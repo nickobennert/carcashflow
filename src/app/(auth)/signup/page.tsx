@@ -1,0 +1,21 @@
+import { Metadata } from "next"
+import { SignupForm } from "./signup-form"
+
+export const metadata: Metadata = {
+  title: "Registrieren",
+  description: "Erstelle ein kostenloses Carcashflow-Konto",
+}
+
+export default function SignupPage() {
+  return (
+    <div className="w-full max-w-md space-y-6">
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Konto erstellen</h1>
+        <p className="text-muted-foreground">
+          Registriere dich kostenlos und finde deine nächste Mitfahrgelegenheit
+        </p>
+      </div>
+      <SignupForm />
+    </div>
+  )
+}

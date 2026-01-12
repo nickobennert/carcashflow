@@ -1,0 +1,637 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm, useFieldArray } from "react-hook-form"
+import { z } from "zod"
+import { motion } from "motion/react"
+import { format } from "date-fns"
+import { de } from "date-fns/locale"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import {
+  Plus,
+  Trash2,
+  Loader2,
+  CalendarIcon,
+  GripVertical,
+  Car,
+  Search,
+} from "lucide-react"
+import { toast } from "sonner"
+
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LocationSearch } from "@/components/map/location-search"
+import { RouteMap, type MapPoint } from "@/components/map"
+import { fadeIn } from "@/lib/animations"
+import { cn } from "@/lib/utils"
+
+const routePointSchema = z.object({
+  id: z.string(),
+  type: z.enum(["start", "stop", "end"]),
+  address: z.string().min(1, "Adresse erforderlich"),
+  lat: z.number(),
+  lng: z.number(),
+  order: z.number(),
+})
+
+const createRideSchema = z.object({
+  type: z.enum(["offer", "request"]),
+  route: z.array(routePointSchema).min(2, "Mindestens Start und Ziel erforderlich"),
+  departure_date: z.date({ message: "Datum erforderlich" }),
+  departure_time: z.string().optional(),
+  seats_available: z.number().min(1).max(8),
+  comment: z.string().max(500).optional(),
+})
+
+type CreateRideFormValues = z.infer<typeof createRideSchema>
+type RoutePoint = z.infer<typeof routePointSchema>
+
+// Sortable route item component
+interface SortableRouteItemProps {
+  field: RoutePoint
+  index: number
+  isLoading: boolean
+  onLocationSelect: (index: number, location: { address: string; lat: number; lng: number }) => void
+  onRemove: (index: number) => void
+  form: ReturnType<typeof useForm<CreateRideFormValues>>
+}
+
+function SortableRouteItem({
+  field,
+  index,
+  isLoading,
+  onLocationSelect,
+  onRemove,
+  form,
+}: SortableRouteItemProps) {
+  const isStop = field.type === "stop"
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id, disabled: !isStop })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 rounded-lg",
+        isDragging && "bg-muted/50 shadow-lg"
+      )}
+    >
+      {/* Drag handle - only for stops */}
+      {isStop ? (
+        <button
+          type="button"
+          className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing p-1"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
+      ) : (
+        <div className="w-7" />
+      )}
+
+      {/* Input field with colored pin inside */}
+      <div className="flex-1">
+        <FormField
+          control={form.control}
+          name={`route.${index}.address`}
+          render={() => (
+            <FormItem className="space-y-0">
+              <FormControl>
+                <LocationSearch
+                  value={field.address}
+                  onSelect={(loc) => onLocationSelect(index, loc)}
+                  placeholder={
+                    field.type === "start"
+                      ? "Startadresse (Abgabeort)"
+                      : field.type === "end"
+                        ? "Zieladresse"
+                        : "Zwischenstopp"
+                  }
+                  disabled={isLoading}
+                  pinColor={field.type}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {/* Delete button for stops */}
+      {isStop ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-destructive"
+          onClick={() => onRemove(index)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ) : (
+        <div className="w-9" />
+      )}
+    </div>
+  )
+}
+
+interface CreateRideDialogProps {
+  userId: string
+  trigger?: React.ReactNode
+}
+
+export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const supabase = createClient()
+
+  const form = useForm<CreateRideFormValues>({
+    resolver: zodResolver(createRideSchema),
+    defaultValues: {
+      type: "offer",
+      route: [
+        { id: crypto.randomUUID(), type: "start", address: "", lat: 0, lng: 0, order: 0 },
+        { id: crypto.randomUUID(), type: "end", address: "", lat: 0, lng: 0, order: 1 },
+      ],
+      departure_time: "",
+      seats_available: 3,
+      comment: "",
+    },
+  })
+
+  const { fields, append, remove, update, replace } = useFieldArray({
+    control: form.control,
+    name: "route",
+  })
+
+  const routeType = form.watch("type")
+  const routePoints = form.watch("route")
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Get sortable item IDs (only stops can be sorted)
+  const sortableIds = useMemo(() => fields.map((f) => f.id), [fields])
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) return
+
+    const oldIndex = fields.findIndex((f) => f.id === active.id)
+    const newIndex = fields.findIndex((f) => f.id === over.id)
+
+    // Don't allow dragging start (index 0) or end (last index)
+    const lastIndex = fields.length - 1
+    if (oldIndex === 0 || oldIndex === lastIndex || newIndex === 0 || newIndex === lastIndex) {
+      return
+    }
+
+    const newFields = arrayMove([...fields], oldIndex, newIndex)
+    // Recalculate orders
+    const reorderedFields = newFields.map((field, idx) => ({
+      ...field,
+      order: idx,
+    }))
+    replace(reorderedFields)
+  }
+
+  // Convert form route to MapPoints for the map
+  const mapPoints: MapPoint[] = routePoints
+    .filter((p) => p.lat !== 0 && p.lng !== 0)
+    .map((p) => ({
+      id: p.id,
+      type: p.type,
+      address: p.address,
+      lat: p.lat,
+      lng: p.lng,
+      order: p.order,
+    }))
+
+  function addStop() {
+    // Insert stop before the end point
+    const endIndex = fields.findIndex((f) => f.type === "end")
+    const insertIndex = endIndex >= 0 ? endIndex : fields.length - 1
+
+    // Create the new stop
+    const newStop = {
+      id: crypto.randomUUID(),
+      type: "stop" as const,
+      address: "",
+      lat: 0,
+      lng: 0,
+      order: insertIndex,
+    }
+
+    // Get current fields, insert new stop before end, and recalculate orders
+    const currentFields = [...fields]
+    currentFields.splice(insertIndex, 0, newStop)
+
+    // Update all orders
+    const reorderedFields = currentFields.map((field, idx) => ({
+      ...field,
+      order: idx,
+    }))
+
+    replace(reorderedFields)
+  }
+
+  function removeStop(index: number) {
+    remove(index)
+    // Recalculate orders
+    setTimeout(() => {
+      const currentFields = form.getValues("route")
+      currentFields.forEach((field, idx) => {
+        update(idx, { ...field, order: idx })
+      })
+    }, 0)
+  }
+
+  function handleLocationSelect(index: number, location: { address: string; lat: number; lng: number }) {
+    const currentField = fields[index]
+    update(index, {
+      ...currentField,
+      address: location.address,
+      lat: location.lat,
+      lng: location.lng,
+    })
+  }
+
+  async function onSubmit(data: CreateRideFormValues) {
+    // Validate that all route points have coordinates
+    const invalidPoints = data.route.filter((p) => p.lat === 0 || p.lng === 0)
+    if (invalidPoints.length > 0) {
+      toast.error("Bitte wähle alle Adressen aus der Suche aus")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const { error } = await supabase.from("rides").insert({
+        user_id: userId,
+        type: data.type,
+        route: data.route.map((p) => ({
+          type: p.type,
+          address: p.address,
+          lat: p.lat,
+          lng: p.lng,
+          order: p.order,
+        })),
+        departure_date: format(data.departure_date, "yyyy-MM-dd"),
+        departure_time: data.departure_time || null,
+        seats_available: data.type === "offer" ? data.seats_available : 1,
+        comment: data.comment || null,
+        status: "active",
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      } as never)
+
+      if (error) throw error
+
+      toast.success("Route erfolgreich erstellt!")
+      setOpen(false)
+      form.reset()
+      router.refresh()
+    } catch (error) {
+      console.error("Error creating ride:", error)
+      toast.error("Fehler beim Erstellen der Route")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Route einstellen
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Neue Route erstellen</DialogTitle>
+          <DialogDescription>
+            Erstelle eine neue Route für deine Rückfahrt nach der Fahrzeugüberführung.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Type Selection */}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Was möchtest du?</FormLabel>
+                  <FormControl>
+                    <Tabs
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="w-full"
+                    >
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="offer" className="gap-2">
+                          <Car className="h-4 w-4" />
+                          Plätze anbieten
+                        </TabsTrigger>
+                        <TabsTrigger value="request" className="gap-2">
+                          <Search className="h-4 w-4" />
+                          Mitfahrt suchen
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </FormControl>
+                  <FormDescription>
+                    {field.value === "offer"
+                      ? "Du hast freie Plätze und nimmst andere mit"
+                      : "Du suchst jemanden, der dich mitnimmt"}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            {/* Route Points */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <FormLabel>Route</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addStop}
+                  disabled={fields.length >= 5}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Zwischenstopp
+                </Button>
+              </div>
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {fields.map((field, index) => (
+                      <SortableRouteItem
+                        key={field.id}
+                        field={field}
+                        index={index}
+                        isLoading={isLoading}
+                        onLocationSelect={handleLocationSelect}
+                        onRemove={removeStop}
+                        form={form}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+
+              {/* Map Preview */}
+              {mapPoints.length >= 2 && (
+                <motion.div variants={fadeIn} initial="initial" animate="animate">
+                  <RouteMap points={mapPoints} height="200px" className="mt-4" />
+                </motion.div>
+              )}
+            </div>
+
+            {/* Date & Time */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="departure_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Datum *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP", { locale: de })
+                            ) : (
+                              <span>Datum wählen</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                          }
+                          locale={de}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="departure_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Abfahrt (optional)</FormLabel>
+                    <Select
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className={cn(!field.value && "text-muted-foreground")}>
+                          <SelectValue placeholder="Abfahrtszeit wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-60">
+                        {Array.from({ length: 24 }, (_, hour) =>
+                          [0, 30].map((minute) => {
+                            const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
+                            return (
+                              <SelectItem key={time} value={time}>
+                                {time} Uhr
+                              </SelectItem>
+                            )
+                          })
+                        ).flat()}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Seats (only for offers) */}
+            {routeType === "offer" && (
+              <FormField
+                control={form.control}
+                name="seats_available"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Freie Plätze</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Anzahl wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                          <SelectItem key={num} value={num.toString()}>
+                            {num} {num === 1 ? "Platz" : "Plätze"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Comment */}
+            <FormField
+              control={form.control}
+              name="comment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kommentar (optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="z.B. Flexibel bei der Abfahrtszeit, kann auch Umwege fahren..."
+                      className="resize-none"
+                      rows={3}
+                      {...field}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {field.value?.length || 0}/500 Zeichen
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Submit */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isLoading}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Route erstellen
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
