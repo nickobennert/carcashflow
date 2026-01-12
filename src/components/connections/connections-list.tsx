@@ -249,6 +249,7 @@ export function ConnectionsList({ currentUserId }: ConnectionsListProps) {
                 >
                   <Link
                     href={`/u/${connection.requester.username}`}
+                    target="_blank"
                     className="flex items-center gap-3 min-w-0 flex-1"
                   >
                     <Avatar>
@@ -312,6 +313,7 @@ export function ConnectionsList({ currentUserId }: ConnectionsListProps) {
                 >
                   <Link
                     href={`/u/${connection.addressee.username}`}
+                    target="_blank"
                     className="flex items-center gap-3 min-w-0 flex-1"
                   >
                     <Avatar>
@@ -393,6 +395,7 @@ function ConnectionCard({
         <div className="flex items-start justify-between gap-4">
           <Link
             href={`/u/${user.username}`}
+            target="_blank"
             className="flex items-center gap-3 min-w-0 flex-1"
           >
             <Avatar className="h-12 w-12">

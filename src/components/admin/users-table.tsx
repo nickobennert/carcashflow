@@ -182,6 +182,7 @@ export function UsersTable() {
                   <TableCell>
                     <Link
                       href={`/u/${user.username}`}
+                      target="_blank"
                       className="flex items-center gap-3 hover:underline"
                     >
                       <Avatar className="h-8 w-8">
@@ -225,7 +226,7 @@ export function UsersTable() {
                         <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link href={`/u/${user.username}`} className="gap-2">
+                          <Link href={`/u/${user.username}`} target="_blank" className="gap-2">
                             <User className="h-4 w-4" />
                             Profil anzeigen
                           </Link>

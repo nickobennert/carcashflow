@@ -218,6 +218,7 @@ export function ConversationView({
 
         <Link
           href={`/u/${otherParticipant.username}`}
+          target="_blank"
           className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
         >
           <div className="relative">
@@ -254,7 +255,7 @@ export function ConversationView({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/u/${otherParticipant.username}`}>Profil anzeigen</Link>
+              <Link href={`/u/${otherParticipant.username}`} target="_blank">Profil anzeigen</Link>
             </DropdownMenuItem>
             {ride && (
               <DropdownMenuItem asChild>

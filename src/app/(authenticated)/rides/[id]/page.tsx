@@ -292,6 +292,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
               <div className="flex items-start justify-between gap-4">
                 <Link
                   href={`/u/${ride.profiles.username}`}
+                  target="_blank"
                   className="flex items-center gap-4 group flex-1 min-w-0"
                 >
                   <Avatar className="h-14 w-14 ring-2 ring-background shadow-md">
@@ -321,7 +322,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
-                        <Link href={`/u/${ride.profiles.username}`} className="gap-2">
+                        <Link href={`/u/${ride.profiles.username}`} target="_blank" className="gap-2">
                           Profil anzeigen
                         </Link>
                       </DropdownMenuItem>

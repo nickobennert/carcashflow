@@ -41,13 +41,18 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
     <Card className="overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
+            <Link
+              href={`/u/${ride.profiles.username}`}
+              target="_blank"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={ride.profiles.avatar_url || undefined} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium leading-none">
+                <p className="font-medium leading-none hover:underline">
                   {ride.profiles.first_name} {ride.profiles.last_name?.[0]}.
                 </p>
                 {ride.profiles.city && (
@@ -56,7 +61,7 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
                   </p>
                 )}
               </div>
-            </div>
+            </Link>
             <Badge
               variant="secondary"
               className={cn(

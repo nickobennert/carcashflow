@@ -243,6 +243,7 @@ export function ReportsTable() {
                       {report.reported_user ? (
                         <Link
                           href={`/u/${report.reported_user.username}`}
+                          target="_blank"
                           className="flex items-center gap-2 hover:underline"
                         >
                           <User className="h-4 w-4 text-muted-foreground" />

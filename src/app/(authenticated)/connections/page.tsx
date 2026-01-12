@@ -20,11 +20,11 @@ export default async function ConnectionsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Verbindungen</h1>
         <p className="text-muted-foreground mt-1">
-          Verwalte deine Verbindungen mit anderen Nutzern
+          Verwalte deine Verbindungen mit anderen Nutzern. Besuche Profile anderer Nutzer um Verbindungsanfragen zu senden.
         </p>
       </div>
 
