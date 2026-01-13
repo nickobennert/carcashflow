@@ -8,13 +8,17 @@ import {
   MessageSquare,
   Flag,
   Gift,
-  TrendingUp,
   Eye,
   Ban,
   Check,
   Search,
   Loader2,
-  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  ArrowUpRight,
+  MoreHorizontal,
+  RefreshCw,
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
@@ -39,6 +43,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { staggerContainer, staggerItem } from "@/lib/animations"
 import type { Profile } from "@/types"
 
@@ -48,6 +58,8 @@ interface Stats {
   totalMessages: number
   pendingReports: number
   activePromoCodes: number
+  newUsersToday: number
+  newUsersWeek: number
 }
 
 interface UserRow {
@@ -57,7 +69,9 @@ interface UserRow {
   first_name: string | null
   last_name: string | null
   subscription_tier: string | null
+  subscription_status: string | null
   created_at: string
+  last_seen_at: string | null
 }
 
 interface ReportRow {
@@ -81,43 +95,182 @@ interface PromoCodeRow {
   valid_until: string | null
 }
 
+// Stat Card Component - Clean Futuristic Design
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  trend,
+  trendValue,
+  accentColor = "emerald",
+}: {
+  title: string
+  value: number | string
+  subtitle?: string
+  icon: React.ComponentType<{ className?: string }>
+  trend?: "up" | "down" | "neutral"
+  trendValue?: string
+  accentColor?: "emerald" | "blue" | "violet" | "amber" | "rose"
+}) {
+  const colorMap = {
+    emerald: {
+      bg: "bg-emerald-500/10",
+      text: "text-emerald-500",
+      border: "border-emerald-500/20",
+    },
+    blue: {
+      bg: "bg-blue-500/10",
+      text: "text-blue-500",
+      border: "border-blue-500/20",
+    },
+    violet: {
+      bg: "bg-violet-500/10",
+      text: "text-violet-500",
+      border: "border-violet-500/20",
+    },
+    amber: {
+      bg: "bg-amber-500/10",
+      text: "text-amber-500",
+      border: "border-amber-500/20",
+    },
+    rose: {
+      bg: "bg-rose-500/10",
+      text: "text-rose-500",
+      border: "border-rose-500/20",
+    },
+  }
+
+  const colors = colorMap[accentColor]
+
+  return (
+    <motion.div variants={staggerItem}>
+      <div className={`relative overflow-hidden rounded-xl border ${colors.border} bg-card p-5`}>
+        {/* Background accent */}
+        <div className={`absolute -right-4 -top-4 h-24 w-24 rounded-full ${colors.bg} blur-2xl`} />
+
+        <div className="relative">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colors.bg}`}>
+              <Icon className={`h-5 w-5 ${colors.text}`} />
+            </div>
+            {trend && trendValue && (
+              <div className={`flex items-center gap-1 text-xs font-medium ${
+                trend === "up" ? "text-emerald-500" : trend === "down" ? "text-rose-500" : "text-muted-foreground"
+              }`}>
+                {trend === "up" ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : trend === "down" ? (
+                  <TrendingDown className="h-3 w-3" />
+                ) : (
+                  <Activity className="h-3 w-3" />
+                )}
+                {trendValue}
+              </div>
+            )}
+          </div>
+
+          {/* Value */}
+          <div className="space-y-1">
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground/70">{subtitle}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// Quick Action Card
+function QuickActionCard({
+  title,
+  description,
+  icon: Icon,
+  onClick,
+  badge,
+}: {
+  title: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  onClick?: () => void
+  badge?: number
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative flex items-start gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-muted/50 w-full"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <Icon className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{title}</p>
+          {badge !== undefined && badge > 0 && (
+            <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+              {badge}
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </button>
+  )
+}
+
 export function AdminTab({ profile }: { profile: Profile }) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<UserRow[]>([])
   const [reports, setReports] = useState<ReportRow[]>([])
   const [promoCodes, setPromoCodes] = useState<PromoCodeRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [userSearch, setUserSearch] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("overview")
   const supabase = createClient()
 
   useEffect(() => {
     loadAdminData()
   }, [])
 
-  async function loadAdminData() {
-    setIsLoading(true)
+  async function loadAdminData(refresh = false) {
+    if (refresh) {
+      setIsRefreshing(true)
+    } else {
+      setIsLoading(true)
+    }
 
     try {
+      // Calculate date ranges
+      const now = new Date()
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
       // Load stats
-      const [usersCount, ridesCount, messagesCount, reportsCount, promoCount] =
-        await Promise.all([
-          supabase.from("profiles").select("id", { count: "exact", head: true }),
-          supabase
-            .from("rides")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "active"),
-          supabase.from("messages").select("id", { count: "exact", head: true }),
-          supabase
-            .from("reports")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "pending"),
-          supabase
-            .from("promo_codes")
-            .select("id", { count: "exact", head: true })
-            .eq("is_active", true),
-        ])
+      const [
+        usersCount,
+        ridesCount,
+        messagesCount,
+        reportsCount,
+        promoCount,
+        newUsersToday,
+        newUsersWeek,
+      ] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("rides").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("messages").select("id", { count: "exact", head: true }),
+        supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("promo_codes").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
+        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
+      ])
 
       setStats({
         totalUsers: usersCount.count || 0,
@@ -125,12 +278,14 @@ export function AdminTab({ profile }: { profile: Profile }) {
         totalMessages: messagesCount.count || 0,
         pendingReports: reportsCount.count || 0,
         activePromoCodes: promoCount.count || 0,
+        newUsersToday: newUsersToday.count || 0,
+        newUsersWeek: newUsersWeek.count || 0,
       })
 
       // Load users
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, username, email, first_name, last_name, subscription_tier, created_at")
+        .select("id, username, email, first_name, last_name, subscription_tier, subscription_status, created_at, last_seen_at")
         .order("created_at", { ascending: false })
         .limit(50)
 
@@ -167,11 +322,16 @@ export function AdminTab({ profile }: { profile: Profile }) {
       if (promoData) {
         setPromoCodes(promoData as PromoCodeRow[])
       }
+
+      if (refresh) {
+        toast.success("Daten aktualisiert")
+      }
     } catch (error) {
       console.error("Error loading admin data:", error)
       toast.error("Fehler beim Laden der Admin-Daten")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -232,76 +392,251 @@ export function AdminTab({ profile }: { profile: Profile }) {
       u.first_name?.toLowerCase().includes(userSearch.toLowerCase())
   )
 
+  const pendingReports = reports.filter((r) => r.status === "pending")
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Lade Admin-Daten...</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Admin Dashboard</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Übersicht und Verwaltung deiner Plattform
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => loadAdminData(true)}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+          Aktualisieren
+        </Button>
+      </div>
+
+      {/* Stats Grid */}
       <motion.div
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
-        {[
-          { label: "Nutzer", value: stats?.totalUsers || 0, icon: Users, color: "text-blue-500" },
-          { label: "Aktive Fahrten", value: stats?.activeRides || 0, icon: Car, color: "text-green-500" },
-          { label: "Nachrichten", value: stats?.totalMessages || 0, icon: MessageSquare, color: "text-purple-500" },
-          { label: "Offene Reports", value: stats?.pendingReports || 0, icon: Flag, color: "text-red-500" },
-          { label: "Promo Codes", value: stats?.activePromoCodes || 0, icon: Gift, color: "text-amber-500" },
-        ].map((stat) => (
-          <motion.div key={stat.label} variants={staggerItem}>
-            <Card>
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-muted ${stat.color}`}>
-                    <stat.icon className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        <StatCard
+          title="Registrierte Nutzer"
+          value={stats?.totalUsers || 0}
+          subtitle={`+${stats?.newUsersWeek || 0} diese Woche`}
+          icon={Users}
+          trend="up"
+          trendValue={`+${stats?.newUsersToday || 0} heute`}
+          accentColor="blue"
+        />
+        <StatCard
+          title="Aktive Fahrten"
+          value={stats?.activeRides || 0}
+          subtitle="Aktuell online"
+          icon={Car}
+          accentColor="emerald"
+        />
+        <StatCard
+          title="Nachrichten"
+          value={stats?.totalMessages || 0}
+          subtitle="Gesamt gesendet"
+          icon={MessageSquare}
+          accentColor="violet"
+        />
+        <StatCard
+          title="Offene Reports"
+          value={stats?.pendingReports || 0}
+          subtitle={stats?.pendingReports === 0 ? "Alles erledigt" : "Zu bearbeiten"}
+          icon={Flag}
+          trend={stats?.pendingReports === 0 ? "neutral" : "up"}
+          trendValue={stats?.pendingReports === 0 ? "OK" : "Achtung"}
+          accentColor={stats?.pendingReports === 0 ? "emerald" : "rose"}
+        />
       </motion.div>
 
+      {/* Quick Actions */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <QuickActionCard
+          title="Reports bearbeiten"
+          description="Offene Meldungen prüfen"
+          icon={Flag}
+          badge={stats?.pendingReports}
+          onClick={() => setActiveTab("reports")}
+        />
+        <QuickActionCard
+          title="Nutzer verwalten"
+          description="Alle Nutzer anzeigen"
+          icon={Users}
+          onClick={() => setActiveTab("users")}
+        />
+        <QuickActionCard
+          title="Promo Codes"
+          description={`${stats?.activePromoCodes || 0} aktive Codes`}
+          icon={Gift}
+          onClick={() => setActiveTab("promos")}
+        />
+      </div>
+
       {/* Admin Tabs */}
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="h-4 w-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-background">
+            <Activity className="h-4 w-4 mr-2" />
+            Übersicht
+          </TabsTrigger>
+          <TabsTrigger value="users" className="data-[state=active]:bg-background">
+            <Users className="h-4 w-4 mr-2" />
             Nutzer
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
-            <Flag className="h-4 w-4" />
+          <TabsTrigger value="reports" className="data-[state=active]:bg-background">
+            <Flag className="h-4 w-4 mr-2" />
             Reports
             {(stats?.pendingReports || 0) > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+              <Badge variant="destructive" className="ml-2 h-5 px-1.5">
                 {stats?.pendingReports}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="promos" className="gap-2">
-            <Gift className="h-4 w-4" />
+          <TabsTrigger value="promos" className="data-[state=active]:bg-background">
+            <Gift className="h-4 w-4 mr-2" />
             Promo Codes
           </TabsTrigger>
         </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-4">
+          {/* Recent Users */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Neueste Nutzer</CardTitle>
+                  <CardDescription>Zuletzt registrierte Accounts</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setActiveTab("users")}>
+                  Alle anzeigen
+                  <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {users.slice(0, 5).map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between py-2 border-b last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-sm font-medium">
+                          {user.first_name?.[0] || user.username[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-xs">
+                        {user.subscription_tier || "trial"}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(user.created_at).toLocaleDateString("de-DE")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pending Reports */}
+          {pendingReports.length > 0 && (
+            <Card className="border-rose-500/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flag className="h-4 w-4 text-rose-500" />
+                    <CardTitle className="text-base">Offene Reports</CardTitle>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("reports")}>
+                    Alle anzeigen
+                    <ArrowUpRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pendingReports.slice(0, 3).map((report) => (
+                    <div
+                      key={report.id}
+                      className="flex items-start justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="destructive" className="text-xs">
+                            {report.reason}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          @{report.reporter?.username || "?"} → @{report.reported_user?.username || "?"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResolveReport(report.id, "dismissed")}
+                          disabled={actionLoading === report.id}
+                        >
+                          Abweisen
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleResolveReport(report.id, "resolved")}
+                          disabled={actionLoading === report.id}
+                        >
+                          {actionLoading === report.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Lösen"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Users Tab */}
         <TabsContent value="users">
           <Card>
             <CardHeader>
-              <CardTitle>Nutzerverwaltung</CardTitle>
-              <CardDescription>Alle registrierten Nutzer verwalten</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Nutzerverwaltung</CardTitle>
+                  <CardDescription>Alle registrierten Nutzer ({users.length})</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
@@ -316,13 +651,14 @@ export function AdminTab({ profile }: { profile: Profile }) {
                 </div>
               </div>
 
-              <div className="rounded-md border">
+              <div className="rounded-lg border">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nutzer</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Plan</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Registriert</TableHead>
                       <TableHead className="text-right">Aktionen</TableHead>
                     </TableRow>
@@ -331,34 +667,55 @@ export function AdminTab({ profile }: { profile: Profile }) {
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {user.first_name} {user.last_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              @{user.username}
-                            </p>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                              <span className="text-xs font-medium">
+                                {user.first_name?.[0] || user.username[0].toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {user.first_name} {user.last_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                @{user.username}
+                              </p>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="text-sm text-muted-foreground">
                           {user.email}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-xs">
                             {user.subscription_tier || "trial"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell>
+                          <Badge
+                            variant={user.subscription_status === "active" ? "default" : "secondary"}
+                            className="text-xs"
+                          >
+                            {user.subscription_status || "trialing"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
                           {new Date(user.created_at).toLocaleDateString("de-DE")}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedUser(user)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Details anzeigen
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -374,13 +731,16 @@ export function AdminTab({ profile }: { profile: Profile }) {
           <Card>
             <CardHeader>
               <CardTitle>Meldungen</CardTitle>
-              <CardDescription>Gemeldete Nutzer und Inhalte</CardDescription>
+              <CardDescription>Gemeldete Nutzer und Inhalte bearbeiten</CardDescription>
             </CardHeader>
             <CardContent>
               {reports.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Flag className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Keine Meldungen vorhanden</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Flag className="h-6 w-6" />
+                  </div>
+                  <p className="font-medium">Keine Meldungen</p>
+                  <p className="text-sm mt-1">Es gibt derzeit keine Meldungen zu bearbeiten</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -390,7 +750,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
                       className="flex items-start justify-between p-4 rounded-lg border"
                     >
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-2">
                           <Badge
                             variant={
                               report.status === "pending"
@@ -406,18 +766,19 @@ export function AdminTab({ profile }: { profile: Profile }) {
                               ? "Gelöst"
                               : "Abgewiesen"}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {report.reason}
+                          <span className="text-sm font-medium">{report.reason}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(report.created_at).toLocaleDateString("de-DE")}
                           </span>
                         </div>
                         <p className="text-sm">
                           <span className="text-muted-foreground">Von:</span>{" "}
                           @{report.reporter?.username || "Unbekannt"}{" "}
-                          <span className="text-muted-foreground">→</span>{" "}
+                          <span className="text-muted-foreground mx-1">→</span>{" "}
                           @{report.reported_user?.username || "Unbekannt"}
                         </p>
                         {report.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-2 rounded">
                             {report.description}
                           </p>
                         )}
@@ -440,9 +801,11 @@ export function AdminTab({ profile }: { profile: Profile }) {
                             {actionLoading === report.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <Check className="h-4 w-4 mr-1" />
+                              <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Lösen
+                              </>
                             )}
-                            Lösen
                           </Button>
                         </div>
                       )}
@@ -458,23 +821,35 @@ export function AdminTab({ profile }: { profile: Profile }) {
         <TabsContent value="promos">
           <Card>
             <CardHeader>
-              <CardTitle>Promo Codes</CardTitle>
-              <CardDescription>Aktive und verwendete Promo Codes</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Promo Codes</CardTitle>
+                  <CardDescription>Aktive und verwendete Promo Codes verwalten</CardDescription>
+                </div>
+                <Button size="sm" disabled>
+                  <Gift className="h-4 w-4 mr-2" />
+                  Neuer Code
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {promoCodes.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Gift className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Keine Promo Codes vorhanden</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Gift className="h-6 w-6" />
+                  </div>
+                  <p className="font-medium">Keine Promo Codes</p>
+                  <p className="text-sm mt-1">Erstelle deinen ersten Promo Code</p>
                 </div>
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-lg border">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Code</TableHead>
                         <TableHead>Typ</TableHead>
                         <TableHead>Verwendungen</TableHead>
+                        <TableHead>Gültig bis</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Aktionen</TableHead>
                       </TableRow>
@@ -492,10 +867,13 @@ export function AdminTab({ profile }: { profile: Profile }) {
                             {code.current_uses}
                             {code.max_uses && ` / ${code.max_uses}`}
                           </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {code.valid_until
+                              ? new Date(code.valid_until).toLocaleDateString("de-DE")
+                              : "Unbegrenzt"}
+                          </TableCell>
                           <TableCell>
-                            <Badge
-                              variant={code.is_active ? "default" : "secondary"}
-                            >
+                            <Badge variant={code.is_active ? "default" : "secondary"}>
                               {code.is_active ? "Aktiv" : "Inaktiv"}
                             </Badge>
                           </TableCell>
@@ -504,9 +882,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
                               variant="ghost"
                               size="sm"
                               disabled={actionLoading === code.id}
-                              onClick={() =>
-                                handleTogglePromoCode(code.id, code.is_active)
-                              }
+                              onClick={() => handleTogglePromoCode(code.id, code.is_active)}
                             >
                               {actionLoading === code.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -530,36 +906,52 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
       {/* User Detail Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nutzer Details</DialogTitle>
-            <DialogDescription>
-              @{selectedUser?.username}
-            </DialogDescription>
+            <DialogDescription>@{selectedUser?.username}</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-lg font-medium">
+                    {selectedUser.first_name?.[0] || selectedUser.username[0].toUpperCase()}
+                  </span>
+                </div>
                 <div>
-                  <p className="text-muted-foreground">Name</p>
                   <p className="font-medium">
                     {selectedUser.first_name} {selectedUser.last_name}
                   </p>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Plan</p>
-                  <p className="font-medium">
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Plan</p>
+                  <Badge variant="outline">
                     {selectedUser.subscription_tier || "trial"}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <Badge variant={selectedUser.subscription_status === "active" ? "default" : "secondary"}>
+                    {selectedUser.subscription_status || "trialing"}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Registriert</p>
+                  <p className="text-sm font-medium">
+                    {new Date(selectedUser.created_at).toLocaleDateString("de-DE")}
                   </p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Registriert</p>
-                  <p className="font-medium">
-                    {new Date(selectedUser.created_at).toLocaleDateString("de-DE")}
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Zuletzt aktiv</p>
+                  <p className="text-sm font-medium">
+                    {selectedUser.last_seen_at
+                      ? new Date(selectedUser.last_seen_at).toLocaleDateString("de-DE")
+                      : "Unbekannt"}
                   </p>
                 </div>
               </div>

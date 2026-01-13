@@ -83,19 +83,16 @@ export default function SettingsPage() {
         setProfile(profileData as Profile)
       }
 
-      // Check if user is admin
-      const { data: adminData, error: adminError } = await supabase
-        .from("super_admins")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle()
-
-      // Debug: log admin check result
-      if (adminError) {
-        console.error("Admin check error:", adminError)
+      // Check if user is admin via server-side API (bypasses RLS)
+      try {
+        const response = await fetch("/api/admin/check")
+        const adminResult = await response.json()
+        console.log("Admin check result:", adminResult)
+        setIsAdmin(adminResult.isAdmin === true)
+      } catch (error) {
+        console.error("Admin check error:", error)
+        setIsAdmin(false)
       }
-
-      setIsAdmin(!!adminData)
 
       setIsLoading(false)
     }

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion } from "motion/react"
 import {
   Car,
   MessageSquare,
@@ -129,16 +128,14 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Collapse Button & Copyright */}
         <div className="border-t px-3 py-3">
           {/* Collapse Toggle */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
               "w-full flex items-center justify-center gap-2 mb-3 py-2 px-3 rounded-lg",
               "text-xs text-muted-foreground",
               "border border-dashed border-muted-foreground/30",
               "hover:border-muted-foreground/50 hover:text-foreground",
-              "transition-all duration-200",
+              "transition-colors",
               isCollapsed && "px-2"
             )}
           >
@@ -150,7 +147,7 @@ export function Sidebar({ className }: SidebarProps) {
                 <span>Einklappen</span>
               </>
             )}
-          </motion.button>
+          </button>
 
           {/* Copyright */}
           {isCollapsed ? (
@@ -188,11 +185,9 @@ function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
 
   const linkContent = (
     <Link href={item.href}>
-      <motion.div
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      <div
         className={cn(
-          "group flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+          "group flex items-center rounded-lg text-sm font-medium transition-colors",
           isCollapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2",
           isActive
             ? "bg-[#4ADE80] text-[#1A421A]"
@@ -222,7 +217,7 @@ function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
           )} />
         )}
         {!isCollapsed && <span className="flex-1">{item.title}</span>}
-      </motion.div>
+      </div>
     </Link>
   )
 
