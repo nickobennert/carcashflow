@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "motion/react"
+import { motion } from "motion/react"
 import {
   Car,
   MessageSquare,
@@ -13,81 +13,69 @@ import {
   HelpCircle,
   FileText,
   CreditCard,
-  ChevronDown,
-  Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface NavItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
-  badge?: string | number
-  isNew?: boolean
 }
 
-interface NavSection {
-  title?: string
-  items: NavItem[]
-  collapsible?: boolean
-  defaultOpen?: boolean
-}
-
-const navSections: NavSection[] = [
+const mainNavItems: NavItem[] = [
   {
-    items: [
-      {
-        title: "Mitfahrbörse",
-        href: "/dashboard",
-        icon: Car,
-      },
-      {
-        title: "Nachrichten",
-        href: "/messages",
-        icon: MessageSquare,
-      },
-      {
-        title: "Verbindungen",
-        href: "/connections",
-        icon: Users,
-      },
-      {
-        title: "Mein Profil",
-        href: "/profile",
-        icon: User,
-      },
-    ],
+    title: "Mitfahrbörse",
+    href: "/dashboard",
+    icon: Car,
   },
   {
-    title: "Mehr",
-    collapsible: true,
-    defaultOpen: false,
-    items: [
-      {
-        title: "Einstellungen",
-        href: "/settings",
-        icon: Settings,
-      },
-      {
-        title: "Abonnement",
-        href: "/pricing",
-        icon: CreditCard,
-      },
-      {
-        title: "Changelog",
-        href: "/changelog",
-        icon: FileText,
-        isNew: true,
-      },
-      {
-        title: "Hilfe",
-        href: "/help",
-        icon: HelpCircle,
-      },
-    ],
+    title: "Nachrichten",
+    href: "/messages",
+    icon: MessageSquare,
+  },
+  {
+    title: "Verbindungen",
+    href: "/connections",
+    icon: Users,
+  },
+  {
+    title: "Mein Profil",
+    href: "/profile",
+    icon: User,
+  },
+]
+
+const footerNavItems: NavItem[] = [
+  {
+    title: "Einstellungen",
+    href: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Abonnement",
+    href: "/pricing",
+    icon: CreditCard,
+  },
+  {
+    title: "Changelog",
+    href: "/changelog",
+    icon: FileText,
+  },
+  {
+    title: "Hilfe",
+    href: "/help",
+    icon: HelpCircle,
   },
 ]
 
@@ -97,169 +85,175 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
-    <div className={cn("flex h-full flex-col", className)}>
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
-        <div className="space-y-6 px-3">
-          {navSections.map((section, index) => (
-            <NavSection
-              key={index}
-              section={section}
-              pathname={pathname}
-            />
-          ))}
-        </div>
-      </ScrollArea>
-
-      {/* Beta Badge */}
-      <div className="px-3 pb-2">
-        <div className="rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-medium">Beta</span>
+    <TooltipProvider delayDuration={0}>
+      <div className={cn(
+        "flex h-full flex-col transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64",
+        className
+      )}>
+        {/* Main Navigation */}
+        <ScrollArea className="flex-1 py-4">
+          <div className={cn("space-y-1.5", isCollapsed ? "px-2" : "px-3")}>
+            {mainNavItems.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                isCollapsed={isCollapsed}
+              />
+            ))}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Feedback? Schreib uns!
-          </p>
+        </ScrollArea>
+
+        {/* Footer Links */}
+        <div className={cn(
+          "border-t py-3",
+          isCollapsed ? "px-2" : "px-3"
+        )}>
+          <div className={cn("space-y-0.5", isCollapsed ? "space-y-1" : "")}>
+            {footerNavItems.map((item) => (
+              <FooterLink
+                key={item.href}
+                item={item}
+                isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                isCollapsed={isCollapsed}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Collapse Button & Copyright */}
+        <div className="border-t px-3 py-3">
+          {/* Collapse Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={cn(
+              "w-full justify-center mb-3 text-muted-foreground hover:text-foreground",
+              isCollapsed && "px-0"
+            )}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                <span className="text-xs">Einklappen</span>
+              </>
+            )}
+          </Button>
+
+          {/* Copyright */}
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">
+              {isCollapsed ? "©" : "© 2026 Carcashflow"}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {isCollapsed ? "β" : "BETA 1.0"}
+            </p>
+          </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="border-t px-4 py-3">
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Carcashflow
-        </p>
-      </div>
-    </div>
-  )
-}
-
-interface NavSectionProps {
-  section: NavSection
-  pathname: string
-}
-
-function NavSection({ section, pathname }: NavSectionProps) {
-  const [isOpen, setIsOpen] = useState(section.defaultOpen ?? true)
-
-  // Check if any item in section is active
-  const hasActiveItem = section.items.some(
-    item => pathname === item.href || pathname.startsWith(item.href + "/")
-  )
-
-  // Auto-open if has active item
-  const shouldBeOpen = isOpen || hasActiveItem
-
-  if (!section.collapsible) {
-    return (
-      <div className="space-y-1">
-        {section.items.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
-          />
-        ))}
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      {/* Collapsible Header */}
-      <button
-        onClick={() => setIsOpen(!shouldBeOpen)}
-        className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <span>{section.title}</span>
-        <motion.div
-          animate={{ rotate: shouldBeOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </motion.div>
-      </button>
-
-      {/* Collapsible Content */}
-      <AnimatePresence initial={false}>
-        {shouldBeOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="space-y-1 pt-1">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.href}
-                  item={item}
-                  isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </TooltipProvider>
   )
 }
 
 interface NavLinkProps {
   item: NavItem
   isActive: boolean
+  isCollapsed: boolean
 }
 
-function NavLink({ item, isActive }: NavLinkProps) {
+function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
   const Icon = item.icon
 
-  return (
+  const linkContent = (
     <Link href={item.href}>
       <motion.div
-        whileHover={{ x: 4 }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         className={cn(
-          "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+          "group flex items-center rounded-xl text-sm font-medium transition-all duration-200",
+          isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
           isActive
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+            ? "bg-[#4ADE80] text-[#1A421A]"
+            : "text-muted-foreground hover:bg-[#4ADE80] hover:text-[#1A421A]"
         )}
       >
         <div className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+          "flex items-center justify-center rounded-lg transition-all duration-200",
+          isCollapsed ? "h-8 w-8" : "h-8 w-8",
           isActive
-            ? "bg-primary-foreground/20"
-            : "bg-muted group-hover:bg-background"
+            ? "bg-[#1A421A]/20"
+            : "bg-muted group-hover:bg-[#1A421A] group-hover:text-white/60"
         )}>
-          <Icon className="h-4 w-4" />
+          <Icon className={cn(
+            "h-4 w-4 transition-colors",
+            isActive ? "" : "group-hover:text-white/60"
+          )} />
         </div>
-        <span className="flex-1">{item.title}</span>
-        {item.badge && (
-          <Badge
-            variant={isActive ? "secondary" : "default"}
-            className="h-5 px-1.5 text-xs"
-          >
-            {item.badge}
-          </Badge>
-        )}
-        {item.isNew && (
-          <Badge
-            variant="outline"
-            className={cn(
-              "h-5 px-1.5 text-[10px] uppercase tracking-wide",
-              isActive
-                ? "border-primary-foreground/30 text-primary-foreground"
-                : "border-amber-500/50 text-amber-600 dark:text-amber-400"
-            )}
-          >
-            Neu
-          </Badge>
-        )}
+        {!isCollapsed && <span className="flex-1">{item.title}</span>}
       </motion.div>
     </Link>
   )
+
+  if (isCollapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {linkContent}
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={10}>
+          {item.title}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return linkContent
+}
+
+interface FooterLinkProps {
+  item: NavItem
+  isActive: boolean
+  isCollapsed: boolean
+}
+
+function FooterLink({ item, isActive, isCollapsed }: FooterLinkProps) {
+  const Icon = item.icon
+
+  const linkContent = (
+    <Link
+      href={item.href}
+      className={cn(
+        "flex items-center gap-2 py-1.5 text-sm transition-colors",
+        isCollapsed ? "justify-center px-2" : "px-3",
+        isActive
+          ? "text-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {!isCollapsed && <span>{item.title}</span>}
+    </Link>
+  )
+
+  if (isCollapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {linkContent}
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={10}>
+          {item.title}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return linkContent
 }

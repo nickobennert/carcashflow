@@ -38,8 +38,8 @@ export function AppShell({
       />
 
       <div className="flex h-[calc(100vh-3.5rem)]">
-        {/* Desktop Sidebar */}
-        <aside className="hidden w-64 shrink-0 border-r md:block">
+        {/* Desktop Sidebar - width controlled by Sidebar component */}
+        <aside className="hidden shrink-0 border-r md:block">
           <div className="h-full overflow-y-auto">
             <Sidebar />
           </div>

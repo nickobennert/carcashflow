@@ -6,11 +6,9 @@ import { motion } from "motion/react"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import {
-  User,
   MapPin,
   Calendar,
   Car,
-  MessageSquare,
   Settings,
   ExternalLink,
   Loader2,
@@ -156,7 +154,7 @@ export default function ProfilePage() {
               {profile.is_public && (
                 <Button
                   variant="ghost"
-                  onClick={() => router.push(`/u/${profile.username}`)}
+                  onClick={() => window.open(`/u/${profile.username}`, '_blank')}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Öffentlich
@@ -170,48 +168,27 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
-                <Car className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {rides.filter((r) => r.type === "offer").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Angebote</p>
-              </div>
-            </div>
+          <CardContent className="py-4">
+            <p className="text-2xl font-bold text-green-600">
+              {rides.filter((r) => r.type === "offer").length}
+            </p>
+            <p className="text-sm text-muted-foreground">Angebote</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
-                <Car className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {rides.filter((r) => r.type === "request").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Gesuche</p>
-              </div>
-            </div>
+          <CardContent className="py-4">
+            <p className="text-2xl font-bold text-blue-600">
+              {rides.filter((r) => r.type === "request").length}
+            </p>
+            <p className="text-sm text-muted-foreground">Gesuche</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/10">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Verbindungen</p>
-              </div>
-            </div>
+          <CardContent className="py-4">
+            <p className="text-2xl font-bold text-purple-600">0</p>
+            <p className="text-sm text-muted-foreground">Verbindungen</p>
           </CardContent>
         </Card>
       </div>

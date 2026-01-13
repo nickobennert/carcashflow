@@ -25,7 +25,7 @@ export function RideList({ rides, currentUserId, emptyMessage }: RideListProps) 
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="space-y-4">
       {rides.map((ride) => (
         <RideCard key={ride.id} ride={ride} currentUserId={currentUserId} />
       ))}

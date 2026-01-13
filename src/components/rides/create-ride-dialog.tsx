@@ -33,6 +33,7 @@ import {
   GripVertical,
   Car,
   Search,
+  HelpCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -69,6 +70,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LocationSearch } from "@/components/map/location-search"
 import { RouteMap, type MapPoint } from "@/components/map"
@@ -386,13 +393,34 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Neue Route erstellen</DialogTitle>
-          <DialogDescription>
-            Erstelle eine neue Route für deine Rückfahrt nach der Fahrzeugüberführung.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <TooltipProvider>
+          <DialogHeader className="pr-10">
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle>Neue Route erstellen</DialogTitle>
+                <DialogDescription>
+                  Erstelle eine neue Route für deine Rückfahrt nach der Fahrzeugüberführung.
+                </DialogDescription>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-xs">
+                  <p className="font-medium mb-1">So funktioniert's:</p>
+                  <ul className="text-xs space-y-1">
+                    <li>• Wähle ob du Plätze anbietest oder suchst</li>
+                    <li>• Gib Start und Ziel deiner Route ein</li>
+                    <li>• Optional: Füge Zwischenstopps hinzu</li>
+                    <li>• Wähle Datum und ungefähre Abfahrtszeit</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -402,7 +430,17 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Was möchtest du?</FormLabel>
+                  <div className="flex items-center gap-2 group">
+                    <FormLabel>Was möchtest du?</FormLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Entscheide ob du freie Plätze anbietest oder eine Mitfahrt suchst
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <FormControl>
                     <Tabs
                       value={field.value}
@@ -432,8 +470,18 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
 
             {/* Route Points */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <FormLabel>Route</FormLabel>
+              <div className="flex items-center justify-between group">
+                <div className="flex items-center gap-2">
+                  <FormLabel>Route</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Gib Start- und Zieladresse ein. Zwischenstopps können per Drag & Drop sortiert werden.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <Button
                   type="button"
                   variant="outline"
@@ -631,6 +679,7 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
             </div>
           </form>
         </Form>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   )

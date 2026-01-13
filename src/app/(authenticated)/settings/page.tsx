@@ -81,11 +81,16 @@ export default function SettingsPage() {
       }
 
       // Check if user is admin
-      const { data: adminData } = await supabase
+      const { data: adminData, error: adminError } = await supabase
         .from("super_admins")
         .select("id")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
+
+      // Debug: log admin check result
+      if (adminError) {
+        console.error("Admin check error:", adminError)
+      }
 
       setIsAdmin(!!adminData)
 

@@ -66,18 +66,18 @@ export function Header({
         {/* Logo */}
         <Link href="/dashboard" className="mr-6 flex items-center">
           <motion.div {...buttonPress}>
-            {/* Light mode logo */}
+            {/* Dark mode: show light logo (for dark backgrounds) */}
             <Image
-              src="/logoipsum-391-light.svg"
+              src="/logoipsum-391-dark.svg"
               alt="Carcashflow"
               width={140}
               height={32}
               className="hidden dark:block"
               priority
             />
-            {/* Dark mode logo (inverted for light backgrounds) */}
+            {/* Light mode: show dark logo (for light backgrounds) */}
             <Image
-              src="/logoipsum-391-dark.svg"
+              src="/logoipsum-391-light.svg"
               alt="Carcashflow"
               width={140}
               height={32}
