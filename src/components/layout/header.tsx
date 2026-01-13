@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { motion } from "motion/react"
 import {
@@ -13,6 +14,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -45,7 +47,15 @@ export function Header({
   unreadMessages = 0,
   unreadNotifications = 0,
 }: HeaderProps) {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const supabase = createClient()
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push("/")
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -175,7 +185,10 @@ export function Header({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   Abmelden
                 </DropdownMenuItem>
