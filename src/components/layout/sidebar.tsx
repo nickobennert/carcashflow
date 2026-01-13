@@ -7,14 +7,14 @@ import { motion } from "motion/react"
 import {
   Car,
   MessageSquare,
-  User,
   Users,
   Settings,
   HelpCircle,
   FileText,
   CreditCard,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeft,
+  Copyright,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -48,11 +48,6 @@ const mainNavItems: NavItem[] = [
     title: "Verbindungen",
     href: "/connections",
     icon: Users,
-  },
-  {
-    title: "Mein Profil",
-    href: "/profile",
-    icon: User,
   },
 ]
 
@@ -91,12 +86,15 @@ export function Sidebar({ className }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <div className={cn(
         "flex h-full flex-col transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64",
+        isCollapsed ? "w-16" : "w-56",
         className
       )}>
         {/* Main Navigation */}
         <ScrollArea className="flex-1 py-4">
-          <div className={cn("space-y-1.5", isCollapsed ? "px-2" : "px-3")}>
+          <div className={cn(
+            "flex flex-col gap-1.5",
+            isCollapsed ? "px-2" : "px-3"
+          )}>
             {mainNavItems.map((item) => (
               <NavLink
                 key={item.href}
@@ -113,7 +111,10 @@ export function Sidebar({ className }: SidebarProps) {
           "border-t py-3",
           isCollapsed ? "px-2" : "px-3"
         )}>
-          <div className={cn("space-y-0.5", isCollapsed ? "space-y-1" : "")}>
+          <div className={cn(
+            "flex flex-col gap-0.5",
+            isCollapsed && "gap-1.5"
+          )}>
             {footerNavItems.map((item) => (
               <FooterLink
                 key={item.href}
@@ -128,34 +129,48 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Collapse Button & Copyright */}
         <div className="border-t px-3 py-3">
           {/* Collapse Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
-              "w-full justify-center mb-3 text-muted-foreground hover:text-foreground",
-              isCollapsed && "px-0"
+              "w-full flex items-center justify-center gap-2 mb-3 py-2 px-3 rounded-lg",
+              "text-xs text-muted-foreground",
+              "border border-dashed border-muted-foreground/30",
+              "hover:border-muted-foreground/50 hover:text-foreground",
+              "transition-all duration-200",
+              isCollapsed && "px-2"
             )}
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <PanelLeft className="h-4 w-4" />
             ) : (
               <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                <span className="text-xs">Einklappen</span>
+                <PanelLeftClose className="h-4 w-4" />
+                <span>Einklappen</span>
               </>
             )}
-          </Button>
+          </motion.button>
 
           {/* Copyright */}
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">
-              {isCollapsed ? "©" : "© 2026 Carcashflow"}
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {isCollapsed ? "β" : "BETA 1.0"}
-            </p>
-          </div>
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center cursor-default">
+                  <Copyright className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={10}>
+                <p className="font-medium">© 2026 Carcashflow</p>
+                <p className="text-xs text-muted-foreground">BETA 1.0</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">© 2026 Carcashflow</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">BETA 1.0</p>
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>
@@ -177,19 +192,21 @@ function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         className={cn(
-          "group flex items-center rounded-xl text-sm font-medium transition-all duration-200",
-          isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
+          "group flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+          isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-2",
           isActive
             ? "bg-[#4ADE80] text-[#1A421A]"
             : "text-muted-foreground hover:bg-[#4ADE80] hover:text-[#1A421A]"
         )}
       >
         <div className={cn(
-          "flex items-center justify-center rounded-lg transition-all duration-200",
-          isCollapsed ? "h-8 w-8" : "h-8 w-8",
+          "flex items-center justify-center rounded-md transition-all duration-200",
+          "h-7 w-7",
           isActive
             ? "bg-[#1A421A]/20"
-            : "bg-muted group-hover:bg-[#1A421A] group-hover:text-white/60"
+            : isCollapsed
+              ? "bg-transparent group-hover:bg-[#1A421A]"
+              : "bg-muted group-hover:bg-[#1A421A]"
         )}>
           <Icon className={cn(
             "h-4 w-4 transition-colors",
@@ -230,8 +247,8 @@ function FooterLink({ item, isActive, isCollapsed }: FooterLinkProps) {
     <Link
       href={item.href}
       className={cn(
-        "flex items-center gap-2 py-1.5 text-sm transition-colors",
-        isCollapsed ? "justify-center px-2" : "px-3",
+        "flex items-center gap-2 py-1.5 text-sm transition-colors rounded-md",
+        isCollapsed ? "justify-center p-2" : "px-2.5",
         isActive
           ? "text-foreground font-medium"
           : "text-muted-foreground hover:text-foreground"

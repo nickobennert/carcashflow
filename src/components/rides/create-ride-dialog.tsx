@@ -395,21 +395,14 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <TooltipProvider>
-          <DialogHeader className="pr-10">
-            <div className="flex items-start justify-between">
-              <div>
-                <DialogTitle>Neue Route erstellen</DialogTitle>
-                <DialogDescription>
-                  Erstelle eine neue Route für deine Rückfahrt nach der Fahrzeugüberführung.
-                </DialogDescription>
-              </div>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle>Neue Route erstellen</DialogTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </Button>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-xs">
+                <TooltipContent side="right" className="max-w-xs">
                   <p className="font-medium mb-1">So funktioniert's:</p>
                   <ul className="text-xs space-y-1">
                     <li>• Wähle ob du Plätze anbietest oder suchst</li>
@@ -420,6 +413,9 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
                 </TooltipContent>
               </Tooltip>
             </div>
+            <DialogDescription>
+              Erstelle eine neue Route für deine Rückfahrt nach der Fahrzeugüberführung.
+            </DialogDescription>
           </DialogHeader>
 
         <Form {...form}>

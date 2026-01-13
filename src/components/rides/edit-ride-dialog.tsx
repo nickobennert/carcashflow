@@ -33,6 +33,7 @@ import {
   Car,
   Search,
   Pencil,
+  HelpCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -80,6 +81,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LocationSearch } from "@/components/map/location-search"
 import { RouteMap, type MapPoint } from "@/components/map"
@@ -435,13 +442,29 @@ export function EditRideDialog({ ride, trigger }: EditRideDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Route bearbeiten</DialogTitle>
-          <DialogDescription>
-            Bearbeite deine Route oder lösche sie.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <TooltipProvider>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle>Route bearbeiten</DialogTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p className="font-medium mb-1">Route bearbeiten:</p>
+                  <ul className="text-xs space-y-1">
+                    <li>• Ändere Typ, Route oder Datum</li>
+                    <li>• Zwischenstopps können per Drag & Drop sortiert werden</li>
+                    <li>• Route kann auch gelöscht werden</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <DialogDescription>
+              Bearbeite deine Route oder lösche sie.
+            </DialogDescription>
+          </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -451,7 +474,17 @@ export function EditRideDialog({ ride, trigger }: EditRideDialogProps) {
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Was möchtest du?</FormLabel>
+                  <div className="flex items-center gap-2 group">
+                    <FormLabel>Was möchtest du?</FormLabel>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Entscheide ob du freie Plätze anbietest oder eine Mitfahrt suchst
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <FormControl>
                     <Tabs
                       value={field.value}
@@ -481,8 +514,18 @@ export function EditRideDialog({ ride, trigger }: EditRideDialogProps) {
 
             {/* Route Points */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <FormLabel>Route</FormLabel>
+              <div className="flex items-center justify-between group">
+                <div className="flex items-center gap-2">
+                  <FormLabel>Route</FormLabel>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Gib Start- und Zieladresse ein. Zwischenstopps können per Drag & Drop sortiert werden.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <Button
                   type="button"
                   variant="outline"
@@ -703,6 +746,7 @@ export function EditRideDialog({ ride, trigger }: EditRideDialogProps) {
             </div>
           </form>
         </Form>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   )
