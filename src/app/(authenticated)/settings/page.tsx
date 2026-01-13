@@ -11,6 +11,7 @@ import {
   Shield,
   Crown,
   Loader2,
+  Lock,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -20,6 +21,7 @@ import { AccountTab } from "@/components/settings/account-tab"
 import { NotificationsTab } from "@/components/settings/notifications-tab"
 import { SubscriptionTab } from "@/components/settings/subscription-tab"
 import { PrivacyTab } from "@/components/settings/privacy-tab"
+import { SecurityTab } from "@/components/settings/security-tab"
 import { AdminTab } from "@/components/settings/admin-tab"
 import type { Profile } from "@/types"
 
@@ -27,13 +29,14 @@ const baseTabs = [
   { id: "profile", label: "Profil", icon: User },
   { id: "account", label: "Account", icon: SettingsIcon },
   { id: "notifications", label: "Benachrichtigungen", icon: Bell },
+  { id: "security", label: "Sicherheit", icon: Lock },
   { id: "subscription", label: "Abonnement", icon: CreditCard },
   { id: "privacy", label: "Datenschutz", icon: Shield },
 ] as const
 
 const adminTab = { id: "admin", label: "Admin", icon: Crown } as const
 
-type TabId = (typeof baseTabs)[number]["id"] | "admin"
+type TabId = (typeof baseTabs)[number]["id"] | "admin" | "security"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -202,6 +205,9 @@ export default function SettingsPage() {
               )}
               {activeTab === "privacy" && (
                 <PrivacyTab profile={profile} onUpdate={handleProfileUpdate} />
+              )}
+              {activeTab === "security" && (
+                <SecurityTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
               {activeTab === "admin" && isAdmin && (
                 <AdminTab profile={profile} />

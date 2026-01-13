@@ -193,26 +193,34 @@ function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         className={cn(
           "group flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-          isCollapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-2",
+          isCollapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2",
           isActive
             ? "bg-[#4ADE80] text-[#1A421A]"
             : "text-muted-foreground hover:bg-[#4ADE80] hover:text-[#1A421A]"
         )}
       >
-        <div className={cn(
-          "flex items-center justify-center rounded-md transition-all duration-200",
-          "h-7 w-7",
-          isActive
-            ? "bg-[#1A421A]/20"
-            : isCollapsed
-              ? "bg-transparent group-hover:bg-[#1A421A]"
+        {/* Icon wrapper - nur im expanded state sichtbar */}
+        {!isCollapsed && (
+          <div className={cn(
+            "flex items-center justify-center rounded-md transition-all duration-200",
+            "h-7 w-7",
+            isActive
+              ? "bg-[#1A421A]/20"
               : "bg-muted group-hover:bg-[#1A421A]"
-        )}>
+          )}>
+            <Icon className={cn(
+              "h-4 w-4 transition-colors",
+              isActive ? "" : "group-hover:text-white/60"
+            )} />
+          </div>
+        )}
+        {/* Icon ohne Wrapper im collapsed state */}
+        {isCollapsed && (
           <Icon className={cn(
-            "h-4 w-4 transition-colors",
+            "h-5 w-5 transition-colors",
             isActive ? "" : "group-hover:text-white/60"
           )} />
-        </div>
+        )}
         {!isCollapsed && <span className="flex-1">{item.title}</span>}
       </motion.div>
     </Link>
