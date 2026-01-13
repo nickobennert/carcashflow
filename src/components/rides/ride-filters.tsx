@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { CalendarIcon, Filter, X, Search } from "lucide-react"
+import { CalendarIcon, X, Search, MapPin, Navigation } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
+import { LocationSearch } from "@/components/map/location-search"
+import { RouteWatchManager } from "./route-watch-manager"
 
 interface RideFiltersProps {
   className?: string
@@ -36,6 +39,19 @@ export function RideFilters({ className }: RideFiltersProps) {
   const [search, setSearch] = useState(searchParams.get("search") || "")
   const [date, setDate] = useState<Date | undefined>(
     searchParams.get("date") ? new Date(searchParams.get("date")!) : undefined
+  )
+
+  // "Unterwegs" filter state
+  const [nearbyMode, setNearbyMode] = useState(false)
+  const [nearbyLat, setNearbyLat] = useState<number | null>(
+    searchParams.get("nearby_lat") ? parseFloat(searchParams.get("nearby_lat")!) : null
+  )
+  const [nearbyLng, setNearbyLng] = useState<number | null>(
+    searchParams.get("nearby_lng") ? parseFloat(searchParams.get("nearby_lng")!) : null
+  )
+  const [nearbyAddress, setNearbyAddress] = useState(searchParams.get("nearby_address") || "")
+  const [nearbyRadius, setNearbyRadius] = useState(
+    searchParams.get("nearby_radius") ? parseInt(searchParams.get("nearby_radius")!) : 25
   )
 
   function updateFilters(updates: Record<string, string | null>) {
@@ -56,10 +72,41 @@ export function RideFilters({ className }: RideFiltersProps) {
     setType("all")
     setSearch("")
     setDate(undefined)
+    setNearbyMode(false)
+    setNearbyLat(null)
+    setNearbyLng(null)
+    setNearbyAddress("")
+    setNearbyRadius(25)
     router.push("/dashboard")
   }
 
-  const hasActiveFilters = type !== "all" || search || date
+  function handleNearbyLocationSelect(location: { address: string; lat: number; lng: number }) {
+    setNearbyAddress(location.address)
+    setNearbyLat(location.lat)
+    setNearbyLng(location.lng)
+
+    updateFilters({
+      nearby_lat: location.lat.toString(),
+      nearby_lng: location.lng.toString(),
+      nearby_address: location.address,
+      nearby_radius: nearbyRadius.toString(),
+    })
+  }
+
+  function clearNearby() {
+    setNearbyMode(false)
+    setNearbyLat(null)
+    setNearbyLng(null)
+    setNearbyAddress("")
+    updateFilters({
+      nearby_lat: null,
+      nearby_lng: null,
+      nearby_address: null,
+      nearby_radius: null,
+    })
+  }
+
+  const hasActiveFilters = type !== "all" || search || date || (nearbyLat && nearbyLng)
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -112,23 +159,42 @@ export function RideFilters({ className }: RideFiltersProps) {
           </PopoverContent>
         </Popover>
 
+        {/* "Unterwegs" Filter Toggle */}
+        <Button
+          variant={nearbyMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => setNearbyMode(!nearbyMode)}
+          className={cn(
+            "gap-2",
+            nearbyLat && nearbyLng && "bg-offer text-white hover:bg-offer/90"
+          )}
+        >
+          <Navigation className="h-4 w-4" />
+          Unterwegs
+        </Button>
+
+        {/* Route Watch Manager */}
+        <RouteWatchManager />
+
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Stadt oder Adresse suchen..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                updateFilters({ search })
-              }
-            }}
-            onBlur={() => updateFilters({ search })}
-            className="pl-9"
-          />
-        </div>
+        {!nearbyMode && (
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Stadt oder Adresse suchen..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  updateFilters({ search })
+                }
+              }}
+              onBlur={() => updateFilters({ search })}
+              className="pl-9"
+            />
+          </div>
+        )}
 
         {/* Clear Filters */}
         {hasActiveFilters && (
@@ -143,6 +209,43 @@ export function RideFilters({ className }: RideFiltersProps) {
           </Button>
         )}
       </div>
+
+      {/* "Unterwegs" Location Search */}
+      {nearbyMode && (
+        <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <MapPin className="h-4 w-4 text-offer" />
+            Zeige Fahrten die durch einen Ort führen
+          </div>
+
+          <LocationSearch
+            value={nearbyAddress}
+            onSelect={handleNearbyLocationSelect}
+            placeholder="Deinen Standort oder Wunschort eingeben..."
+            showRecent={true}
+          />
+
+          {nearbyLat && nearbyLng && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Umkreis</span>
+                <span className="font-medium">{nearbyRadius} km</span>
+              </div>
+              <Slider
+                value={[nearbyRadius]}
+                onValueChange={([value]) => {
+                  setNearbyRadius(value)
+                  updateFilters({ nearby_radius: value.toString() })
+                }}
+                min={5}
+                max={100}
+                step={5}
+                className="w-full"
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Active Filter Badges */}
       {hasActiveFilters && (
@@ -175,7 +278,7 @@ export function RideFilters({ className }: RideFiltersProps) {
               </button>
             </Badge>
           )}
-          {search && (
+          {search && !nearbyMode && (
             <Badge variant="secondary" className="gap-1">
               "{search}"
               <button
@@ -183,6 +286,18 @@ export function RideFilters({ className }: RideFiltersProps) {
                   setSearch("")
                   updateFilters({ search: null })
                 }}
+                className="ml-1 hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {nearbyAddress && nearbyLat && nearbyLng && (
+            <Badge variant="secondary" className="gap-1 bg-offer/20 text-offer border-offer/30">
+              <Navigation className="h-3 w-3 mr-1" />
+              {nearbyAddress.split(",")[0]} ({nearbyRadius} km)
+              <button
+                onClick={clearNearby}
                 className="ml-1 hover:text-foreground"
               >
                 <X className="h-3 w-3" />

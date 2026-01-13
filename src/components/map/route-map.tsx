@@ -17,6 +17,8 @@ interface RouteMapProps {
   points: MapPoint[]
   className?: string
   height?: string
+  interactive?: boolean
+  onMapClick?: (lat: number, lng: number) => void
 }
 
 // Dynamically import the Leaflet map component (client-side only)
@@ -29,7 +31,13 @@ const LeafletMap = dynamic(() => import("./leaflet-map").then((mod) => mod.Leafl
   ),
 })
 
-export function RouteMap({ points, className, height = "400px" }: RouteMapProps) {
+export function RouteMap({
+  points,
+  className,
+  height = "400px",
+  interactive = false,
+  onMapClick,
+}: RouteMapProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -49,7 +57,12 @@ export function RouteMap({ points, className, height = "400px" }: RouteMapProps)
 
   return (
     <div className={cn("rounded-lg overflow-hidden relative isolate", className)} style={{ height }}>
-      <LeafletMap points={points} height={height} />
+      <LeafletMap
+        points={points}
+        height={height}
+        interactive={interactive}
+        onMapClick={onMapClick}
+      />
     </div>
   )
 }

@@ -93,6 +93,35 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper to generate dates for recurring rides
+function generateRecurringDates(
+  startDate: Date,
+  recurringDays: number[],
+  recurringUntil: Date
+): Date[] {
+  const dates: Date[] = []
+  const current = new Date(startDate)
+
+  // Start from the beginning of the week of startDate
+  current.setDate(current.getDate() - current.getDay())
+
+  while (current <= recurringUntil) {
+    for (const dayOfWeek of recurringDays) {
+      const date = new Date(current)
+      date.setDate(current.getDate() + dayOfWeek)
+
+      // Only include dates that are >= startDate and <= recurringUntil
+      if (date >= startDate && date <= recurringUntil) {
+        dates.push(new Date(date))
+      }
+    }
+    // Move to next week
+    current.setDate(current.getDate() + 7)
+  }
+
+  return dates
+}
+
 // POST /api/rides - Create a new ride
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -107,7 +136,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { type, route, departure_date, departure_time, seats_available, comment } = body
+    const {
+      type,
+      route,
+      departure_date,
+      departure_time,
+      seats_available,
+      comment,
+      is_recurring,
+      recurring_days,
+      recurring_until,
+    } = body
 
     // Validation
     if (!type || !["offer", "request"].includes(type)) {
@@ -141,7 +180,107 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate expiration (7 days after departure or 14 days from now, whichever is later)
+    // Validate recurring ride parameters
+    if (is_recurring && (!recurring_days || recurring_days.length === 0)) {
+      return NextResponse.json(
+        { error: "Recurring days are required for recurring rides" },
+        { status: 400 }
+      )
+    }
+
+    const routeData = route.map((point: RoutePoint, index: number) => ({
+      ...point,
+      order: index,
+    }))
+
+    // For recurring rides, create multiple ride entries
+    if (is_recurring && recurring_days && recurring_until) {
+      const startDate = new Date(departure_date)
+      const endDate = new Date(recurring_until)
+      const dates = generateRecurringDates(startDate, recurring_days, endDate)
+
+      if (dates.length === 0) {
+        return NextResponse.json(
+          { error: "No valid dates found for the recurring schedule" },
+          { status: 400 }
+        )
+      }
+
+      // Create the parent ride first
+      const parentDepartureDate = dates[0]
+      const parentExpiresAt = new Date(parentDepartureDate)
+      parentExpiresAt.setDate(parentExpiresAt.getDate() + 7)
+
+      const parentRideData: RideInsert = {
+        user_id: user.id,
+        type,
+        route: routeData,
+        departure_date: parentDepartureDate.toISOString().split("T")[0],
+        departure_time: departure_time || null,
+        seats_available: type === "offer" ? (seats_available || 1) : 1,
+        comment: comment || null,
+        status: "active",
+        expires_at: parentExpiresAt.toISOString(),
+        is_recurring: true,
+        recurring_days,
+        recurring_until,
+      }
+
+      const { data: parentRide, error: parentError } = await supabase
+        .from("rides")
+        .insert(parentRideData as never)
+        .select(`
+          *,
+          profiles:user_id (
+            id, username, first_name, last_name, avatar_url, city, bio
+          )
+        `)
+        .single()
+
+      if (parentError) throw parentError
+
+      const parentRideId = (parentRide as { id: string }).id
+
+      // Create child rides for remaining dates
+      if (dates.length > 1) {
+        const childRides = dates.slice(1).map((date) => {
+          const expiresAt = new Date(date)
+          expiresAt.setDate(expiresAt.getDate() + 7)
+
+          return {
+            user_id: user.id,
+            type,
+            route: routeData,
+            departure_date: date.toISOString().split("T")[0],
+            departure_time: departure_time || null,
+            seats_available: type === "offer" ? (seats_available || 1) : 1,
+            comment: comment || null,
+            status: "active",
+            expires_at: expiresAt.toISOString(),
+            is_recurring: true,
+            recurring_days,
+            recurring_until,
+            parent_ride_id: parentRideId,
+          }
+        })
+
+        const { error: childError } = await supabase
+          .from("rides")
+          .insert(childRides as never)
+
+        if (childError) {
+          console.error("Error creating child rides:", childError)
+          // Don't fail the whole operation, parent ride was created successfully
+        }
+      }
+
+      return NextResponse.json({
+        data: parentRide,
+        recurring_count: dates.length,
+      }, { status: 201 })
+    }
+
+    // Non-recurring ride
     const departureDate = new Date(departure_date)
     const sevenDaysAfterDeparture = new Date(departureDate)
     sevenDaysAfterDeparture.setDate(sevenDaysAfterDeparture.getDate() + 7)
@@ -156,16 +295,14 @@ export async function POST(request: NextRequest) {
     const rideData: RideInsert = {
       user_id: user.id,
       type,
-      route: route.map((point: RoutePoint, index: number) => ({
-        ...point,
-        order: index,
-      })),
+      route: routeData,
       departure_date,
       departure_time: departure_time || null,
       seats_available: type === "offer" ? (seats_available || 1) : 1,
       comment: comment || null,
       status: "active",
       expires_at: expiresAt.toISOString(),
+      is_recurring: false,
     }
 
     const { data, error } = await supabase

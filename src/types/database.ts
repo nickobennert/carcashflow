@@ -103,6 +103,10 @@ export type Database = {
           created_at: string
           updated_at: string
           expires_at: string | null
+          is_recurring: boolean
+          recurring_days: number[] | null
+          recurring_until: string | null
+          parent_ride_id: string | null
         }
         Insert: {
           id?: string
@@ -117,6 +121,10 @@ export type Database = {
           created_at?: string
           updated_at?: string
           expires_at?: string | null
+          is_recurring?: boolean
+          recurring_days?: number[] | null
+          recurring_until?: string | null
+          parent_ride_id?: string | null
         }
         Update: {
           id?: string
@@ -131,6 +139,10 @@ export type Database = {
           created_at?: string
           updated_at?: string
           expires_at?: string | null
+          is_recurring?: boolean
+          recurring_days?: number[] | null
+          recurring_until?: string | null
+          parent_ride_id?: string | null
         }
       }
       conversations: {
@@ -360,6 +372,30 @@ export type NotificationType = "new_message" | "connection_request" | "ride_matc
 export type LegalAcceptanceType = "rideshare_terms" | "privacy_policy" | "terms_of_service"
 export type AdminRole = "super_admin" | "admin" | "moderator"
 export type ConnectionStatus = "pending" | "accepted" | "blocked"
+export type RouteWatchType = "location" | "route"
+
+// Route Watch interface (for storing in localStorage or user preferences)
+export interface RouteWatch {
+  id: string
+  type: RouteWatchType
+  name: string
+  // For location-based watch
+  lat?: number
+  lng?: number
+  radius?: number  // in km
+  address?: string
+  // For route-based watch
+  startLat?: number
+  startLng?: number
+  startAddress?: string
+  endLat?: number
+  endLng?: number
+  endAddress?: string
+  // Preferences
+  rideType?: "offer" | "request" | "both"
+  createdAt: string
+  lastNotifiedAt?: string
+}
 
 export interface RoutePoint {
   type: "start" | "stop" | "end"

@@ -1,20 +1,9 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import type { MapPoint } from "./route-map"
-
-// Fix for default marker icons in Leaflet with webpack/next.js
-const DefaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
 
 // Custom colored markers
 function createColoredIcon(color: string) {
@@ -35,16 +24,65 @@ function createColoredIcon(color: string) {
   })
 }
 
+// Click indicator icon
+function createClickIndicator() {
+  return L.divIcon({
+    className: "click-indicator",
+    html: `<div style="
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid #3b82f6;
+      background: rgba(59, 130, 246, 0.3);
+    "></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  })
+}
+
 interface LeafletMapProps {
   points: MapPoint[]
   height: string
+  interactive?: boolean
+  onMapClick?: (lat: number, lng: number) => void
 }
 
-export function LeafletMap({ points, height }: LeafletMapProps) {
+export function LeafletMap({
+  points,
+  height,
+  interactive = false,
+  onMapClick,
+}: LeafletMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
   const polylineRef = useRef<L.Polyline | null>(null)
+  const clickMarkerRef = useRef<L.Marker | null>(null)
+
+  // Handle map click
+  const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
+    if (!interactive || !onMapClick) return
+
+    const { lat, lng } = e.latlng
+
+    // Show click indicator
+    if (mapInstanceRef.current) {
+      if (clickMarkerRef.current) {
+        clickMarkerRef.current.remove()
+      }
+      clickMarkerRef.current = L.marker([lat, lng], {
+        icon: createClickIndicator(),
+      }).addTo(mapInstanceRef.current)
+
+      // Remove after a short delay
+      setTimeout(() => {
+        clickMarkerRef.current?.remove()
+        clickMarkerRef.current = null
+      }, 1000)
+    }
+
+    onMapClick(lat, lng)
+  }, [interactive, onMapClick])
 
   // Initialize map
   useEffect(() => {
@@ -70,6 +108,19 @@ export function LeafletMap({ points, height }: LeafletMapProps) {
       mapInstanceRef.current = null
     }
   }, [])
+
+  // Add/remove click handler when interactive changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return
+
+    if (interactive && onMapClick) {
+      mapInstanceRef.current.on("click", handleMapClick)
+    }
+
+    return () => {
+      mapInstanceRef.current?.off("click", handleMapClick)
+    }
+  }, [interactive, onMapClick, handleMapClick])
 
   // Update markers when points change
   useEffect(() => {
@@ -126,5 +177,10 @@ export function LeafletMap({ points, height }: LeafletMapProps) {
     }
   }, [points])
 
-  return <div ref={mapRef} style={{ height, width: "100%" }} />
+  return (
+    <div
+      ref={mapRef}
+      style={{ height, width: "100%", cursor: interactive ? "crosshair" : "grab" }}
+    />
+  )
 }
