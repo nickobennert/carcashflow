@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AppShell } from "@/components/layout"
+import { LegalCheckWrapper } from "@/components/legal"
 import type { Profile } from "@/types"
 
 export default async function AuthenticatedLayout({
@@ -47,6 +48,7 @@ export default async function AuthenticatedLayout({
       unreadMessages={unreadMessages}
       unreadNotifications={unreadNotifications}
     >
+      <LegalCheckWrapper />
       {children}
     </AppShell>
   )

@@ -37,7 +37,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { createClient } from "@/lib/supabase/client"
+// Using API routes instead of direct Supabase access
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
@@ -218,8 +218,6 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const supabase = createClient()
-
   const form = useForm<CreateRideFormValues>({
     resolver: zodResolver(createRideSchema),
     defaultValues: {
@@ -351,25 +349,30 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
 
     setIsLoading(true)
     try {
-      const { error } = await supabase.from("rides").insert({
-        user_id: userId,
-        type: data.type,
-        route: data.route.map((p) => ({
-          type: p.type,
-          address: p.address,
-          lat: p.lat,
-          lng: p.lng,
-          order: p.order,
-        })),
-        departure_date: format(data.departure_date, "yyyy-MM-dd"),
-        departure_time: data.departure_time || null,
-        seats_available: data.type === "offer" ? data.seats_available : 1,
-        comment: data.comment || null,
-        status: "active",
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-      } as never)
+      const response = await fetch("/api/rides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: data.type,
+          route: data.route.map((p) => ({
+            type: p.type,
+            address: p.address,
+            lat: p.lat,
+            lng: p.lng,
+            order: p.order,
+          })),
+          departure_date: format(data.departure_date, "yyyy-MM-dd"),
+          departure_time: data.departure_time || null,
+          seats_available: data.type === "offer" ? data.seats_available : 1,
+          comment: data.comment || null,
+        }),
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create ride")
+      }
 
       toast.success("Route erfolgreich erstellt!")
       setOpen(false)
