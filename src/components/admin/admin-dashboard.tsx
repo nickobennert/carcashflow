@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "motion/react"
 import {
   Users,
@@ -8,15 +8,17 @@ import {
   MessageSquare,
   Flag,
   TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
   Shield,
   Gift,
+  RefreshCw,
+  UserPlus,
+  CreditCard,
+  Sparkles,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReportsTable } from "./reports-table"
@@ -31,68 +33,73 @@ interface AdminDashboardProps {
 
 interface Stats {
   totalUsers: number
-  activeUsers: number
-  totalRides: number
   activeRides: number
+  totalMessages: number
   totalConversations: number
   pendingReports: number
-  totalReports: number
+  activePromoCodes: number
+  newUsersToday: number
+  newUsersWeek: number
+  activeSubscriptions: number
+  trialingUsers: number
+  lifetimeUsers: number
 }
 
-export function AdminDashboard({ userId, role }: AdminDashboardProps) {
+interface RecentUser {
+  id: string
+  username: string
+  first_name: string | null
+  avatar_url: string | null
+  created_at: string
+}
+
+interface PendingReport {
+  id: string
+  reason: string
+  created_at: string
+  reporter: { username: string } | null
+}
+
+export function AdminDashboard({ role }: AdminDashboardProps) {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
+  const [pendingReportsList, setPendingReportsList] = useState<PendingReport[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const loadStats = useCallback(async (showRefreshToast = false) => {
+    try {
+      if (showRefreshToast) setIsRefreshing(true)
+
+      const response = await fetch("/api/admin/stats")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats")
+      }
+
+      const data = await response.json()
+
+      setStats(data.stats)
+      setRecentUsers(data.recentUsers || [])
+      setPendingReportsList(data.pendingReportsList || [])
+
+      if (showRefreshToast) {
+        toast.success("Dashboard aktualisiert")
+      }
+    } catch (error) {
+      console.error("Error loading stats:", error)
+      if (showRefreshToast) {
+        toast.error("Fehler beim Aktualisieren")
+      }
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [])
 
   useEffect(() => {
-    async function loadStats() {
-      try {
-        // Fetch stats in parallel
-        const [usersResult, ridesResult, conversationsResult, reportsResult] =
-          await Promise.all([
-            supabase.from("profiles").select("id, last_seen_at", { count: "exact" }),
-            supabase.from("rides").select("id, status", { count: "exact" }),
-            supabase.from("conversations").select("id", { count: "exact" }),
-            supabase.from("reports").select("id, status", { count: "exact" }),
-          ])
-
-        // Calculate stats
-        const now = new Date()
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-        const activeUsers = (usersResult.data || []).filter((u) => {
-          const user = u as { last_seen_at: string | null }
-          return user.last_seen_at && new Date(user.last_seen_at) > thirtyDaysAgo
-        }).length
-
-        const activeRides = (ridesResult.data || []).filter((r) => {
-          const ride = r as { status: string }
-          return ride.status === "active"
-        }).length
-
-        const pendingReports = (reportsResult.data || []).filter((r) => {
-          const report = r as { status: string }
-          return report.status === "pending"
-        }).length
-
-        setStats({
-          totalUsers: usersResult.count || 0,
-          activeUsers,
-          totalRides: ridesResult.count || 0,
-          activeRides,
-          totalConversations: conversationsResult.count || 0,
-          pendingReports,
-          totalReports: reportsResult.count || 0,
-        })
-      } catch (error) {
-        console.error("Error loading stats:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadStats()
-  }, [supabase])
+  }, [loadStats])
 
   const roleLabels: Record<string, string> = {
     super_admin: "Super Admin",
@@ -115,13 +122,24 @@ export function AdminDashboard({ userId, role }: AdminDashboardProps) {
             Übersicht und Verwaltung der Plattform
           </p>
         </div>
-        <Badge variant="secondary" className="gap-2">
-          <Shield className="h-3.5 w-3.5" />
-          {roleLabels[role] || role}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadStats(true)}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+            Aktualisieren
+          </Button>
+          <Badge variant="secondary" className="gap-2">
+            <Shield className="h-3.5 w-3.5" />
+            {roleLabels[role] || role}
+          </Badge>
+        </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Row 1: Main Stats */}
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -129,47 +147,155 @@ export function AdminDashboard({ userId, role }: AdminDashboardProps) {
           ))}
         </div>
       ) : stats ? (
-        <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <motion.div variants={staggerItem}>
-            <StatCard
-              title="Benutzer"
-              value={stats.totalUsers}
-              subValue={`${stats.activeUsers} aktiv (30 Tage)`}
-              icon={Users}
-              trend={stats.activeUsers > 0 ? "up" : undefined}
-            />
+        <>
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Benutzer gesamt"
+                value={stats.totalUsers}
+                subValue={`+${stats.newUsersToday} heute, +${stats.newUsersWeek} diese Woche`}
+                icon={Users}
+                trend={stats.newUsersToday > 0 ? "up" : undefined}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Aktive Routen"
+                value={stats.activeRides}
+                icon={Car}
+                trend={stats.activeRides > 0 ? "up" : undefined}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Konversationen"
+                value={stats.totalConversations}
+                subValue={`${stats.totalMessages} Nachrichten`}
+                icon={MessageSquare}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Offene Meldungen"
+                value={stats.pendingReports}
+                icon={Flag}
+                highlight={stats.pendingReports > 0}
+              />
+            </motion.div>
           </motion.div>
-          <motion.div variants={staggerItem}>
-            <StatCard
-              title="Routen"
-              value={stats.totalRides}
-              subValue={`${stats.activeRides} aktiv`}
-              icon={Car}
-              trend={stats.activeRides > 0 ? "up" : undefined}
-            />
+
+          {/* Stats Grid - Row 2: Subscription Stats */}
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Aktive Abos"
+                value={stats.activeSubscriptions}
+                icon={CreditCard}
+                trend={stats.activeSubscriptions > 0 ? "up" : undefined}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="In Testphase"
+                value={stats.trialingUsers}
+                icon={UserPlus}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Lifetime"
+                value={stats.lifetimeUsers}
+                icon={Sparkles}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Aktive Promo Codes"
+                value={stats.activePromoCodes}
+                icon={Gift}
+              />
+            </motion.div>
           </motion.div>
-          <motion.div variants={staggerItem}>
-            <StatCard
-              title="Konversationen"
-              value={stats.totalConversations}
-              icon={MessageSquare}
-            />
-          </motion.div>
-          <motion.div variants={staggerItem}>
-            <StatCard
-              title="Offene Meldungen"
-              value={stats.pendingReports}
-              subValue={`${stats.totalReports} insgesamt`}
-              icon={Flag}
-              highlight={stats.pendingReports > 0}
-            />
-          </motion.div>
-        </motion.div>
+
+          {/* Quick Info Cards */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Recent Users */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Neue Benutzer</CardTitle>
+                <CardDescription>Zuletzt registriert</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Keine neuen Benutzer</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentUsers.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                            {user.first_name?.[0] || user.username[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {user.first_name || user.username}
+                            </p>
+                            <p className="text-xs text-muted-foreground">@{user.username}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString("de-DE")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pending Reports */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Offene Meldungen</CardTitle>
+                <CardDescription>Erfordert Überprüfung</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pendingReportsList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Keine offenen Meldungen</p>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingReportsList.map((report) => (
+                      <div key={report.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Flag className="h-4 w-4 text-amber-500" />
+                          <div>
+                            <p className="text-sm font-medium capitalize">{report.reason}</p>
+                            <p className="text-xs text-muted-foreground">
+                              von @{report.reporter?.username || "Unbekannt"}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(report.created_at).toLocaleDateString("de-DE")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
       ) : null}
 
       {/* Main Content Tabs */}
