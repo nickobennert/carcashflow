@@ -9,32 +9,28 @@ import {
   MapPin,
   Shield,
   MessageSquare,
-  Clock,
   CheckCircle2,
   Sparkles,
-  ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   staggerContainer,
   staggerItem,
   fadeIn,
-  fadeInUp,
 } from "@/lib/animations"
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/30">
       {/* Header */}
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+        className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl"
       >
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link href="/" className="flex items-center space-x-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-offer to-request">
               <Car className="h-5 w-5 text-white" />
@@ -60,36 +56,23 @@ export default function Home() {
       </motion.header>
 
       {/* Hero Section */}
-      <section className="relative flex flex-1 flex-col items-center justify-center px-4 py-20 md:py-32 overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-offer/5 via-background to-request/5" />
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-offer/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-request/10 rounded-full blur-3xl" />
-        </div>
-
-        {/* Animated Dots Pattern */}
-        <div className="absolute inset-0 -z-10 opacity-30">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-              backgroundSize: "40px 40px",
-            }}
-          />
+      <section className="relative px-6 pt-20 pb-32 md:pt-32 md:pb-40">
+        {/* Subtle gradient orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-br from-offer/20 to-request/20 rounded-full blur-3xl opacity-50" />
         </div>
 
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="mx-auto max-w-4xl space-y-8 text-center"
+          className="relative mx-auto max-w-3xl text-center"
         >
           {/* Badge */}
-          <motion.div variants={staggerItem}>
+          <motion.div variants={staggerItem} className="mb-6">
             <Badge
               variant="secondary"
-              className="px-4 py-1.5 text-sm font-medium border border-border/50"
+              className="px-4 py-1.5 text-sm font-medium bg-background border"
             >
               <Sparkles className="mr-2 h-3.5 w-3.5 text-offer" />
               30 Tage kostenlos testen
@@ -99,9 +82,10 @@ export default function Home() {
           {/* Headline */}
           <motion.h1
             variants={staggerItem}
-            className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+            className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
           >
-            Mitfahrbörse für{" "}
+            Mitfahrbörse für
+            <br />
             <span className="bg-gradient-to-r from-offer to-request bg-clip-text text-transparent">
               Schulungsteilnehmer
             </span>
@@ -110,7 +94,7 @@ export default function Home() {
           {/* Subheadline */}
           <motion.p
             variants={staggerItem}
-            className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl"
+            className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground"
           >
             Organisiere Rückfahrten effizient mit anderen Teilnehmern.
             Biete Fahrten an, finde Mitfahrgelegenheiten und spare Kosten.
@@ -119,24 +103,15 @@ export default function Home() {
           {/* CTA Buttons */}
           <motion.div
             variants={staggerItem}
-            className="flex flex-col gap-4 sm:flex-row sm:justify-center"
+            className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center"
           >
             <Link href="/signup">
               <Button
                 size="lg"
-                className="w-full sm:w-auto h-12 px-8 text-base bg-gradient-to-r from-offer to-request text-white hover:opacity-90 transition-opacity shadow-lg shadow-offer/25"
+                className="w-full sm:w-auto h-12 px-8 text-base bg-foreground text-background hover:bg-foreground/90"
               >
                 Kostenlos starten
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto h-12 px-8 text-base"
-              >
-                Ich habe bereits ein Konto
               </Button>
             </Link>
           </motion.div>
@@ -144,7 +119,7 @@ export default function Home() {
           {/* Trust Indicators */}
           <motion.div
             variants={staggerItem}
-            className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-muted-foreground"
+            className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground"
           >
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-offer" />
@@ -160,321 +135,338 @@ export default function Home() {
             </div>
           </motion.div>
         </motion.div>
+      </section>
 
-        {/* Scroll Indicator */}
+      {/* Problem Statement */}
+      <section className="px-6 py-16 text-center">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-2xl"
         >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <ChevronDown className="h-6 w-6 text-muted-foreground" />
-          </motion.div>
+          <h2 className="text-2xl font-bold md:text-3xl">
+            Rückfahrten organisieren ist umständlich
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground italic">
+            Deshalb haben wir die Lösung gebaut, die wir uns immer gewünscht haben
+          </p>
         </motion.div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-y bg-muted/30 py-12">
-        <div className="container px-4">
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-2 gap-8 md:grid-cols-4"
-          >
-            {[
-              { value: "100%", label: "Kostenlos im ersten Monat" },
-              { value: "24/7", label: "Verfügbarkeit" },
-              { value: "< 5 Min", label: "Eintrag erstellen" },
-              { value: "Sicher", label: "Verifizierte Nutzer" },
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                variants={staggerItem}
-                className="text-center"
-              >
-                <p className="text-3xl font-bold md:text-4xl bg-gradient-to-r from-offer to-request bg-clip-text text-transparent">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+      {/* Step 1 */}
+      <section className="px-6 py-20">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <span className="text-sm text-muted-foreground">01</span>
+          <h3 className="mt-2 text-2xl font-bold md:text-3xl">
+            Teile deine Route
+          </h3>
+          <p className="mt-2 text-lg italic text-muted-foreground">
+            mit anderen Teilnehmern
+          </p>
+          <p className="mx-auto mt-6 max-w-lg text-muted-foreground">
+            Gib deinen <strong>Start- und Zielort</strong> an. Füge Zwischenstopps hinzu,
+            wenn du auf dem Weg jemanden mitnehmen kannst.
+          </p>
+
+          {/* Visual placeholder - Route Card Mockup */}
+          <div className="mx-auto mt-10 max-w-md">
+            <div className="rounded-2xl border bg-card p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-offer/10">
+                  <MapPin className="h-5 w-5 text-offer" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">München → Hamburg</p>
+                  <p className="text-sm text-muted-foreground">15. Januar 2026 · 3 Plätze frei</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Badge variant="secondary" className="bg-offer/10 text-offer border-0">
+                  Bietet Plätze
+                </Badge>
+                <Badge variant="secondary">Flexibel</Badge>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-20 md:py-28">
-        <div className="container px-4">
-          <motion.div
-            variants={fadeIn}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto max-w-2xl text-center mb-16"
-          >
-            <Badge variant="outline" className="mb-4">
-              So funktioniert&apos;s
-            </Badge>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              In drei Schritten zur Mitfahrt
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Einfacher geht&apos;s nicht: Registrieren, Eintrag erstellen,
-              Kontakt aufnehmen.
-            </p>
-          </motion.div>
+      {/* Step 2 */}
+      <section className="px-6 py-20 bg-muted/30">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <span className="text-sm text-muted-foreground">02</span>
+          <h3 className="mt-2 text-2xl font-bold md:text-3xl">
+            Finde passende Fahrten
+          </h3>
+          <p className="mt-2 text-lg italic text-muted-foreground">
+            (keine endlosen Gruppenanfragen mehr)
+          </p>
+          <p className="mx-auto mt-6 max-w-lg text-muted-foreground">
+            Unsere Plattform zeigt dir <strong>alle verfügbaren Angebote und Gesuche</strong> auf einen Blick.
+            Filter nach Datum, Ort und Typ.
+          </p>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3"
-          >
-            {[
-              {
-                step: "01",
-                icon: MapPin,
-                title: "Route angeben",
-                description:
-                  "Gib deinen Start- und Zielort an. Füge Zwischenstopps hinzu, wenn du auf dem Weg jemanden mitnehmen kannst.",
-                color: "offer",
-              },
-              {
-                step: "02",
-                icon: Users,
-                title: "Kontakt aufnehmen",
-                description:
-                  "Finde passende Angebote oder Gesuche und nimm direkt Kontakt mit anderen Teilnehmern auf.",
-                color: "request",
-              },
-              {
-                step: "03",
-                icon: Shield,
-                title: "Sicher & einfach",
-                description:
-                  "Nur verifizierte Schulungsteilnehmer. Deine Kontaktdaten bleiben privat bis du sie teilen möchtest.",
-                color: "primary",
-              },
-            ].map((item, index) => (
-              <motion.div key={index} variants={staggerItem}>
-                <Card className="group relative h-full overflow-hidden border-2 transition-colors hover:border-offer/50">
-                  <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${
-                    item.color === "offer"
-                      ? "from-offer to-offer/50"
-                      : item.color === "request"
-                      ? "from-request to-request/50"
-                      : "from-primary to-primary/50"
-                  }`} />
-                  <CardContent className="p-8">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                        item.color === "offer"
-                          ? "bg-offer/10"
-                          : item.color === "request"
-                          ? "bg-request/10"
-                          : "bg-primary/10"
-                      }`}>
-                        <item.icon className={`h-6 w-6 ${
-                          item.color === "offer"
-                            ? "text-offer"
-                            : item.color === "request"
-                            ? "text-request"
-                            : "text-primary"
-                        }`} />
-                      </div>
-                      <span className="text-4xl font-bold text-muted-foreground/20">
-                        {item.step}
-                      </span>
+          {/* Visual - Filter Mockup */}
+          <div className="mx-auto mt-10 max-w-lg">
+            <div className="rounded-2xl border bg-card p-6 shadow-lg">
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Badge className="bg-offer text-white border-0">Alle Routen</Badge>
+                <Badge variant="outline">Angebote</Badge>
+                <Badge variant="outline">Gesuche</Badge>
+              </div>
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-offer/10 flex items-center justify-center text-sm font-medium">M</div>
+                    <div className="text-left text-sm">
+                      <p className="font-medium">Berlin → Köln</p>
+                      <p className="text-muted-foreground">Morgen · 2 Plätze</p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+                  </div>
+                  <Badge variant="secondary" className="bg-offer/10 text-offer border-0 text-xs">Bietet</Badge>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-request/10 flex items-center justify-center text-sm font-medium">S</div>
+                    <div className="text-left text-sm">
+                      <p className="font-medium">Frankfurt → Stuttgart</p>
+                      <p className="text-muted-foreground">Fr, 17. Jan</p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="bg-request/10 text-request border-0 text-xs">Sucht</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-20 md:py-28 bg-muted/30">
-        <div className="container px-4">
-          <motion.div
-            variants={fadeIn}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto max-w-2xl text-center mb-16"
-          >
-            <Badge variant="outline" className="mb-4">
-              Features
-            </Badge>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Alles was du brauchst
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Eine Plattform, die speziell für Schulungsteilnehmer entwickelt wurde.
-            </p>
-          </motion.div>
+      {/* Step 3 */}
+      <section className="px-6 py-20">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <span className="text-sm text-muted-foreground">03</span>
+          <h3 className="mt-2 text-2xl font-bold md:text-3xl">
+            Nimm Kontakt auf
+          </h3>
+          <p className="mt-2 text-lg italic text-muted-foreground">
+            sicher und direkt
+          </p>
+          <p className="mx-auto mt-6 max-w-lg text-muted-foreground">
+            Schreibe anderen Nutzern über unser <strong>internes Nachrichtensystem</strong>.
+            Deine Kontaktdaten bleiben privat, bis du sie teilen möchtest.
+          </p>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 lg:grid-cols-3"
-          >
-            {[
-              {
-                icon: Car,
-                title: "Angebote & Gesuche",
-                description: "Erstelle in Sekunden ein Angebot oder Gesuch für deine Fahrt.",
-              },
-              {
-                icon: MessageSquare,
-                title: "Internes Messaging",
-                description: "Kommuniziere sicher mit anderen Nutzern - ohne deine Nummer zu teilen.",
-              },
-              {
-                icon: Shield,
-                title: "Verifizierte Nutzer",
-                description: "Nur echte Schulungsteilnehmer haben Zugang zur Plattform.",
-              },
-              {
-                icon: Clock,
-                title: "Flexible Zeiten",
-                description: "Morgens, mittags oder abends - finde immer eine passende Fahrt.",
-              },
-              {
-                icon: MapPin,
-                title: "Zwischenstopps",
-                description: "Sammle unterwegs weitere Mitfahrer ein oder steige zu.",
-              },
-              {
-                icon: Users,
-                title: "Community",
-                description: "Vernetze dich mit anderen Teilnehmern und spare gemeinsam.",
-              },
-            ].map((feature, index) => (
-              <motion.div key={index} variants={staggerItem}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-offer/10 to-request/10 mb-4">
-                      <feature.icon className="h-5 w-5 text-foreground" />
-                    </div>
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+          {/* Visual - Chat Mockup */}
+          <div className="mx-auto mt-10 max-w-sm">
+            <div className="rounded-2xl border bg-card p-4 shadow-lg">
+              <div className="flex items-center gap-3 border-b pb-3 mb-3">
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-medium">TM</div>
+                <div className="text-left">
+                  <p className="font-medium text-sm">Thomas M.</p>
+                  <p className="text-xs text-muted-foreground">Online</p>
+                </div>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2 max-w-[80%]">
+                    Hey, hast du noch Plätze frei für morgen?
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="rounded-2xl rounded-tr-sm bg-offer text-white px-4 py-2 max-w-[80%]">
+                    Ja klar! Noch 2 Plätze. Wohin genau musst du?
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Features */}
+      <section className="px-6 py-20 bg-muted/30">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-3xl text-center"
+        >
+          <Badge variant="outline" className="mb-4">Features</Badge>
+          <h2 className="text-2xl font-bold md:text-3xl">
+            Alles was du brauchst
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Eine Plattform, die speziell für Schulungsteilnehmer entwickelt wurde.
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {[
+            {
+              icon: Car,
+              title: "Angebote & Gesuche",
+              description: "Erstelle in Sekunden ein Angebot oder Gesuch für deine Fahrt.",
+            },
+            {
+              icon: MessageSquare,
+              title: "Internes Messaging",
+              description: "Kommuniziere sicher mit anderen Nutzern - ohne deine Nummer zu teilen.",
+            },
+            {
+              icon: Shield,
+              title: "Verifizierte Nutzer",
+              description: "Nur echte Schulungsteilnehmer haben Zugang zur Plattform.",
+            },
+            {
+              icon: MapPin,
+              title: "Zwischenstopps",
+              description: "Sammle unterwegs weitere Mitfahrer ein oder steige zu.",
+            },
+            {
+              icon: Users,
+              title: "Community",
+              description: "Vernetze dich mit anderen Teilnehmern und spare gemeinsam.",
+            },
+            {
+              icon: Sparkles,
+              title: "Einfach & schnell",
+              description: "Keine komplizierten Formulare. In unter 5 Minuten startklar.",
+            },
+          ].map((feature, index) => (
+            <motion.div
+              key={index}
+              variants={staggerItem}
+              className="rounded-xl border bg-card p-6 text-center"
+            >
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+                <feature.icon className="h-6 w-6 text-foreground" />
+              </div>
+              <h3 className="mt-4 font-semibold">{feature.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-28">
-        <div className="container px-4">
-          <motion.div
-            variants={fadeInUp}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl"
-          >
-            {/* Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-offer via-offer/80 to-request" />
+      <section className="px-6 py-24">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <h2 className="text-3xl font-bold md:text-4xl">
+            Die moderne
+            <br />
+            <span className="italic text-muted-foreground">Mitfahrbörse</span>
+            <br />
+            ist da
+          </h2>
 
-            {/* Content */}
-            <div className="relative px-8 py-16 md:px-16 md:py-20 text-center text-white">
-              <h2 className="text-3xl font-bold md:text-4xl lg:text-5xl mb-4">
-                Bereit loszufahren?
-              </h2>
-              <p className="mx-auto max-w-xl text-white/90 mb-8 text-lg">
-                Registriere dich jetzt kostenlos und finde deine nächste
-                Mitfahrgelegenheit. Der erste Monat ist komplett gratis.
-              </p>
-              <Link href="/signup">
-                <Button
-                  size="lg"
-                  className="h-12 px-8 text-base bg-white text-foreground hover:bg-white/90 shadow-xl"
-                >
-                  Jetzt kostenlos registrieren
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-        </div>
+          <p className="mx-auto mt-6 max-w-md text-muted-foreground">
+            Registriere dich jetzt kostenlos und finde deine nächste Mitfahrgelegenheit.
+            Der erste Monat ist komplett gratis.
+          </p>
+
+          <div className="mt-8">
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base bg-foreground text-background hover:bg-foreground/90"
+              >
+                Kostenlos starten
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 md:py-28 bg-muted/30">
-        <div className="container px-4">
-          <motion.div
-            variants={fadeIn}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto max-w-2xl text-center mb-16"
-          >
-            <Badge variant="outline" className="mb-4">
-              FAQ
-            </Badge>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Häufig gestellte Fragen
-            </h2>
-          </motion.div>
+      <section className="px-6 py-20 bg-muted/30">
+        <motion.div
+          variants={fadeIn}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <Badge variant="outline" className="mb-4">FAQ</Badge>
+          <h2 className="text-2xl font-bold md:text-3xl">
+            Häufig gestellte Fragen
+          </h2>
+        </motion.div>
 
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            className="mx-auto max-w-3xl space-y-4"
-          >
-            {[
-              {
-                q: "Ist Carcashflow wirklich kostenlos?",
-                a: "Der erste Monat ist komplett kostenlos. Danach kannst du zwischen verschiedenen günstigen Abo-Optionen wählen.",
-              },
-              {
-                q: "Wer kann die Plattform nutzen?",
-                a: "Carcashflow ist exklusiv für Schulungsteilnehmer. Nur verifizierte Nutzer haben Zugang.",
-              },
-              {
-                q: "Wie funktioniert die Kontaktaufnahme?",
-                a: "Du kannst über unser internes Nachrichtensystem Kontakt aufnehmen. Deine persönlichen Daten bleiben geschützt.",
-              },
-              {
-                q: "Gibt es eine Vermittlungsgebühr?",
-                a: "Nein, Carcashflow vermittelt keine Fahrten. Wir stellen nur die Plattform zur Kontaktanbahnung bereit.",
-              },
-            ].map((faq, index) => (
-              <motion.div key={index} variants={staggerItem}>
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-2">{faq.q}</h3>
-                    <p className="text-muted-foreground">{faq.a}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mx-auto mt-10 max-w-2xl space-y-4"
+        >
+          {[
+            {
+              q: "Ist Carcashflow wirklich kostenlos?",
+              a: "Der erste Monat ist komplett kostenlos. Danach kannst du zwischen verschiedenen günstigen Abo-Optionen wählen.",
+            },
+            {
+              q: "Wer kann die Plattform nutzen?",
+              a: "Carcashflow ist exklusiv für Schulungsteilnehmer. Nur verifizierte Nutzer haben Zugang.",
+            },
+            {
+              q: "Wie funktioniert die Kontaktaufnahme?",
+              a: "Du kannst über unser internes Nachrichtensystem Kontakt aufnehmen. Deine persönlichen Daten bleiben geschützt.",
+            },
+            {
+              q: "Gibt es eine Vermittlungsgebühr?",
+              a: "Nein, Carcashflow vermittelt keine Fahrten. Wir stellen nur die Plattform zur Kontaktanbahnung bereit.",
+            },
+          ].map((faq, index) => (
+            <motion.div
+              key={index}
+              variants={staggerItem}
+              className="rounded-xl border bg-card p-6 text-left"
+            >
+              <h3 className="font-semibold">{faq.q}</h3>
+              <p className="mt-2 text-muted-foreground">{faq.a}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="border-t py-12">
-        <div className="container px-4">
-          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center space-x-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-offer to-request">
                 <Car className="h-4 w-4 text-white" />
@@ -495,7 +487,7 @@ export default function Home() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Carcashflow. Alle Rechte vorbehalten.
+              &copy; {new Date().getFullYear()} Carcashflow
             </p>
           </div>
         </div>
