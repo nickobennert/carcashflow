@@ -62,8 +62,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })
     }
 
+    // Fetch legal acceptances for all users in the result
+    const userIds = (data || []).map((u: { id: string }) => u.id)
+    const { data: acceptances } = await supabaseAdmin
+      .from("legal_acceptances")
+      .select("user_id, acceptance_type, version, accepted_at, ip_address")
+      .in("user_id", userIds)
+      .eq("acceptance_type", "rideshare_terms")
+
+    // Create a map for quick lookup
+    const acceptanceMap = new Map<string, { version: string; accepted_at: string; ip_address: string | null }>()
+    for (const acc of acceptances || []) {
+      acceptanceMap.set(acc.user_id, {
+        version: acc.version,
+        accepted_at: acc.accepted_at,
+        ip_address: acc.ip_address,
+      })
+    }
+
+    // Merge legal acceptance into user data
+    const enrichedData = (data || []).map((user: { id: string }) => ({
+      ...user,
+      legal_acceptance: acceptanceMap.get(user.id) || null,
+    }))
+
     return NextResponse.json({
-      data,
+      data: enrichedData,
+      total: count,
       pagination: {
         total: count,
         limit,

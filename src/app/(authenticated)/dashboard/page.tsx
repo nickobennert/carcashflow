@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { RideList, RideFilters, CreateRideDialog } from "@/components/rides"
+import { RideList, RideFilters, CreateRideDrawer } from "@/components/rides"
 import type { RideWithUser } from "@/types"
 
 export const metadata: Metadata = {
@@ -98,7 +98,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         title="Rückfahrten"
         description="Finde Mitfahrgelegenheiten nach deiner Fahrzeugüberführung"
       >
-        {user && <CreateRideDialog userId={user.id} />}
+        {user && <CreateRideDrawer userId={user.id} />}
       </PageHeader>
 
       {/* Quick Stats */}
@@ -160,7 +160,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardDescription>
             {user && (
               <div className="flex gap-3">
-                <CreateRideDialog
+                <CreateRideDrawer
                   userId={user.id}
                   trigger={
                     <Button className="bg-offer hover:bg-offer/90">
@@ -169,7 +169,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     </Button>
                   }
                 />
-                <CreateRideDialog
+                <CreateRideDrawer
                   userId={user.id}
                   trigger={
                     <Button variant="outline" className="border-request text-request hover:bg-request/10">

@@ -373,6 +373,8 @@ export type LegalAcceptanceType = "rideshare_terms" | "privacy_policy" | "terms_
 export type AdminRole = "super_admin" | "admin" | "moderator"
 export type ConnectionStatus = "pending" | "accepted" | "blocked"
 export type RouteWatchType = "location" | "route"
+export type BugReportStatus = "open" | "in_progress" | "resolved" | "closed"
+export type BugReportArea = "dashboard" | "messages" | "profile" | "settings" | "other"
 
 // Route Watch interface (for storing in localStorage or user preferences)
 export interface RouteWatch {
@@ -445,4 +447,24 @@ export type ConnectionUpdate = Database["public"]["Tables"]["connections"]["Upda
 export type ConnectionWithProfile = Connection & {
   requester: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city">
   addressee: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city">
+}
+
+// Bug Report types
+export interface BugReport {
+  id: string
+  user_id: string
+  title: string
+  description: string
+  area: BugReportArea
+  screenshot_url: string | null
+  status: BugReportStatus
+  admin_notes: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+}
+
+export interface BugReportWithUser extends BugReport {
+  profiles: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
 }

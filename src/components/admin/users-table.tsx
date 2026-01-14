@@ -9,6 +9,7 @@ import {
   Loader2,
   User,
   Shield,
+  ShieldCheck,
   Ban,
   Crown,
   Mail,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   CheckCircle,
   XCircle,
+  FileCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -59,8 +61,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Profile } from "@/types"
 
+interface LegalAcceptance {
+  version: string
+  accepted_at: string
+  ip_address: string | null
+}
+
 interface UserWithStats extends Profile {
   is_banned?: boolean
+  legal_acceptance?: LegalAcceptance | null
 }
 
 export function UsersTable() {
@@ -321,6 +330,7 @@ export function UsersTable() {
                   <TableHead>Benutzer</TableHead>
                   <TableHead>E-Mail</TableHead>
                   <TableHead>Abonnement</TableHead>
+                  <TableHead>Datenschutz</TableHead>
                   <TableHead>Registriert</TableHead>
                   <TableHead>Zuletzt aktiv</TableHead>
                   <TableHead className="w-12"></TableHead>
@@ -353,6 +363,21 @@ export function UsersTable() {
                     </TableCell>
                     <TableCell className="text-sm">{user.email || "—"}</TableCell>
                     <TableCell>{getSubscriptionBadge(user)}</TableCell>
+                    <TableCell>
+                      {user.legal_acceptance ? (
+                        <div className="flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                          <span className="text-xs text-muted-foreground" title={`Akzeptiert am ${format(new Date(user.legal_acceptance.accepted_at), "dd.MM.yyyy HH:mm", { locale: de })}${user.legal_acceptance.ip_address ? ` von IP ${user.legal_acceptance.ip_address}` : ""}`}>
+                            {format(new Date(user.legal_acceptance.accepted_at), "dd.MM.yy", { locale: de })}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <XCircle className="h-4 w-4 text-amber-500" />
+                          <span className="text-xs text-muted-foreground">Ausstehend</span>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(user.created_at), "dd.MM.yyyy", {
                         locale: de,

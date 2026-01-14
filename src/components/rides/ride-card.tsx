@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EditRideDialog } from "@/components/rides/edit-ride-dialog"
+import { EditRideDrawer } from "@/components/rides/edit-ride-drawer"
 import { cn } from "@/lib/utils"
 import type { RideWithUser } from "@/types"
 
@@ -146,7 +146,7 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
 
         <CardFooter className="pt-0">
           {isOwnRide ? (
-            <EditRideDialog
+            <EditRideDrawer
               ride={{
                 id: ride.id,
                 type: ride.type,
