@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Sheet,
@@ -300,10 +301,10 @@ export function BugReportDrawer() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 1, type: "spring", stiffness: 260, damping: 20 }}
-            className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center transition-colors"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.3 }}
+            className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full bg-muted text-muted-foreground border shadow-lg hover:bg-accent hover:text-accent-foreground flex items-center justify-center transition-colors"
             title="Bug melden / Feedback geben"
           >
             <Bug className="h-5 w-5" />
@@ -480,8 +481,19 @@ export function BugReportDrawer() {
 
               <TabsContent value="list" className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
                 {loadingReports ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-4 border rounded-lg space-y-3">
+                        <div className="flex items-start justify-between">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-5 w-16 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3 w-20" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : reports.length === 0 ? (
                   <div className="text-center py-12">
