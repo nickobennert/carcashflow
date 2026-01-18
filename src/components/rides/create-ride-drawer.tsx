@@ -510,13 +510,13 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
         }
       }
 
-      // Only add route geometry fields if we have calculated route data
-      // These columns may not exist in the database yet
-      if (calculatedRoute?.geometry && calculatedRoute.geometry.length > 0) {
-        requestBody.route_geometry = calculatedRoute.geometry
-        requestBody.route_distance = calculatedRoute.distance
-        requestBody.route_duration = calculatedRoute.duration
-      }
+      // TODO: Re-enable route geometry once database columns are verified
+      // Temporarily disabled to isolate the error
+      // if (calculatedRoute?.geometry && calculatedRoute.geometry.length > 0) {
+      //   requestBody.route_geometry = calculatedRoute.geometry
+      //   requestBody.route_distance = calculatedRoute.distance
+      //   requestBody.route_duration = calculatedRoute.duration
+      // }
 
       const response = await fetch("/api/rides", {
         method: "POST",
