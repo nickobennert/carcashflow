@@ -217,21 +217,21 @@ function NotificationRow({
   tooltip?: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-start gap-3">
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3 min-w-0 flex-1">
         <Icon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-        <div>
-          <div className="flex items-center gap-2">
-            <Label className="text-base font-medium">{title}</Label>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Label className="text-sm sm:text-base font-medium">{title}</Label>
             {comingSoon && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs shrink-0">
                 Coming Soon
               </Badge>
             )}
             {tooltip && (
               <Tooltip>
                 <TooltipTrigger>
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   {tooltip}
@@ -239,11 +239,11 @@ function NotificationRow({
               </Tooltip>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
         <Switch
           checked={checked}

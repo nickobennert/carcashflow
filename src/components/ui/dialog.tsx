@@ -61,10 +61,10 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed z-50 grid gap-4 border shadow-lg duration-200 outline-none",
-          // Mobile: Bottom sheet style for better UX
-          "inset-x-0 bottom-0 translate-x-0 translate-y-0 rounded-t-lg rounded-b-none w-full max-h-[90vh] overflow-y-auto p-4",
+          // Mobile: Bottom sheet style with safe margins
+          "inset-x-4 bottom-4 translate-x-0 translate-y-0 rounded-lg w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-4",
           // Desktop: Centered modal
-          "sm:inset-auto sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:max-w-lg sm:max-h-[85vh] sm:p-6",
+          "sm:inset-auto sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-auto sm:max-w-lg sm:max-h-[85vh] sm:p-6",
           className
         )}
         {...props}

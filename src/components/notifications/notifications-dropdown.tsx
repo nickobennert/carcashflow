@@ -57,6 +57,7 @@ export function NotificationsDropdown() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isMarkingAll, setIsMarkingAll] = useState(false)
   const supabase = createClient()
 
@@ -195,7 +196,7 @@ export function NotificationsDropdown() {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
@@ -245,7 +246,10 @@ export function NotificationsDropdown() {
             <Button
               variant="ghost"
               className="w-full justify-center text-sm"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsDropdownOpen(false)
+                setIsModalOpen(true)
+              }}
             >
               Alle Benachrichtigungen
             </Button>

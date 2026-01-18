@@ -408,7 +408,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Admin Dashboard</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -420,6 +420,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
           size="sm"
           onClick={() => loadAdminData(true)}
           disabled={isRefreshing}
+          className="w-full sm:w-auto"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
           Aktualisieren
