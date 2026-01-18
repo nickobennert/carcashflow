@@ -652,8 +652,8 @@ export function AdminTab({ profile }: { profile: Profile }) {
                 </div>
               </div>
 
-              <div className="rounded-lg border">
-                <Table>
+              <div className="rounded-lg border overflow-x-auto">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nutzer</TableHead>
@@ -843,8 +843,8 @@ export function AdminTab({ profile }: { profile: Profile }) {
                   <p className="text-sm mt-1">Erstelle deinen ersten Promo Code</p>
                 </div>
               ) : (
-                <div className="rounded-lg border">
-                  <Table>
+                <div className="rounded-lg border overflow-x-auto">
+                  <Table className="min-w-[500px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Code</TableHead>
