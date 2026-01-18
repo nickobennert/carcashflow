@@ -485,30 +485,37 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
         recurringUntil = format(untilDate, "yyyy-MM-dd")
       }
 
+      // Build request body - only include route geometry if we have valid data
+      const requestBody: Record<string, unknown> = {
+        type: data.type,
+        route: data.route.map((p) => ({
+          type: p.type,
+          address: p.address,
+          lat: p.lat,
+          lng: p.lng,
+          order: p.order,
+        })),
+        departure_date: format(data.departure_date, "yyyy-MM-dd"),
+        departure_time: data.departure_time || null,
+        seats_available: data.type === "offer" ? data.seats_available : 1,
+        comment: data.comment || null,
+        is_recurring: data.is_recurring,
+        recurring_days: data.is_recurring ? data.recurring_days : null,
+        recurring_until: recurringUntil,
+      }
+
+      // Only add route geometry fields if we have calculated route data
+      // These columns may not exist in the database yet
+      if (calculatedRoute?.geometry && calculatedRoute.geometry.length > 0) {
+        requestBody.route_geometry = calculatedRoute.geometry
+        requestBody.route_distance = calculatedRoute.distance
+        requestBody.route_duration = calculatedRoute.duration
+      }
+
       const response = await fetch("/api/rides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: data.type,
-          route: data.route.map((p) => ({
-            type: p.type,
-            address: p.address,
-            lat: p.lat,
-            lng: p.lng,
-            order: p.order,
-          })),
-          departure_date: format(data.departure_date, "yyyy-MM-dd"),
-          departure_time: data.departure_time || null,
-          seats_available: data.type === "offer" ? data.seats_available : 1,
-          comment: data.comment || null,
-          is_recurring: data.is_recurring,
-          recurring_days: data.is_recurring ? data.recurring_days : null,
-          recurring_until: recurringUntil,
-          // Include OSRM route geometry if available
-          route_geometry: calculatedRoute?.geometry || null,
-          route_distance: calculatedRoute?.distance || null,
-          route_duration: calculatedRoute?.duration || null,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()

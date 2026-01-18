@@ -338,9 +338,8 @@ export async function POST(request: NextRequest) {
       ? sevenDaysAfterDeparture
       : new Date(Math.max(sevenDaysAfterDeparture.getTime(), fourteenDaysFromNow.getTime()))
 
-    // Build ride data - only include route_geometry fields if they exist in DB
-    // These columns were added in migration 013 and might not exist yet
-    const rideData: RideInsert = {
+    // Build ride data with only base fields that are guaranteed to exist
+    const rideData: Record<string, unknown> = {
       user_id: user.id,
       type,
       route: routeData,
@@ -350,18 +349,15 @@ export async function POST(request: NextRequest) {
       comment: comment || null,
       status: "active",
       expires_at: expiresAt.toISOString(),
-      is_recurring: false,
+      // Include recurring fields - these columns should exist after migration 014
+      is_recurring: is_recurring || false,
     }
 
-    // Add route geometry fields only if provided (column might not exist)
-    if (route_geometry) {
-      (rideData as Record<string, unknown>).route_geometry = route_geometry
-    }
-    if (route_distance) {
-      (rideData as Record<string, unknown>).route_distance = route_distance
-    }
-    if (route_duration) {
-      (rideData as Record<string, unknown>).route_duration = route_duration
+    // Add route geometry fields only if provided and valid
+    if (route_geometry && Array.isArray(route_geometry) && route_geometry.length > 0) {
+      rideData.route_geometry = route_geometry
+      if (route_distance) rideData.route_distance = route_distance
+      if (route_duration) rideData.route_duration = route_duration
     }
 
     const { data, error } = await supabase
