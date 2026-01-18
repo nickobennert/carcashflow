@@ -79,7 +79,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const offerCount = rides.filter((r) => r.type === "offer").length
   const requestCount = rides.filter((r) => r.type === "request").length
 
-  // Get user's active ride count separately (their own rides, regardless of date filter)
+  // Get user's active ride count separately (their own rides that are still active and not in the past)
   let userRideCount = 0
   if (user) {
     const { count } = await supabase
@@ -87,6 +87,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("status", "active")
+      .gte("departure_date", new Date().toISOString().split("T")[0])
 
     userRideCount = count || 0
   }
