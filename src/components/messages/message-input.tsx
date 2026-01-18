@@ -164,7 +164,7 @@ export function MessageInput({
         onKeyDown={handleKeyDown}
         placeholder="Nachricht schreiben..."
         className={cn(
-          "flex-1 resize-none rounded-2xl border bg-background px-4 py-2.5",
+          "flex-1 min-w-0 resize-none rounded-2xl border bg-background px-3 sm:px-4 py-2.5",
           "text-sm placeholder:text-muted-foreground",
           "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
           "min-h-[44px] max-h-[120px]",

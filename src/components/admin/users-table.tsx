@@ -59,6 +59,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import type { Profile } from "@/types"
 
 interface LegalAcceptance {
@@ -323,7 +324,152 @@ export function UsersTable() {
         </div>
       ) : (
         <>
-          <div className="rounded-md border">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {users.map((user) => (
+              <div
+                key={user.id}
+                className={cn(
+                  "border rounded-lg p-4 space-y-3",
+                  user.is_banned && "opacity-60"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <Link
+                    href={`/u/${user.username}`}
+                    target="_blank"
+                    className="flex items-center gap-3 hover:opacity-80 min-w-0 flex-1"
+                  >
+                    <Avatar className="h-10 w-10 shrink-0">
+                      <AvatarImage src={user.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {getInitials(user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">
+                        {getDisplayName(user)}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        @{user.username}
+                      </p>
+                    </div>
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={actionLoading === user.id}
+                        className="shrink-0"
+                      >
+                        {actionLoading === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href={`/u/${user.username}`} target="_blank" className="gap-2">
+                          <User className="h-4 w-4" />
+                          Profil anzeigen
+                        </Link>
+                      </DropdownMenuItem>
+                      {user.email && (
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onClick={() => window.open(`mailto:${user.email}`)}
+                        >
+                          <Mail className="h-4 w-4" />
+                          E-Mail senden
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="gap-2"
+                        onClick={() => handleToggleLifetime(user)}
+                      >
+                        <Crown className="h-4 w-4" />
+                        {user.is_lifetime ? "Lifetime entfernen" : "Lifetime gewähren"}
+                      </DropdownMenuItem>
+                      {!user.is_lifetime && (
+                        <>
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => handleUpdateSubscription(user, "premium", "active")}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Auf Premium setzen
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => handleUpdateSubscription(user, "basic", "active")}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Auf Basis setzen
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      {user.is_banned ? (
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onClick={() => setBanDialog({ open: true, user, action: "unban" })}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Benutzer entsperren
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          className="gap-2 text-destructive focus:text-destructive"
+                          onClick={() => setBanDialog({ open: true, user, action: "ban" })}
+                        >
+                          <Ban className="h-4 w-4" />
+                          Benutzer sperren
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {getSubscriptionBadge(user)}
+                  {user.legal_acceptance ? (
+                    <div className="flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      <span className="text-muted-foreground">AGB akzeptiert</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <XCircle className="h-3.5 w-3.5 text-amber-500" />
+                      <span className="text-muted-foreground">AGB ausstehend</span>
+                    </div>
+                  )}
+                </div>
+                {user.email && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>
+                    Registriert: {format(new Date(user.created_at), "dd.MM.yy", { locale: de })}
+                  </span>
+                  {user.last_seen_at && (
+                    <span>
+                      Aktiv: {format(new Date(user.last_seen_at), "dd.MM.yy", { locale: de })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>

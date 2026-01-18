@@ -47,7 +47,7 @@ export function AppShell({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1">
+        <main className="flex-1 min-w-0 overflow-hidden">
           {isFixedHeight ? (
             // Fixed height layout for chat views (internal scroll)
             <div className="h-full overflow-hidden">
@@ -55,7 +55,7 @@ export function AppShell({
             </div>
           ) : (
             // Standard layout - page scrolls naturally
-            <div className="mx-auto max-w-7xl py-6 px-4 md:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl py-6 px-4 md:px-6 lg:px-8 overflow-x-hidden">
               {children}
             </div>
           )}

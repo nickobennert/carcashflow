@@ -196,39 +196,27 @@ export function ConversationView({
   const messagesByDate = groupMessagesByDate(messages)
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header - Fixed at top */}
-      <header className="shrink-0 flex items-center gap-3 px-4 py-3 border-b bg-card">
+      <header className="shrink-0 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b bg-card">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.push("/messages")}
-          className="h-9 w-9 shrink-0 md:hidden"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/messages")}
-          className="h-9 w-9 shrink-0 hidden md:flex"
+          className="h-9 w-9 shrink-0"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
 
-        <Link
-          href={`/u/${otherParticipant.username}`}
-          target="_blank"
-          className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
-        >
-          <div className="relative">
-            <Avatar className="h-10 w-10">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div className="relative shrink-0">
+            <Avatar className="h-9 w-9 sm:h-10 sm:w-10">
               <AvatarImage src={otherParticipant.avatar_url || undefined} />
-              <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
+              <AvatarFallback className="text-xs sm:text-sm font-medium">{initials}</AvatarFallback>
             </Avatar>
             <span
               className={cn(
-                "absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-card",
+                "absolute bottom-0 right-0 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full ring-2 ring-card",
                 isOtherOnline ? "bg-emerald-500" : "bg-zinc-400"
               )}
             />
@@ -245,7 +233,7 @@ export function ConversationView({
               )}
             </p>
           </div>
-        </Link>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -270,20 +258,20 @@ export function ConversationView({
       {ride && (
         <Link
           href={`/rides/${ride.id}`}
-          className="shrink-0 flex items-center gap-2 px-4 py-2 bg-muted/50 border-b text-xs hover:bg-muted transition-colors"
+          className="shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 bg-muted/50 border-b text-xs hover:bg-muted transition-colors overflow-hidden"
         >
           <span className={cn(
             "h-2 w-2 rounded-full shrink-0",
             ride.type === "offer" ? "bg-emerald-500" : "bg-blue-500"
           )} />
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground shrink-0">
             {ride.type === "offer" ? "Angebot" : "Gesuch"}:
           </span>
-          <span className="font-medium truncate">
+          <span className="font-medium truncate min-w-0">
             {extractCity(ride.route[0]?.address)} → {extractCity(ride.route[ride.route.length - 1]?.address)}
           </span>
           <span className="text-muted-foreground ml-auto shrink-0">
-            {format(new Date(ride.departure_date), "dd.MM.yyyy")}
+            {format(new Date(ride.departure_date), "dd.MM.")}
           </span>
         </Link>
       )}
@@ -291,9 +279,9 @@ export function ConversationView({
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto scrollbar-none min-h-0"
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none min-h-0"
       >
-        <div className="max-w-2xl mx-auto px-4 py-4">
+        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4">
           {Object.entries(messagesByDate).map(([date, dayMessages]) => (
             <div key={date}>
               {/* Date separator */}
@@ -347,7 +335,7 @@ export function ConversationView({
       </div>
 
       {/* Input Area - Fixed at bottom */}
-      <footer className="shrink-0 border-t bg-card px-4 py-3">
+      <footer className="shrink-0 border-t bg-card px-3 sm:px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <MessageInput
             conversationId={conversationId}
@@ -393,14 +381,14 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
     )}>
       <div
         className={cn(
-          "max-w-[75%] sm:max-w-[65%] px-3.5 py-2",
+          "max-w-[80%] sm:max-w-[65%] px-3 sm:px-3.5 py-2",
           getBubbleRadius(),
           isOwn
             ? "bg-primary text-primary-foreground"
             : "bg-muted"
         )}
       >
-        <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
+        <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
           {message.content}
         </p>
         <div
@@ -412,9 +400,9 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
           <span className="text-[10px]">{time}</span>
           {isOwn && (
             message.is_read ? (
-              <CheckCheck className="h-3.5 w-3.5" />
+              <CheckCheck className="h-3.5 w-3.5 shrink-0" />
             ) : (
-              <Check className="h-3.5 w-3.5" />
+              <Check className="h-3.5 w-3.5 shrink-0" />
             )
           )}
         </div>
