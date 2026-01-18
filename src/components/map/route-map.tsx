@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useSyncExternalStore, useEffect, useState } from "react"
+import React, { useSyncExternalStore, useEffect, useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import { calculateRoute, formatDistance, formatDuration, type RouteResult } from "@/lib/routing"
@@ -69,20 +69,36 @@ export function RouteMap({
   const onRouteCalculatedRef = React.useRef(onRouteCalculated)
   onRouteCalculatedRef.current = onRouteCalculated
 
-  // Calculate route when points change
+  // Store points ref to use current value without causing re-runs
+  const pointsRef = React.useRef(points)
+  pointsRef.current = points
+
+  // Create a stable key from points to prevent infinite loops
+  const pointsKey = useMemo(() => {
+    const sortedPoints = [...points].sort((a, b) => a.order - b.order)
+    return sortedPoints.map(p => `${p.lat},${p.lng}`).join("|")
+  }, [points])
+
+  // Calculate route when points change (using stable key)
   useEffect(() => {
+    const currentPoints = pointsRef.current
+
     // Skip if we have pre-calculated geometry or not enough points
-    if (preCalculatedGeometry || points.length < 2) {
+    if (preCalculatedGeometry || currentPoints.length < 2) {
       setRouteData(null)
       onRouteCalculatedRef.current?.(null)
       return
     }
 
     // Sort points by order
-    const sortedPoints = [...points].sort((a, b) => a.order - b.order)
+    const sortedPoints = [...currentPoints].sort((a, b) => a.order - b.order)
 
-    // Create a stable key for the points to prevent unnecessary recalculations
-    const pointsKey = sortedPoints.map(p => `${p.lat},${p.lng}`).join("|")
+    // Skip if any point has invalid coordinates
+    if (sortedPoints.some(p => p.lat === 0 || p.lng === 0)) {
+      setRouteData(null)
+      onRouteCalculatedRef.current?.(null)
+      return
+    }
 
     let cancelled = false
     setIsCalculating(true)
@@ -118,7 +134,7 @@ export function RouteMap({
     return () => {
       cancelled = true
     }
-  }, [points, preCalculatedGeometry])
+  }, [pointsKey, preCalculatedGeometry])
 
   // Use pre-calculated geometry or calculated route geometry
   const displayGeometry = preCalculatedGeometry || routeData?.geometry

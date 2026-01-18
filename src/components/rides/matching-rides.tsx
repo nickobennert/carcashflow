@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { Sparkles, MapPin, ChevronRight, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -37,11 +37,21 @@ export function MatchingRides({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Create a stable key from route to prevent infinite loops
+  const routeKey = useMemo(() => {
+    return route.map(p => `${p.type}:${p.lat}:${p.lng}`).join("|")
+  }, [route])
+
+  // Store route in ref to use current value in effect without causing re-runs
+  const routeRef = useRef(route)
+  routeRef.current = route
+
   useEffect(() => {
     async function fetchMatches() {
+      const currentRoute = routeRef.current
       // Only search if we have valid start and end
-      const start = route.find((p) => p.type === "start")
-      const end = route.find((p) => p.type === "end")
+      const start = currentRoute.find((p) => p.type === "start")
+      const end = currentRoute.find((p) => p.type === "end")
 
       if (!start?.lat || !end?.lat) {
         setRides([])
@@ -57,7 +67,7 @@ export function MatchingRides({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            route,
+            route: currentRoute,
             type,
             departure_date: departureDate?.toISOString().split("T")[0],
           }),
@@ -76,7 +86,7 @@ export function MatchingRides({
     }
 
     fetchMatches()
-  }, [route, type, departureDate])
+  }, [routeKey, type, departureDate])
 
   if (isLoading) {
     return (
