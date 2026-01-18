@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore, useEffect, useState, useCallback } from "react"
+import React, { useSyncExternalStore, useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import { calculateRoute, formatDistance, formatDuration, type RouteResult } from "@/lib/routing"
@@ -65,47 +65,60 @@ export function RouteMap({
   const [routeData, setRouteData] = useState<RouteResult | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
 
+  // Store callback ref to avoid infinite loops
+  const onRouteCalculatedRef = React.useRef(onRouteCalculated)
+  onRouteCalculatedRef.current = onRouteCalculated
+
   // Calculate route when points change
-  const fetchRoute = useCallback(async () => {
+  useEffect(() => {
     // Skip if we have pre-calculated geometry or not enough points
     if (preCalculatedGeometry || points.length < 2) {
       setRouteData(null)
-      onRouteCalculated?.(null)
+      onRouteCalculatedRef.current?.(null)
       return
     }
 
     // Sort points by order
     const sortedPoints = [...points].sort((a, b) => a.order - b.order)
 
+    // Create a stable key for the points to prevent unnecessary recalculations
+    const pointsKey = sortedPoints.map(p => `${p.lat},${p.lng}`).join("|")
+
+    let cancelled = false
     setIsCalculating(true)
-    try {
-      const result = await calculateRoute(
-        sortedPoints.map((p) => ({ lat: p.lat, lng: p.lng }))
-      )
 
-      setRouteData(result)
+    calculateRoute(sortedPoints.map((p) => ({ lat: p.lat, lng: p.lng })))
+      .then((result) => {
+        if (cancelled) return
 
-      if (result) {
-        onRouteCalculated?.({
-          distance: result.distance,
-          duration: result.duration,
-          geometry: result.geometry,
-        })
-      } else {
-        onRouteCalculated?.(null)
-      }
-    } catch (error) {
-      console.error("Route calculation failed:", error)
-      setRouteData(null)
-      onRouteCalculated?.(null)
-    } finally {
-      setIsCalculating(false)
+        setRouteData(result)
+
+        if (result) {
+          onRouteCalculatedRef.current?.({
+            distance: result.distance,
+            duration: result.duration,
+            geometry: result.geometry,
+          })
+        } else {
+          onRouteCalculatedRef.current?.(null)
+        }
+      })
+      .catch((error) => {
+        if (cancelled) return
+        console.error("Route calculation failed:", error)
+        setRouteData(null)
+        onRouteCalculatedRef.current?.(null)
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsCalculating(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
     }
-  }, [points, preCalculatedGeometry, onRouteCalculated])
-
-  useEffect(() => {
-    fetchRoute()
-  }, [fetchRoute])
+  }, [points, preCalculatedGeometry])
 
   // Use pre-calculated geometry or calculated route geometry
   const displayGeometry = preCalculatedGeometry || routeData?.geometry

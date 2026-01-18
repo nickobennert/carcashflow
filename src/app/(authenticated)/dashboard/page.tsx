@@ -75,12 +75,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       })
     : rides
 
-  // Get counts
+  // Get counts from filtered rides (only active future rides)
   const offerCount = rides.filter((r) => r.type === "offer").length
   const requestCount = rides.filter((r) => r.type === "request").length
-  const userRideCount = user
-    ? rides.filter((r) => r.user_id === user.id).length
-    : 0
+
+  // Get user's active ride count separately (their own rides, regardless of date filter)
+  let userRideCount = 0
+  if (user) {
+    const { count } = await supabase
+      .from("rides")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "active")
+
+    userRideCount = count || 0
+  }
 
   return (
     <div className="space-y-6">
