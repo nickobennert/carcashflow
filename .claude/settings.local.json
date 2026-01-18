@@ -9,7 +9,18 @@
       "Bash(npm ls:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: complete Phase 2 implementation\n\n- Auth: Login, Signup, Google OAuth, Profile Setup\n- Dashboard: Ride listing with filters, create/edit rides\n- Messages: Real-time conversations, typing indicators\n- Connections: Send/accept/reject connection requests\n- Profile: Public profiles, avatar upload, connection button\n- Settings: Profile, Account, Notifications, Subscription, Privacy tabs\n- Admin: Dashboard with stats, user/report/promo management \\(super_admin only\\)\n- Promo: Beta banner, feature cards, testimonials, CTA components\n- Help: FAQ with accordion and search\n- Changelog: Beta phase timeline with status indicators\n- Pricing: Subscription plans with promo code redemption\n- Notifications: Real-time dropdown with modal view\n- UI: Dark/light logos, max-w-7xl app shell, motion animations\n- Database: Migrations for profiles, rides, messages, connections, reports, promo_codes\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(cat:*)",
+      "Bash(xargs ls:*)",
+      "Bash(find:*)",
+      "Bash(ls -la \"C:\\\\Dev\\\\carcashflow\\\\public\"\" 2>/dev/null || echo \"No public directory \")",
+      "Bash(xargs cat:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

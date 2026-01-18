@@ -238,10 +238,17 @@ export async function POST(request: NextRequest) {
         is_recurring: true,
         recurring_days,
         recurring_until,
-        // Include route geometry if provided
-        route_geometry: route_geometry || null,
-        route_distance: route_distance || null,
-        route_duration: route_duration || null,
+      }
+
+      // Add route geometry fields only if provided (column might not exist)
+      if (route_geometry) {
+        (parentRideData as Record<string, unknown>).route_geometry = route_geometry
+      }
+      if (route_distance) {
+        (parentRideData as Record<string, unknown>).route_distance = route_distance
+      }
+      if (route_duration) {
+        (parentRideData as Record<string, unknown>).route_duration = route_duration
       }
 
       const { data: parentRide, error: parentError } = await supabase
@@ -266,7 +273,7 @@ export async function POST(request: NextRequest) {
           const expiresAt = new Date(date)
           expiresAt.setDate(expiresAt.getDate() + 7)
 
-          return {
+          const childRide: Record<string, unknown> = {
             user_id: user.id,
             type,
             route: routeData,
@@ -280,11 +287,14 @@ export async function POST(request: NextRequest) {
             recurring_days,
             recurring_until,
             parent_ride_id: parentRideId,
-            // Include route geometry for child rides too
-            route_geometry: route_geometry || null,
-            route_distance: route_distance || null,
-            route_duration: route_duration || null,
           }
+
+          // Add route geometry fields only if provided
+          if (route_geometry) childRide.route_geometry = route_geometry
+          if (route_distance) childRide.route_distance = route_distance
+          if (route_duration) childRide.route_duration = route_duration
+
+          return childRide
         })
 
         const { data: createdChildRides, error: childError } = await supabase
@@ -328,6 +338,8 @@ export async function POST(request: NextRequest) {
       ? sevenDaysAfterDeparture
       : new Date(Math.max(sevenDaysAfterDeparture.getTime(), fourteenDaysFromNow.getTime()))
 
+    // Build ride data - only include route_geometry fields if they exist in DB
+    // These columns were added in migration 013 and might not exist yet
     const rideData: RideInsert = {
       user_id: user.id,
       type,
@@ -339,10 +351,17 @@ export async function POST(request: NextRequest) {
       status: "active",
       expires_at: expiresAt.toISOString(),
       is_recurring: false,
-      // Include route geometry if provided
-      route_geometry: route_geometry || null,
-      route_distance: route_distance || null,
-      route_duration: route_duration || null,
+    }
+
+    // Add route geometry fields only if provided (column might not exist)
+    if (route_geometry) {
+      (rideData as Record<string, unknown>).route_geometry = route_geometry
+    }
+    if (route_distance) {
+      (rideData as Record<string, unknown>).route_distance = route_distance
+    }
+    if (route_duration) {
+      (rideData as Record<string, unknown>).route_duration = route_duration
     }
 
     const { data, error } = await supabase

@@ -7,12 +7,16 @@ DROP TRIGGER IF EXISTS connections_updated_at ON connections;
 -- Drop the function
 DROP FUNCTION IF EXISTS update_connections_updated_at();
 
--- Remove from realtime publication
+-- Remove from realtime publication (if it exists)
 DO $$
 BEGIN
-  ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS connections;
+  ALTER PUBLICATION supabase_realtime DROP TABLE connections;
 EXCEPTION
   WHEN undefined_object THEN
+    -- Table not in publication or publication doesn't exist
+    NULL;
+  WHEN undefined_table THEN
+    -- Table doesn't exist
     NULL;
 END $$;
 
