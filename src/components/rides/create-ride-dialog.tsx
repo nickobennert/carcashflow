@@ -562,7 +562,7 @@ export function CreateRideDialog({ userId, trigger }: CreateRideDialogProps) {
                   <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="right" className="max-w-xs">
-                  <p className="font-medium mb-1">So funktioniert's:</p>
+                  <p className="font-medium mb-1">So funktioniert&apos;s:</p>
                   <ul className="text-xs space-y-1">
                     <li>• Wähle ob du Plätze anbietest oder suchst</li>
                     <li>• Gib Start und Ziel deiner Route ein</li>

@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation"
 import {
   Car,
   MessageSquare,
-  Users,
   Settings,
   HelpCircle,
   FileText,
@@ -42,11 +41,6 @@ const mainNavItems: NavItem[] = [
     title: "Nachrichten",
     href: "/messages",
     icon: MessageSquare,
-  },
-  {
-    title: "Verbindungen",
-    href: "/connections",
-    icon: Users,
   },
 ]
 

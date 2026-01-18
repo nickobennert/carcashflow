@@ -194,6 +194,7 @@ export async function POST(request: NextRequest) {
     }))
 
     // For recurring rides, create multiple ride entries
+    // Fixed: Proper error handling with rollback if child rides fail
     if (is_recurring && recurring_days && recurring_until) {
       const startDate = new Date(departure_date)
       const endDate = new Date(recurring_until)
@@ -202,6 +203,15 @@ export async function POST(request: NextRequest) {
       if (dates.length === 0) {
         return NextResponse.json(
           { error: "No valid dates found for the recurring schedule" },
+          { status: 400 }
+        )
+      }
+
+      // Limit recurring rides to prevent abuse (max 52 weeks = 1 year)
+      const MAX_RECURRING_RIDES = 52
+      if (dates.length > MAX_RECURRING_RIDES) {
+        return NextResponse.json(
+          { error: `Maximum ${MAX_RECURRING_RIDES} recurring rides allowed` },
           { status: 400 }
         )
       }
@@ -240,6 +250,7 @@ export async function POST(request: NextRequest) {
       if (parentError) throw parentError
 
       const parentRideId = (parentRide as { id: string }).id
+      let childRidesCreated = 0
 
       // Create child rides for remaining dates
       if (dates.length > 1) {
@@ -264,19 +275,32 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        const { error: childError } = await supabase
+        const { data: createdChildRides, error: childError } = await supabase
           .from("rides")
           .insert(childRides as never)
+          .select("id")
 
         if (childError) {
           console.error("Error creating child rides:", childError)
-          // Don't fail the whole operation, parent ride was created successfully
+          // Rollback: Delete parent ride if child rides failed
+          await supabase.from("rides").delete().eq("id", parentRideId)
+          return NextResponse.json(
+            { error: "Failed to create recurring rides. Please try again." },
+            { status: 500 }
+          )
         }
+
+        childRidesCreated = createdChildRides?.length || 0
       }
+
+      // Trigger route watches for this new recurring ride (async, don't wait)
+      triggerRouteWatches(parentRideId, routeData, type).catch((err) =>
+        console.error("Error triggering route watches:", err)
+      )
 
       return NextResponse.json({
         data: parentRide,
-        recurring_count: dates.length,
+        recurring_count: 1 + childRidesCreated,
       }, { status: 201 })
     }
 
@@ -318,6 +342,13 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    // Trigger route watches for this new ride (async, don't wait)
+    triggerRouteWatches(
+      (data as { id: string }).id,
+      routeData,
+      type
+    ).catch((err) => console.error("Error triggering route watches:", err))
+
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
     console.error("Error creating ride:", error)
@@ -325,5 +356,23 @@ export async function POST(request: NextRequest) {
       { error: "Failed to create ride" },
       { status: 500 }
     )
+  }
+}
+
+// Helper function to trigger route watches asynchronously
+async function triggerRouteWatches(
+  rideId: string,
+  route: RoutePoint[],
+  rideType: "offer" | "request"
+) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    await fetch(`${baseUrl}/api/route-watches/trigger`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rideId, route, rideType }),
+    })
+  } catch (error) {
+    console.error("Failed to trigger route watches:", error)
   }
 }

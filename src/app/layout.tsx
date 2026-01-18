@@ -56,6 +56,8 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1, // Prevent zoom on iOS input focus
+  viewportFit: "cover", // Support for iPhone notch/Dynamic Island
 }
 
 export default function RootLayout({

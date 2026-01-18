@@ -231,7 +231,7 @@ export default function Home() {
           className="mx-auto max-w-3xl"
         >
           <div className="mb-12 text-center">
-            <p className="mb-2 text-sm text-muted-foreground">So funktioniert's</p>
+            <p className="mb-2 text-sm text-muted-foreground">So funktioniert&apos;s</p>
             <h2 className="text-2xl font-medium md:text-3xl">
               In drei Schritten zur Mitfahrt
             </h2>

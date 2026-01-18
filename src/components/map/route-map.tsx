@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +21,15 @@ interface RouteMapProps {
   onMapClick?: (lat: number, lng: number) => void
 }
 
+// Hook to safely detect client-side mounting without triggering lint warnings
+function useIsMounted() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
+}
+
 // Dynamically import the Leaflet map component (client-side only)
 const LeafletMap = dynamic(() => import("./leaflet-map").then((mod) => mod.LeafletMap), {
   ssr: false,
@@ -38,11 +47,7 @@ export function RouteMap({
   interactive = false,
   onMapClick,
 }: RouteMapProps) {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const isMounted = useIsMounted()
 
   if (!isMounted) {
     return (

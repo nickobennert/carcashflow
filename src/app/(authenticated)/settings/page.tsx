@@ -41,24 +41,26 @@ type TabId = (typeof baseTabs)[number]["id"] | "admin" | "security"
 export default function SettingsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState<TabId>("profile")
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
+
+  // Initialize activeTab from URL param or default to "profile"
+  const tabFromUrl = searchParams.get("tab") as TabId | null
+  const validTab = tabFromUrl && baseTabs.some((t) => t.id === tabFromUrl) ? tabFromUrl : "profile"
+  const [activeTab, setActiveTab] = useState<TabId>(validTab)
 
   // Build tabs array based on admin status
   const tabs = isAdmin
     ? [...baseTabs, adminTab]
     : baseTabs
 
-  // Get tab from URL
-  useEffect(() => {
-    const tab = searchParams.get("tab") as TabId | null
-    if (tab && (baseTabs.some((t) => t.id === tab) || (isAdmin && tab === "admin"))) {
-      setActiveTab(tab)
-    }
-  }, [searchParams, isAdmin])
+  // Sync tab with URL changes (for browser back/forward) - using derived state
+  const currentTabFromUrl = searchParams.get("tab") as TabId | null
+  const derivedActiveTab = currentTabFromUrl && (baseTabs.some((t) => t.id === currentTabFromUrl) || (isAdmin && currentTabFromUrl === "admin"))
+    ? currentTabFromUrl
+    : activeTab
 
   // Load profile and check admin status
   useEffect(() => {
@@ -147,7 +149,7 @@ export default function SettingsPage() {
           <div className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => {
               const Icon = tab.icon
-              const isActive = activeTab === tab.id
+              const isActive = derivedActiveTab === tab.id
 
               return (
                 <button
@@ -184,29 +186,29 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab}
+              key={derivedActiveTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === "profile" && (
+              {derivedActiveTab === "profile" && (
                 <ProfileTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
-              {activeTab === "account" && <AccountTab profile={profile} />}
-              {activeTab === "notifications" && (
+              {derivedActiveTab === "account" && <AccountTab profile={profile} />}
+              {derivedActiveTab === "notifications" && (
                 <NotificationsTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
-              {activeTab === "subscription" && (
+              {derivedActiveTab === "subscription" && (
                 <SubscriptionTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
-              {activeTab === "privacy" && (
+              {derivedActiveTab === "privacy" && (
                 <PrivacyTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
-              {activeTab === "security" && (
+              {derivedActiveTab === "security" && (
                 <SecurityTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
-              {activeTab === "admin" && isAdmin && (
+              {derivedActiveTab === "admin" && isAdmin && (
                 <AdminTab profile={profile} />
               )}
             </motion.div>

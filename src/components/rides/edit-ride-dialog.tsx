@@ -262,6 +262,7 @@ export function EditRideDialog({ ride, trigger }: EditRideDialogProps) {
 
   const form = useForm<EditRideFormValues>({
     resolver: zodResolver(editRideSchema),
+    mode: "onChange", // Fix: Enables proper field registration without requiring user interaction
     defaultValues: {
       type: ride.type,
       route: initialRoute,

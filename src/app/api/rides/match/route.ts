@@ -24,25 +24,98 @@ function toRad(deg: number): number {
   return deg * (Math.PI / 180)
 }
 
+// Calculate perpendicular distance from a point to a line segment
+// This is the key fix for detecting "Düsseldorf is on the way from Rheine to Köln"
+function pointToSegmentDistance(
+  point: { lat: number; lng: number },
+  segStart: { lat: number; lng: number },
+  segEnd: { lat: number; lng: number }
+): number {
+  const { lat: px, lng: py } = point
+  const { lat: ax, lng: ay } = segStart
+  const { lat: bx, lng: by } = segEnd
+
+  // Vector from A to B
+  const abx = bx - ax
+  const aby = by - ay
+
+  // Vector from A to P
+  const apx = px - ax
+  const apy = py - ay
+
+  // Project AP onto AB to find the closest point on the segment
+  const abSquared = abx * abx + aby * aby
+
+  // Handle degenerate case (A == B)
+  if (abSquared === 0) {
+    return calculateDistance(px, py, ax, ay)
+  }
+
+  // Parameter t for the projection (clamped to [0, 1] for segment)
+  const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abSquared))
+
+  // Find the closest point on the segment
+  const closestLat = ax + t * abx
+  const closestLng = ay + t * aby
+
+  // Return distance from point to closest point on segment
+  return calculateDistance(px, py, closestLat, closestLng)
+}
+
 // Check if a point is "on the way" of a route (within threshold km of any segment)
+// IMPROVED: Now uses proper point-to-segment distance calculation
 function isPointOnRoute(
   point: { lat: number; lng: number },
   route: { lat?: number; lng?: number }[],
   thresholdKm: number = 20
-): boolean {
+): { onRoute: boolean; minDistance: number } {
   const validRoute = route.filter((p) => p.lat && p.lng) as { lat: number; lng: number }[]
-  if (validRoute.length < 2) return false
+  if (validRoute.length < 2) return { onRoute: false, minDistance: Infinity }
+
+  let minDistance = Infinity
 
   for (let i = 0; i < validRoute.length - 1; i++) {
-    const d1 = calculateDistance(point.lat, point.lng, validRoute[i].lat, validRoute[i].lng)
-    const d2 = calculateDistance(point.lat, point.lng, validRoute[i + 1].lat, validRoute[i + 1].lng)
+    // Calculate perpendicular distance to this segment
+    const segmentDistance = pointToSegmentDistance(
+      point,
+      validRoute[i],
+      validRoute[i + 1]
+    )
 
-    // Point is close to any segment endpoint
-    if (Math.min(d1, d2) <= thresholdKm) {
-      return true
+    if (segmentDistance < minDistance) {
+      minDistance = segmentDistance
+    }
+
+    // Early exit if we found a close enough point
+    if (segmentDistance <= thresholdKm) {
+      return { onRoute: true, minDistance: segmentDistance }
     }
   }
-  return false
+
+  return { onRoute: minDistance <= thresholdKm, minDistance }
+}
+
+// Check if point is within a "corridor" between two points
+// Used to detect if intermediate stops are genuinely on the way
+function isPointInCorridor(
+  point: { lat: number; lng: number },
+  start: { lat: number; lng: number },
+  end: { lat: number; lng: number },
+  corridorWidthKm: number = 30
+): boolean {
+  // Calculate the direct distance from start to end
+  const directDistance = calculateDistance(start.lat, start.lng, end.lat, end.lng)
+
+  // Calculate distances via the point
+  const distToStart = calculateDistance(point.lat, point.lng, start.lat, start.lng)
+  const distToEnd = calculateDistance(point.lat, point.lng, end.lat, end.lng)
+  const viaDistance = distToStart + distToEnd
+
+  // The point is "on the way" if going via it doesn't add much detour
+  // Allow up to 20% extra distance or corridorWidthKm, whichever is greater
+  const maxDetour = Math.max(directDistance * 0.2, corridorWidthKm)
+
+  return (viaDistance - directDistance) <= maxDetour
 }
 
 // Calculate similarity score between two routes (0-100)
@@ -128,32 +201,101 @@ export async function POST(request: NextRequest) {
     if (error) throw error
 
     // Calculate similarity scores and filter
+    // IMPROVED: Better matching including intermediate stops and corridor detection
     const matchedRides = (rides as RideWithUser[])
       .map((ride) => {
         const similarity = calculateRouteSimilarity(route, ride.route)
 
-        // Check if any route point is "on the way" of the other route
-        const start = route.find((p: RoutePoint) => p.type === "start")
-        const end = route.find((p: RoutePoint) => p.type === "end")
+        // Get key points from both routes
+        const userStart = route.find((p: RoutePoint) => p.type === "start")
+        const userEnd = route.find((p: RoutePoint) => p.type === "end")
+        const userStops = route.filter((p: RoutePoint) => p.type === "stop")
+
         const rideStart = ride.route.find((p) => p.type === "start")
         const rideEnd = ride.route.find((p) => p.type === "end")
+        const rideStops = ride.route.filter((p) => p.type === "stop")
 
         let onTheWay = false
-        if (start?.lat && end?.lat) {
-          // Check if ride's start/end is on user's route
-          if (rideStart?.lat) {
-            onTheWay = onTheWay || isPointOnRoute(
-              { lat: rideStart.lat, lng: rideStart.lng! },
-              route,
-              threshold_km
-            )
+        const matchDetails: string[] = []
+        let minDistance = Infinity
+
+        if (userStart?.lat && userEnd?.lat && rideStart?.lat && rideEnd?.lat) {
+          // 1. Check if ride's start/end is on user's route (using segment distance)
+          const startOnRoute = isPointOnRoute(
+            { lat: rideStart.lat, lng: rideStart.lng! },
+            route,
+            threshold_km
+          )
+          if (startOnRoute.onRoute) {
+            onTheWay = true
+            matchDetails.push(`Start liegt auf deiner Route (${Math.round(startOnRoute.minDistance)} km)`)
+            if (startOnRoute.minDistance < minDistance) minDistance = startOnRoute.minDistance
           }
-          if (rideEnd?.lat) {
-            onTheWay = onTheWay || isPointOnRoute(
-              { lat: rideEnd.lat, lng: rideEnd.lng! },
-              route,
-              threshold_km
-            )
+
+          const endOnRoute = isPointOnRoute(
+            { lat: rideEnd.lat, lng: rideEnd.lng! },
+            route,
+            threshold_km
+          )
+          if (endOnRoute.onRoute) {
+            onTheWay = true
+            matchDetails.push(`Ziel liegt auf deiner Route (${Math.round(endOnRoute.minDistance)} km)`)
+            if (endOnRoute.minDistance < minDistance) minDistance = endOnRoute.minDistance
+          }
+
+          // 2. Check if user's points are on ride's route
+          const userStartOnRide = isPointOnRoute(
+            { lat: userStart.lat, lng: userStart.lng! },
+            ride.route,
+            threshold_km
+          )
+          if (userStartOnRide.onRoute && !startOnRoute.onRoute) {
+            onTheWay = true
+            matchDetails.push(`Dein Start liegt auf dieser Route`)
+            if (userStartOnRide.minDistance < minDistance) minDistance = userStartOnRide.minDistance
+          }
+
+          const userEndOnRide = isPointOnRoute(
+            { lat: userEnd.lat, lng: userEnd.lng! },
+            ride.route,
+            threshold_km
+          )
+          if (userEndOnRide.onRoute && !endOnRoute.onRoute) {
+            onTheWay = true
+            matchDetails.push(`Dein Ziel liegt auf dieser Route`)
+            if (userEndOnRide.minDistance < minDistance) minDistance = userEndOnRide.minDistance
+          }
+
+          // 3. Check intermediate stops (the "Düsseldorf" scenario)
+          // Check if any of ride's stops are in the corridor between user's start/end
+          for (const stop of rideStops) {
+            if (stop.lat && stop.lng) {
+              const inCorridor = isPointInCorridor(
+                { lat: stop.lat, lng: stop.lng },
+                { lat: userStart.lat, lng: userStart.lng! },
+                { lat: userEnd.lat, lng: userEnd.lng! },
+                threshold_km
+              )
+              if (inCorridor) {
+                onTheWay = true
+                matchDetails.push(`Fährt über ${stop.address?.split(",")[0] || "Zwischenstopp"}`)
+              }
+            }
+          }
+
+          // 4. Check if user's stops are on ride's route
+          for (const stop of userStops) {
+            if (stop.lat && stop.lng) {
+              const stopOnRide = isPointOnRoute(
+                { lat: stop.lat, lng: stop.lng },
+                ride.route,
+                threshold_km
+              )
+              if (stopOnRide.onRoute) {
+                onTheWay = true
+                matchDetails.push(`Dein Stopp ${stop.address?.split(",")[0] || ""} liegt auf der Route`)
+              }
+            }
           }
         }
 
@@ -161,10 +303,18 @@ export async function POST(request: NextRequest) {
           ...ride,
           similarity,
           onTheWay,
+          matchDetails: matchDetails.slice(0, 3), // Limit to 3 details
+          minDistance: minDistance === Infinity ? null : Math.round(minDistance),
         }
       })
       .filter((ride) => ride.similarity >= 20 || ride.onTheWay)
-      .sort((a, b) => b.similarity - a.similarity)
+      .sort((a, b) => {
+        // Sort by: onTheWay first, then similarity, then minDistance
+        if (a.onTheWay && !b.onTheWay) return -1
+        if (!a.onTheWay && b.onTheWay) return 1
+        if (b.similarity !== a.similarity) return b.similarity - a.similarity
+        return (a.minDistance || 999) - (b.minDistance || 999)
+      })
       .slice(0, 20)
 
     return NextResponse.json({
@@ -236,24 +386,18 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     // Filter rides that pass through the given location
+    // IMPROVED: Uses proper segment-based distance calculation
     const nearbyRides = (rides as RideWithUser[])
       .map((ride) => {
         const userPoint = { lat, lng }
-        const onRoute = isPointOnRoute(userPoint, ride.route, radius)
 
-        // Calculate distance to nearest point on route
-        let minDistance = Infinity
-        for (const point of ride.route) {
-          if (point.lat && point.lng) {
-            const d = calculateDistance(lat, lng, point.lat, point.lng)
-            if (d < minDistance) minDistance = d
-          }
-        }
+        // Use improved isPointOnRoute with segment distance
+        const routeCheck = isPointOnRoute(userPoint, ride.route, radius)
 
         return {
           ...ride,
-          onRoute,
-          distance: Math.round(minDistance),
+          onRoute: routeCheck.onRoute,
+          distance: Math.round(routeCheck.minDistance),
         }
       })
       .filter((ride) => ride.onRoute || ride.distance <= radius)

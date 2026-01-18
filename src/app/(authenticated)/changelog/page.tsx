@@ -154,7 +154,7 @@ export default function ChangelogPage() {
       {/* Header */}
       <div className="mb-10">
         <Badge variant="secondary" className="mb-3">
-          Was gibt's Neues?
+          Was gibt&apos;s Neues?
         </Badge>
         <h1 className="text-3xl font-bold tracking-tight">Changelog</h1>
         <p className="text-muted-foreground mt-2">

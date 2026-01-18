@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 // GET /api/conversations - Get all conversations for the current user
+// Optimized: Single query with aggregated message data instead of N+1 queries
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get all conversations where user is a participant
+    // Get all conversations with profiles, ride info, and messages in one query
     const { data: conversations, error } = await supabase
       .from("conversations")
       .select(`
@@ -32,6 +33,9 @@ export async function GET(request: NextRequest) {
         ),
         ride:rides!conversations_ride_id_fkey (
           id, type, route, departure_date
+        ),
+        messages (
+          id, content, created_at, sender_id, is_read
         )
       `)
       .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
@@ -43,6 +47,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Type for conversation from query
+    type MessageResult = {
+      id: string
+      content: string
+      created_at: string
+      sender_id: string
+      is_read: boolean
+    }
+
     type ConversationResult = {
       id: string
       participant_1: string
@@ -53,35 +65,39 @@ export async function GET(request: NextRequest) {
       participant_1_profile: unknown
       participant_2_profile: unknown
       ride: unknown
+      messages: MessageResult[]
     }
 
-    // For each conversation, get the last message and unread count
-    const conversationsWithDetails = await Promise.all(
-      ((conversations || []) as ConversationResult[]).map(async (conv) => {
-        // Get last message
-        const { data: lastMessage } = await supabase
-          .from("messages")
-          .select("content, created_at, sender_id")
-          .eq("conversation_id", conv.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single()
+    // Process conversations to extract last_message and unread_count from already-fetched messages
+    const conversationsWithDetails = ((conversations || []) as ConversationResult[]).map((conv) => {
+      const messages = conv.messages || []
 
-        // Get unread count
-        const { count: unreadCount } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .eq("is_read", false)
-          .neq("sender_id", user.id)
+      // Sort messages by created_at descending to get last message
+      const sortedMessages = [...messages].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
 
-        return {
-          ...conv,
-          last_message: lastMessage || null,
-          unread_count: unreadCount || 0,
-        }
-      })
-    )
+      const lastMessage = sortedMessages[0] || null
+
+      // Count unread messages (not from current user and not read)
+      const unreadCount = messages.filter(
+        (msg) => msg.sender_id !== user.id && !msg.is_read
+      ).length
+
+      // Remove messages array from response (we only need last_message and unread_count)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { messages: _messages, ...convWithoutMessages } = conv
+
+      return {
+        ...convWithoutMessages,
+        last_message: lastMessage ? {
+          content: lastMessage.content,
+          created_at: lastMessage.created_at,
+          sender_id: lastMessage.sender_id,
+        } : null,
+        unread_count: unreadCount,
+      }
+    })
 
     return NextResponse.json({ data: conversationsWithDetails })
   } catch (error) {
@@ -91,6 +107,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/conversations - Create or get existing conversation
+// Fixed: Race condition prevented by checking for existing conversation with retry logic
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -115,14 +132,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot message yourself" }, { status: 400 })
     }
 
+    // Normalize participant order to prevent duplicates (lower UUID first)
+    const [participant1, participant2] = [user.id, otherUserId].sort()
+
     // Check if conversation already exists between these users
     const { data: existingConversationData } = await supabase
       .from("conversations")
       .select("id")
-      .or(
-        `and(participant_1.eq.${user.id},participant_2.eq.${otherUserId}),and(participant_1.eq.${otherUserId},participant_2.eq.${user.id})`
-      )
-      .single()
+      .eq("participant_1", participant1)
+      .eq("participant_2", participant2)
+      .maybeSingle()
 
     const existingConversation = existingConversationData as { id: string } | null
 
@@ -131,21 +150,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ conversationId: existingConversation.id })
     }
 
-    // Create new conversation
+    // Try to create new conversation with normalized participant order
     const { data: newConversationData, error } = await supabase
       .from("conversations")
       .insert({
-        participant_1: user.id,
-        participant_2: otherUserId,
+        participant_1: participant1,
+        participant_2: participant2,
         ride_id: rideId || null,
       } as never)
       .select("id")
       .single()
 
+    // Handle race condition: if insert fails due to unique constraint, fetch existing
+    if (error) {
+      // Check if it's a unique constraint violation (code 23505)
+      if (error.code === "23505") {
+        // Another request created the conversation, fetch it
+        const { data: raceConversation } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("participant_1", participant1)
+          .eq("participant_2", participant2)
+          .single()
+
+        if (raceConversation) {
+          return NextResponse.json({ conversationId: (raceConversation as { id: string }).id })
+        }
+      }
+
+      console.error("Error creating conversation:", error)
+      return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 })
+    }
+
     const newConversation = newConversationData as { id: string } | null
 
-    if (error || !newConversation) {
-      console.error("Error creating conversation:", error)
+    if (!newConversation) {
       return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 })
     }
 

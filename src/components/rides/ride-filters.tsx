@@ -280,7 +280,7 @@ export function RideFilters({ className }: RideFiltersProps) {
           )}
           {search && !nearbyMode && (
             <Badge variant="secondary" className="gap-1">
-              "{search}"
+              &ldquo;{search}&rdquo;
               <button
                 onClick={() => {
                   setSearch("")

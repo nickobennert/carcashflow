@@ -7,7 +7,6 @@ import { de } from "date-fns/locale"
 import {
   Bell,
   MessageSquare,
-  Users,
   Car,
   Info,
   Check,
@@ -49,7 +48,6 @@ interface Notification {
 
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   new_message: MessageSquare,
-  connection_request: Users,
   ride_match: Car,
   system: Info,
 }
@@ -359,8 +357,6 @@ function NotificationItem({
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
           notification.type === "new_message" && "bg-blue-500/10 text-blue-600",
-          notification.type === "connection_request" &&
-            "bg-purple-500/10 text-purple-600",
           notification.type === "ride_match" && "bg-green-500/10 text-green-600",
           notification.type === "system" && "bg-muted text-muted-foreground"
         )}

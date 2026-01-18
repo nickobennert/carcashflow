@@ -231,7 +231,6 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                 startPoint={startPoint}
                 stops={stops}
                 endPoint={endPoint}
-                isOffer={isOffer}
               />
             </motion.div>
 
@@ -381,12 +380,10 @@ function RouteTimeline({
   startPoint,
   stops,
   endPoint,
-  isOffer,
 }: {
   startPoint: RoutePoint | undefined
   stops: RoutePoint[]
   endPoint: RoutePoint | undefined
-  isOffer: boolean
 }) {
   return (
     <div className="relative">

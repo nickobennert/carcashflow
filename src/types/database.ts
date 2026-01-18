@@ -322,32 +322,6 @@ export type Database = {
           created_at?: string
         }
       }
-      connections: {
-        Row: {
-          id: string
-          requester_id: string
-          addressee_id: string
-          status: ConnectionStatus
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          requester_id: string
-          addressee_id: string
-          status?: ConnectionStatus
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          requester_id?: string
-          addressee_id?: string
-          status?: ConnectionStatus
-          created_at?: string
-          updated_at?: string
-        }
-      }
     }
     Views: {
       [_ in never]: never
@@ -368,10 +342,9 @@ export type RideType = "offer" | "request"
 export type RideStatus = "active" | "completed" | "cancelled" | "expired"
 export type ReportReason = "spam" | "inappropriate" | "fake" | "harassment" | "other"
 export type ReportStatus = "pending" | "reviewed" | "resolved" | "dismissed"
-export type NotificationType = "new_message" | "connection_request" | "ride_match" | "system"
+export type NotificationType = "new_message" | "ride_match" | "system"
 export type LegalAcceptanceType = "rideshare_terms" | "privacy_policy" | "terms_of_service"
 export type AdminRole = "super_admin" | "admin" | "moderator"
-export type ConnectionStatus = "pending" | "accepted" | "blocked"
 export type RouteWatchType = "location" | "route"
 export type BugReportStatus = "open" | "in_progress" | "resolved" | "closed"
 export type BugReportArea = "dashboard" | "messages" | "profile" | "settings" | "other"
@@ -437,16 +410,6 @@ export type ConversationWithDetails = Conversation & {
 
 export type MessageWithSender = Message & {
   sender: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
-}
-
-// Connection types
-export type Connection = Database["public"]["Tables"]["connections"]["Row"]
-export type ConnectionInsert = Database["public"]["Tables"]["connections"]["Insert"]
-export type ConnectionUpdate = Database["public"]["Tables"]["connections"]["Update"]
-
-export type ConnectionWithProfile = Connection & {
-  requester: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city">
-  addressee: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city">
 }
 
 // Bug Report types

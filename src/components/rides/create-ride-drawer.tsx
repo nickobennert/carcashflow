@@ -268,12 +268,14 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
 
   const form = useForm<CreateRideFormValues>({
     resolver: zodResolver(createRideSchema),
+    mode: "onChange", // Fix: Enables proper field registration without requiring user interaction
     defaultValues: {
       type: "offer",
       route: [
         { id: crypto.randomUUID(), type: "start", address: "", lat: 0, lng: 0, order: 0 },
         { id: crypto.randomUUID(), type: "end", address: "", lat: 0, lng: 0, order: 1 },
       ],
+      departure_date: undefined, // Will be set by user via calendar
       departure_time: "",
       seats_available: 3,
       comment: "",
@@ -532,7 +534,14 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl md:max-w-2xl p-0 m-4 h-[calc(100vh-2rem)] rounded-lg border shadow-2xl flex flex-col [&>button]:hidden"
+        className={cn(
+          "w-full p-0 flex flex-col [&>button]:hidden",
+          // Mobile: Full screen
+          "h-full m-0 rounded-none border-0",
+          // Desktop: Floating with margins
+          "sm:m-4 sm:h-[calc(100vh-2rem)] sm:max-w-xl sm:rounded-lg sm:border sm:shadow-2xl",
+          "md:max-w-2xl"
+        )}
       >
         <TooltipProvider>
           {/* Header */}
@@ -545,7 +554,7 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                     <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="right" className="max-w-xs">
-                    <p className="font-medium mb-1">So funktioniert's:</p>
+                    <p className="font-medium mb-1">So funktioniert&apos;s:</p>
                     <ul className="text-xs space-y-1">
                       <li>1. Wähle ob du Plätze anbietest oder suchst</li>
                       <li>2. Gib Start und Ziel deiner Route ein</li>

@@ -139,7 +139,7 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
           {/* Comment preview */}
           {ride.comment && (
             <p className="text-sm text-muted-foreground line-clamp-2">
-              "{ride.comment}"
+              &ldquo;{ride.comment}&rdquo;
             </p>
           )}
         </CardContent>

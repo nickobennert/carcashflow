@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ProfileConnectionButton } from "@/components/profile/profile-connection-button"
 
 interface PublicProfilePageProps {
   params: Promise<{ username: string }>
@@ -154,11 +153,6 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                       locale: de,
                     })}
                   </span>
-                </div>
-
-                {/* Connection Button */}
-                <div className="mt-6 flex justify-center sm:justify-start">
-                  <ProfileConnectionButton profileUserId={profile.id} />
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle, Users, AlertCircle } from "lucide-react"
+import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +23,6 @@ interface NotificationPreferences {
   push: boolean
   new_message: boolean
   new_ride: boolean
-  connection_request: boolean
   marketing: boolean
 }
 
@@ -41,7 +40,6 @@ export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
     push: true,
     new_message: true,
     new_ride: false,
-    connection_request: true,
     marketing: false,
     ...(profile.notification_preferences as Partial<NotificationPreferences> || {}),
   }
@@ -160,18 +158,6 @@ export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
               onCheckedChange={(checked) => updatePreference("new_message", checked)}
               isLoading={isLoading === "new_message"}
               tooltip="Erhalte sofort eine Benachrichtigung wenn jemand dir schreibt"
-            />
-
-            <Separator />
-
-            <NotificationRow
-              icon={Users}
-              title="Verbindungsanfragen"
-              description="Wenn jemand sich mit dir verbinden möchte"
-              checked={preferences.connection_request}
-              onCheckedChange={(checked) => updatePreference("connection_request", checked)}
-              isLoading={isLoading === "connection_request"}
-              tooltip="Werde informiert wenn du eine neue Verbindungsanfrage erhältst"
             />
 
             <Separator />
