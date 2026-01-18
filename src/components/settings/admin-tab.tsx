@@ -493,27 +493,27 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
       {/* Admin Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-background">
-            <Activity className="h-4 w-4 mr-2" />
-            Übersicht
+        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-background px-2 sm:px-3">
+            <Activity className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Übersicht</span>
           </TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:bg-background">
-            <Users className="h-4 w-4 mr-2" />
-            Nutzer
+          <TabsTrigger value="users" className="data-[state=active]:bg-background px-2 sm:px-3">
+            <Users className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nutzer</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-background">
-            <Flag className="h-4 w-4 mr-2" />
-            Reports
+          <TabsTrigger value="reports" className="data-[state=active]:bg-background px-2 sm:px-3 relative">
+            <Flag className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Reports</span>
             {(stats?.pendingReports || 0) > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 px-1.5">
+              <Badge variant="destructive" className="absolute -top-1 -right-1 sm:static sm:ml-2 h-4 w-4 sm:h-5 sm:w-auto sm:px-1.5 p-0 flex items-center justify-center text-[10px] sm:text-xs">
                 {stats?.pendingReports}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="promos" className="data-[state=active]:bg-background">
-            <Gift className="h-4 w-4 mr-2" />
-            Promo Codes
+          <TabsTrigger value="promos" className="data-[state=active]:bg-background px-2 sm:px-3">
+            <Gift className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Promo Codes</span>
           </TabsTrigger>
         </TabsList>
 

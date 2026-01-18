@@ -142,10 +142,10 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
       variants={fadeIn}
       initial="initial"
       animate="animate"
-      className="max-w-4xl mx-auto"
+      className="max-w-4xl mx-auto px-4 sm:px-0"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <Button
           variant="ghost"
           size="sm"
@@ -153,7 +153,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
           className="gap-2 -ml-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Zurück
+          <span className="hidden sm:inline">Zurück</span>
         </Button>
 
         {isOwnRide && (
@@ -217,10 +217,10 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
             </Badge>
           </div>
 
-          <CardContent className="p-6 space-y-8">
+          <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
             {/* Route Title */}
             <motion.div variants={staggerItem}>
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                 {extractCity(startPoint?.address)} → {extractCity(endPoint?.address)}
               </h1>
             </motion.div>
@@ -249,7 +249,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
             {/* Info Grid */}
             <motion.div
               variants={staggerItem}
-              className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
             >
               <InfoCard
                 icon={Calendar}
@@ -278,35 +278,31 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
             {ride.comment && (
               <motion.div
                 variants={staggerItem}
-                className="bg-muted/50 rounded-xl p-4"
+                className="bg-muted/50 rounded-xl p-3 sm:p-4"
               >
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                   Kommentar
                 </p>
-                <p className="text-sm leading-relaxed">{ride.comment}</p>
+                <p className="text-sm leading-relaxed break-words">{ride.comment}</p>
               </motion.div>
             )}
           </CardContent>
         </Card>
 
         {/* Provider Card */}
-        <motion.div variants={staggerItem} className="mt-6">
+        <motion.div variants={staggerItem} className="mt-4 sm:mt-6">
           <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <Link
-                  href={`/u/${ride.profiles.username}`}
-                  target="_blank"
-                  className="flex items-center gap-4 group flex-1 min-w-0"
-                >
-                  <Avatar className="h-14 w-14 ring-2 ring-background shadow-md">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-background shadow-md shrink-0">
                     <AvatarImage src={ride.profiles.avatar_url || undefined} />
-                    <AvatarFallback className="text-lg font-semibold bg-primary text-primary-foreground">
+                    <AvatarFallback className="text-base sm:text-lg font-semibold bg-primary text-primary-foreground">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="font-semibold text-lg group-hover:text-primary transition-colors truncate">
+                    <p className="font-semibold text-base sm:text-lg truncate">
                       {displayName}
                     </p>
                     {ride.profiles.city && (
@@ -315,7 +311,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                       </p>
                     )}
                   </div>
-                </Link>
+                </div>
 
                 {!isOwnRide && (
                   <DropdownMenu>
@@ -325,12 +321,6 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/u/${ride.profiles.username}`} target="_blank" className="gap-2">
-                          Profil anzeigen
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
                         <Flag className="h-4 w-4" />
                         Melden
@@ -340,14 +330,8 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                 )}
               </div>
 
-              {ride.profiles.bio && (
-                <p className="text-sm text-muted-foreground mt-4 line-clamp-2">
-                  {ride.profiles.bio}
-                </p>
-              )}
-
               {/* Action Button */}
-              <div className="mt-6 pt-6 border-t">
+              <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
                 {isOwnRide ? (
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground mb-3">
@@ -368,7 +352,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                       isOffer={isOffer}
                     />
                     <p className="text-xs text-muted-foreground text-center">
-                      Kontaktdaten werden erst nach beiderseitiger Zustimmung geteilt.
+                      Schreibe eine Nachricht um Kontakt aufzunehmen.
                     </p>
                   </div>
                 )}
@@ -395,19 +379,19 @@ function RouteTimeline({
       {/* Vertical line */}
       <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-emerald-500 via-muted-foreground/30 to-blue-500" />
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Start */}
         {startPoint && (
-          <div className="flex items-start gap-4">
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md shrink-0">
               <CircleDot className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                 Start
               </p>
-              <p className="font-semibold text-lg">{extractCity(startPoint.address)}</p>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="font-semibold text-base sm:text-lg truncate">{extractCity(startPoint.address)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                 {startPoint.address}
               </p>
             </div>
@@ -416,32 +400,32 @@ function RouteTimeline({
 
         {/* Stops */}
         {stops.map((stop, index) => (
-          <div key={index} className="flex items-start gap-4">
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-muted-foreground/20 border-2 border-muted-foreground/40">
+          <div key={index} className="flex items-start gap-3 sm:gap-4">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-muted-foreground/20 border-2 border-muted-foreground/40 shrink-0">
               <div className="h-2 w-2 rounded-full bg-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Zwischenstopp
               </p>
-              <p className="font-medium">{extractCity(stop.address)}</p>
-              <p className="text-sm text-muted-foreground truncate">{stop.address}</p>
+              <p className="font-medium text-sm sm:text-base truncate">{extractCity(stop.address)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{stop.address}</p>
             </div>
           </div>
         ))}
 
         {/* End */}
         {endPoint && (
-          <div className="flex items-start gap-4">
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white shadow-md">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white shadow-md shrink-0">
               <MapPin className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                 Ziel
               </p>
-              <p className="font-semibold text-lg">{extractCity(endPoint.address)}</p>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="font-semibold text-base sm:text-lg truncate">{extractCity(endPoint.address)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                 {endPoint.address}
               </p>
             </div>
@@ -468,14 +452,14 @@ function InfoCard({
   return (
     <div
       className={cn(
-        "rounded-xl p-4 transition-colors",
+        "rounded-xl p-3 sm:p-4 transition-colors",
         highlight ? "bg-primary/5 border border-primary/20" : "bg-muted/50"
       )}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
         <Icon
           className={cn(
-            "h-4 w-4",
+            "h-4 w-4 shrink-0",
             highlight ? "text-primary" : "text-muted-foreground"
           )}
         />
@@ -483,9 +467,9 @@ function InfoCard({
           {label}
         </span>
       </div>
-      <p className={cn("font-semibold", highlight && "text-primary")}>{value}</p>
+      <p className={cn("font-semibold text-sm sm:text-base truncate", highlight && "text-primary")}>{value}</p>
       {subValue && (
-        <p className="text-xs text-muted-foreground mt-0.5">{subValue}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">{subValue}</p>
       )}
     </div>
   )
@@ -493,48 +477,48 @@ function InfoCard({
 
 function RideDetailSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto">
-      <Skeleton className="h-9 w-24 mb-6" />
+    <div className="max-w-4xl mx-auto px-4 sm:px-0">
+      <Skeleton className="h-9 w-16 sm:w-24 mb-4 sm:mb-6" />
       <Card className="overflow-hidden border-0 shadow-lg">
-        <Skeleton className="h-16 w-full" />
-        <div className="p-6 space-y-8">
-          <Skeleton className="h-8 w-3/4" />
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-14 sm:h-16 w-full" />
+        <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+          <Skeleton className="h-7 sm:h-8 w-3/4" />
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="space-y-2 flex-1 min-w-0">
+                <Skeleton className="h-4 w-12 sm:w-16" />
+                <Skeleton className="h-5 sm:h-6 w-32 sm:w-48" />
+                <Skeleton className="h-4 w-48 sm:w-64" />
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-64" />
+            <div className="flex items-start gap-3 sm:gap-4">
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="space-y-2 flex-1 min-w-0">
+                <Skeleton className="h-4 w-12 sm:w-16" />
+                <Skeleton className="h-5 sm:h-6 w-32 sm:w-48" />
+                <Skeleton className="h-4 w-48 sm:w-64" />
               </div>
             </div>
           </div>
-          <Skeleton className="h-[280px] w-full rounded-xl" />
-          <div className="grid grid-cols-3 gap-4">
-            <Skeleton className="h-24 rounded-xl" />
-            <Skeleton className="h-24 rounded-xl" />
-            <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-[200px] sm:h-[280px] w-full rounded-xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <Skeleton className="h-20 sm:h-24 rounded-xl" />
+            <Skeleton className="h-20 sm:h-24 rounded-xl" />
+            <Skeleton className="h-20 sm:h-24 rounded-xl" />
           </div>
         </div>
       </Card>
-      <Card className="mt-6 border-0 shadow-lg">
-        <div className="p-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-14 w-14 rounded-full" />
+      <Card className="mt-4 sm:mt-6 border-0 shadow-lg">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Skeleton className="h-12 w-12 sm:h-14 sm:w-14 rounded-full shrink-0" />
             <div className="space-y-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-28 sm:w-32" />
+              <Skeleton className="h-4 w-20 sm:w-24" />
             </div>
           </div>
-          <Skeleton className="h-11 w-full mt-6" />
+          <Skeleton className="h-11 w-full mt-4 sm:mt-6" />
         </div>
       </Card>
     </div>
