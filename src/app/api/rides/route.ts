@@ -338,19 +338,24 @@ export async function POST(request: NextRequest) {
       ? sevenDaysAfterDeparture
       : new Date(Math.max(sevenDaysAfterDeparture.getTime(), fourteenDaysFromNow.getTime()))
 
-    // Build ride data with only base fields that are guaranteed to exist
+    // Build ride data with only base fields
     const rideData: Record<string, unknown> = {
       user_id: user.id,
       type,
       route: routeData,
       departure_date,
-      departure_time: departure_time || null,
       seats_available: type === "offer" ? (seats_available || 1) : 1,
-      comment: comment || null,
       status: "active",
       expires_at: expiresAt.toISOString(),
-      // Include recurring fields - these columns should exist after migration 014
       is_recurring: is_recurring || false,
+    }
+
+    // Only add optional fields if they have values (avoid null for columns that don't accept it)
+    if (departure_time) {
+      rideData.departure_time = departure_time
+    }
+    if (comment) {
+      rideData.comment = comment
     }
 
     // Add route geometry fields only if provided and valid

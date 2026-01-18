@@ -485,23 +485,29 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
         recurringUntil = format(untilDate, "yyyy-MM-dd")
       }
 
-      // Build request body - only include route geometry if we have valid data
+      // Build request body - only include fields that have values
       const requestBody: Record<string, unknown> = {
         type: data.type,
         route: data.route.map((p) => ({
           type: p.type,
           address: p.address,
-          lat: p.lat,
-          lng: p.lng,
-          order: p.order,
+          lat: Number(p.lat),
+          lng: Number(p.lng),
+          order: Number(p.order),
         })),
         departure_date: format(data.departure_date, "yyyy-MM-dd"),
         departure_time: data.departure_time || null,
         seats_available: data.type === "offer" ? data.seats_available : 1,
         comment: data.comment || null,
-        is_recurring: data.is_recurring,
-        recurring_days: data.is_recurring ? data.recurring_days : null,
-        recurring_until: recurringUntil,
+        is_recurring: data.is_recurring || false,
+      }
+
+      // Only add recurring fields if actually recurring
+      if (data.is_recurring && data.recurring_days && data.recurring_days.length > 0) {
+        requestBody.recurring_days = data.recurring_days
+        if (recurringUntil) {
+          requestBody.recurring_until = recurringUntil
+        }
       }
 
       // Only add route geometry fields if we have calculated route data
