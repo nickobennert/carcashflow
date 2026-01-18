@@ -514,7 +514,8 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to create ride")
+        console.error("API Error:", result)
+        throw new Error(result.message || result.error || "Failed to create ride")
       }
 
       const successMessage = data.is_recurring
@@ -526,7 +527,8 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
       router.refresh()
     } catch (error) {
       console.error("Error creating ride:", error)
-      toast.error("Fehler beim Erstellen der Route")
+      const errorMsg = error instanceof Error ? error.message : "Unbekannter Fehler"
+      toast.error(`Fehler: ${errorMsg}`)
     } finally {
       setIsLoading(false)
     }

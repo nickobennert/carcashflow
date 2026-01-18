@@ -387,8 +387,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
     console.error("Error creating ride:", error)
+    // Return detailed error in development for debugging
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorDetails = error && typeof error === "object" && "code" in error
+      ? (error as { code?: string; details?: string; hint?: string })
+      : null
     return NextResponse.json(
-      { error: "Failed to create ride" },
+      {
+        error: "Failed to create ride",
+        message: errorMessage,
+        code: errorDetails?.code,
+        details: errorDetails?.details,
+        hint: errorDetails?.hint,
+      },
       { status: 500 }
     )
   }
