@@ -107,6 +107,10 @@ export type Database = {
           recurring_days: number[] | null
           recurring_until: string | null
           parent_ride_id: string | null
+          // Route geometry from OSRM routing
+          route_geometry: [number, number][] | null
+          route_distance: number | null
+          route_duration: number | null
         }
         Insert: {
           id?: string
@@ -125,6 +129,9 @@ export type Database = {
           recurring_days?: number[] | null
           recurring_until?: string | null
           parent_ride_id?: string | null
+          route_geometry?: [number, number][] | null
+          route_distance?: number | null
+          route_duration?: number | null
         }
         Update: {
           id?: string
@@ -143,6 +150,9 @@ export type Database = {
           recurring_days?: number[] | null
           recurring_until?: string | null
           parent_ride_id?: string | null
+          route_geometry?: [number, number][] | null
+          route_distance?: number | null
+          route_duration?: number | null
         }
       }
       conversations: {

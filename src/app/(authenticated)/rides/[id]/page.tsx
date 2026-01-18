@@ -237,7 +237,12 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
             {/* Map */}
             {mapPoints.length >= 2 && (
               <motion.div variants={staggerItem} className="rounded-xl overflow-hidden">
-                <RouteMap points={mapPoints} height="280px" />
+                <RouteMap
+                  points={mapPoints}
+                  height="280px"
+                  routeGeometry={ride.route_geometry || undefined}
+                  showRouteInfo={!!ride.route_geometry}
+                />
               </motion.div>
             )}
 

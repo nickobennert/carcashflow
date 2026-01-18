@@ -45,6 +45,8 @@ interface LeafletMapProps {
   height: string
   interactive?: boolean
   onMapClick?: (lat: number, lng: number) => void
+  /** Pre-calculated route geometry to display instead of straight lines */
+  routeGeometry?: [number, number][]
 }
 
 export function LeafletMap({
@@ -52,6 +54,7 @@ export function LeafletMap({
   height,
   interactive = false,
   onMapClick,
+  routeGeometry,
 }: LeafletMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
@@ -122,7 +125,7 @@ export function LeafletMap({
     }
   }, [interactive, onMapClick, handleMapClick])
 
-  // Update markers when points change
+  // Update markers and route when points or geometry change
   useEffect(() => {
     if (!mapInstanceRef.current) return
 
@@ -159,23 +162,40 @@ export function LeafletMap({
       markersRef.current.push(marker)
     })
 
-    // Draw polyline connecting points
+    // Draw route - use real geometry if available, otherwise fallback to straight dashed line
     if (sortedPoints.length >= 2) {
-      const latLngs: L.LatLngExpression[] = sortedPoints.map((p) => [p.lat, p.lng])
-      polylineRef.current = L.polyline(latLngs, {
-        color: "#3b82f6",
-        weight: 4,
-        opacity: 0.7,
-        dashArray: "10, 10",
-      }).addTo(mapInstanceRef.current)
-    }
+      if (routeGeometry && routeGeometry.length >= 2) {
+        // Draw real route from OSRM
+        polylineRef.current = L.polyline(routeGeometry, {
+          color: "#3b82f6",
+          weight: 5,
+          opacity: 0.8,
+          lineJoin: "round",
+          lineCap: "round",
+        }).addTo(mapInstanceRef.current)
 
-    // Fit bounds to show all markers
-    if (sortedPoints.length > 0) {
-      const bounds = L.latLngBounds(sortedPoints.map((p) => [p.lat, p.lng]))
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+        // Fit bounds to route geometry
+        const bounds = L.latLngBounds(routeGeometry)
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+      } else {
+        // Fallback: dashed line between points (while loading or if routing fails)
+        const latLngs: L.LatLngExpression[] = sortedPoints.map((p) => [p.lat, p.lng])
+        polylineRef.current = L.polyline(latLngs, {
+          color: "#3b82f6",
+          weight: 4,
+          opacity: 0.5,
+          dashArray: "10, 10",
+        }).addTo(mapInstanceRef.current)
+
+        // Fit bounds to markers
+        const bounds = L.latLngBounds(sortedPoints.map((p) => [p.lat, p.lng]))
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+      }
+    } else if (sortedPoints.length === 1) {
+      // Single point - center on it
+      mapInstanceRef.current.setView([sortedPoints[0].lat, sortedPoints[0].lng], 12)
     }
-  }, [points])
+  }, [points, routeGeometry])
 
   return (
     <div

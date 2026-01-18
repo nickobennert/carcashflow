@@ -94,7 +94,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LocationSearch, reverseGeocode } from "@/components/map/location-search"
-import { RouteMap, type MapPoint } from "@/components/map"
+import { RouteMap, type MapPoint, type RouteInfo } from "@/components/map"
 import { cn } from "@/lib/utils"
 import {
   calculateRouteDistance,
@@ -259,6 +259,8 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
   const [favoriteRoutes, setFavoriteRoutes] = useState<FavoriteRoute[]>([])
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [favoriteName, setFavoriteName] = useState("")
+  // Store calculated route geometry for submission
+  const [calculatedRoute, setCalculatedRoute] = useState<RouteInfo | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -447,11 +449,20 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
     setMapClickTarget(null)
   }
 
+  // Use OSRM calculated distance if available, otherwise fallback to simple calculation
   const routeDistance = useMemo(() => {
+    if (calculatedRoute?.distance) {
+      return calculatedRoute.distance / 1000 // Convert meters to km
+    }
     const validPoints = routePoints.filter((p) => p.lat !== 0 && p.lng !== 0)
     if (validPoints.length < 2) return 0
     return calculateRouteDistance(validPoints.sort((a, b) => a.order - b.order))
-  }, [routePoints])
+  }, [routePoints, calculatedRoute])
+
+  // Handler for when route is calculated by RouteMap
+  const handleRouteCalculated = (route: RouteInfo | null) => {
+    setCalculatedRoute(route)
+  }
 
   async function onSubmit(data: CreateRideFormValues) {
     const invalidPoints = data.route.filter((p) => p.lat === 0 || p.lng === 0)
@@ -493,6 +504,10 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
           is_recurring: data.is_recurring,
           recurring_days: data.is_recurring ? data.recurring_days : null,
           recurring_until: recurringUntil,
+          // Include OSRM route geometry if available
+          route_geometry: calculatedRoute?.geometry || null,
+          route_distance: calculatedRoute?.distance || null,
+          route_duration: calculatedRoute?.duration || null,
         }),
       })
 
@@ -776,6 +791,8 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                       height={showFullMap ? "350px" : "180px"}
                       interactive={mapClickTarget !== null}
                       onMapClick={handleMapClick}
+                      onRouteCalculated={handleRouteCalculated}
+                      showRouteInfo={mapPoints.length >= 2}
                     />
 
                     {showFullMap && (

@@ -146,6 +146,10 @@ export async function POST(request: NextRequest) {
       is_recurring,
       recurring_days,
       recurring_until,
+      // Route geometry from OSRM routing (optional)
+      route_geometry,
+      route_distance,
+      route_duration,
     } = body
 
     // Validation
@@ -234,6 +238,10 @@ export async function POST(request: NextRequest) {
         is_recurring: true,
         recurring_days,
         recurring_until,
+        // Include route geometry if provided
+        route_geometry: route_geometry || null,
+        route_distance: route_distance || null,
+        route_duration: route_duration || null,
       }
 
       const { data: parentRide, error: parentError } = await supabase
@@ -272,6 +280,10 @@ export async function POST(request: NextRequest) {
             recurring_days,
             recurring_until,
             parent_ride_id: parentRideId,
+            // Include route geometry for child rides too
+            route_geometry: route_geometry || null,
+            route_distance: route_distance || null,
+            route_duration: route_duration || null,
           }
         })
 
@@ -327,6 +339,10 @@ export async function POST(request: NextRequest) {
       status: "active",
       expires_at: expiresAt.toISOString(),
       is_recurring: false,
+      // Include route geometry if provided
+      route_geometry: route_geometry || null,
+      route_distance: route_distance || null,
+      route_duration: route_duration || null,
     }
 
     const { data, error } = await supabase

@@ -104,7 +104,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LocationSearch, reverseGeocode } from "@/components/map/location-search"
-import { RouteMap, type MapPoint } from "@/components/map"
+import { RouteMap, type MapPoint, type RouteInfo } from "@/components/map"
 import { cn } from "@/lib/utils"
 import {
   calculateRouteDistance,
@@ -794,6 +794,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                       height={showFullMap ? "350px" : "180px"}
                       interactive={mapClickTarget !== null}
                       onMapClick={handleMapClick}
+                      showRouteInfo={mapPoints.length >= 2}
                     />
 
                     {showFullMap && (
