@@ -210,7 +210,7 @@ export function NotificationsDropdown() {
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-0">
+        <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 max-w-sm p-0">
           <div className="flex items-center justify-between p-3 border-b">
             <h4 className="font-semibold">Benachrichtigungen</h4>
             {unreadCount > 0 && (
@@ -255,9 +255,9 @@ export function NotificationsDropdown() {
 
       {/* Full Notifications Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <DialogTitle>Alle Benachrichtigungen</DialogTitle>
                 <DialogDescription>
@@ -277,7 +277,8 @@ export function NotificationsDropdown() {
                     ) : (
                       <CheckCheck className="h-4 w-4 mr-2" />
                     )}
-                    Alle gelesen
+                    <span className="hidden sm:inline">Alle gelesen</span>
+                    <span className="sm:hidden">Gelesen</span>
                   </Button>
                 )}
                 {notifications.length > 0 && (
@@ -286,8 +287,8 @@ export function NotificationsDropdown() {
                     size="sm"
                     onClick={clearAllNotifications}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Alle löschen
+                    <Trash2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Alle löschen</span>
                   </Button>
                 )}
               </div>
@@ -393,7 +394,7 @@ function NotificationItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+          className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
           onClick={(e) => {
             e.stopPropagation()
             onDelete()

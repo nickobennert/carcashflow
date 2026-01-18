@@ -110,7 +110,7 @@ export function RideFilters({ className }: RideFiltersProps) {
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
         {/* Type Filter */}
         <Select
           value={type}
@@ -119,7 +119,7 @@ export function RideFilters({ className }: RideFiltersProps) {
             updateFilters({ type: value })
           }}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Alle Typen" />
           </SelectTrigger>
           <SelectContent>
@@ -135,7 +135,7 @@ export function RideFilters({ className }: RideFiltersProps) {
             <Button
               variant="outline"
               className={cn(
-                "w-[180px] justify-start text-left font-normal",
+                "w-full sm:w-[180px] justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
             >
@@ -178,7 +178,7 @@ export function RideFilters({ className }: RideFiltersProps) {
 
         {/* Search */}
         {!nearbyMode && (
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"

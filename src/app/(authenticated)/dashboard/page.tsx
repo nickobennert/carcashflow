@@ -1,13 +1,13 @@
 import { Suspense } from "react"
 import { Metadata } from "next"
-import { Plus, Car, Search, AlertTriangle, Users } from "lucide-react"
+import { Plus, Car, Search, Users } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RideList, RideFilters, CreateRideDrawer } from "@/components/rides"
+import { DismissibleDisclaimer } from "@/components/legal/dismissible-disclaimer"
 import type { RideWithUser } from "@/types"
 
 export const metadata: Metadata = {
@@ -93,14 +93,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <div className="space-y-6">
-      {/* Legal Notice */}
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Diese Plattform dient der Kontaktanbahnung für Rückfahrten nach Fahrzeugüberführungen.
-          Es findet keine Vermittlung oder Haftung statt. Alle Absprachen erfolgen eigenverantwortlich.
-        </AlertDescription>
-      </Alert>
+      {/* Legal Disclaimer - Dismissible */}
+      <DismissibleDisclaimer userId={user?.id} />
 
       {/* Page Header */}
       <PageHeader
@@ -168,11 +162,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Biete freie Plätze an oder finde jemanden, der dich mitnimmt.
             </CardDescription>
             {user && (
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <CreateRideDrawer
                   userId={user.id}
                   trigger={
-                    <Button className="bg-offer hover:bg-offer/90">
+                    <Button className="bg-offer hover:bg-offer/90 w-full sm:w-auto">
                       <Plus className="mr-2 h-4 w-4" />
                       Plätze anbieten
                     </Button>
@@ -181,7 +175,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <CreateRideDrawer
                   userId={user.id}
                   trigger={
-                    <Button variant="outline" className="border-request text-request hover:bg-request/10">
+                    <Button variant="outline" className="border-request text-request hover:bg-request/10 w-full sm:w-auto">
                       <Search className="mr-2 h-4 w-4" />
                       Rückfahrt suchen
                     </Button>

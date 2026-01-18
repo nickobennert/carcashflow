@@ -215,8 +215,7 @@ export function ProfileSetupForm({
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Dein öffentlicher Benutzername (z.B. carcashflow.de/u/
-                      {field.value || "username"})
+                      Dein Benutzername für die Plattform
                     </FormDescription>
                     {usernameAvailable === false && (
                       <p className="text-sm font-medium text-destructive">

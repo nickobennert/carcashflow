@@ -14,6 +14,8 @@ import {
   Clock,
   Shield,
   Sparkles,
+  FileText,
+  Scale,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -212,11 +214,31 @@ export default function HelpPage() {
           </Link>
           <Link
             href="/changelog"
-            className="flex items-center justify-between py-3 hover:text-foreground text-muted-foreground transition-colors"
+            className="flex items-center justify-between py-3 border-b hover:text-foreground text-muted-foreground transition-colors"
           >
             <div className="flex items-center gap-3">
               <Sparkles className="h-4 w-4" />
               <span className="text-sm">Was ist neu?</span>
+            </div>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/datenschutz"
+            className="flex items-center justify-between py-3 border-b hover:text-foreground text-muted-foreground transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm">Datenschutzerklärung</span>
+            </div>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/impressum"
+            className="flex items-center justify-between py-3 hover:text-foreground text-muted-foreground transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Scale className="h-4 w-4" />
+              <span className="text-sm">Impressum</span>
             </div>
             <ArrowRight className="h-4 w-4" />
           </Link>

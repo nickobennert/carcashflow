@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import {
-  Eye,
-  EyeOff,
   Download,
   FileText,
   Loader2,
@@ -14,9 +12,6 @@ import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,49 +30,16 @@ interface PrivacyTabProps {
   onUpdate: (profile: Profile) => void
 }
 
-export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
-  const [isLoading, setIsLoading] = useState<string | null>(null)
+export function PrivacyTab({ profile }: PrivacyTabProps) {
   const [isExporting, setIsExporting] = useState(false)
   const supabase = createClient()
-
-  const isPublic = profile.is_public ?? true
-
-  async function toggleVisibility() {
-    setIsLoading("visibility")
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          is_public: !isPublic,
-          updated_at: new Date().toISOString(),
-        } as never)
-        .eq("id", profile.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      onUpdate(data as Profile)
-      toast.success(
-        isPublic
-          ? "Dein Profil ist jetzt privat"
-          : "Dein Profil ist jetzt öffentlich"
-      )
-    } catch (error) {
-      console.error("Error updating visibility:", error)
-      toast.error("Fehler beim Aktualisieren der Sichtbarkeit")
-    } finally {
-      setIsLoading(null)
-    }
-  }
 
   async function handleExportData() {
     setIsExporting(true)
 
     try {
       // Fetch all user data
-      const [profileData, ridesData, messagesData, conversationsData] =
+      const [profileData, ridesData, messagesData, conversationsData, legalData] =
         await Promise.all([
           supabase.from("profiles").select("*").eq("id", profile.id).single(),
           supabase.from("rides").select("*").eq("user_id", profile.id),
@@ -85,6 +47,10 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
           supabase
             .from("conversation_participants")
             .select("*, conversations(*)")
+            .eq("user_id", profile.id),
+          supabase
+            .from("legal_acceptances")
+            .select("*")
             .eq("user_id", profile.id),
         ])
 
@@ -94,6 +60,7 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
         rides: ridesData.data,
         messages: messagesData.data,
         conversations: conversationsData.data,
+        legalAcceptances: legalData.data,
       }
 
       // Create and download JSON file
@@ -120,81 +87,6 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Profile Visibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-muted-foreground" />
-            Profil-Sichtbarkeit
-          </CardTitle>
-          <CardDescription>
-            Kontrolliere, wer dein Profil und deine Aktivitäten sehen kann
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              {isPublic ? (
-                <Eye className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              ) : (
-                <EyeOff className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              )}
-              <div>
-                <Label className="text-base font-medium">
-                  Öffentliches Profil
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {isPublic
-                    ? "Dein Profil ist für alle Nutzer sichtbar"
-                    : "Nur verbundene Nutzer können dein Profil sehen"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {isLoading === "visibility" && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-              <Switch
-                checked={isPublic}
-                onCheckedChange={toggleVisibility}
-                disabled={isLoading === "visibility"}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Visibility Details */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium">Was ist sichtbar?</p>
-
-            <div className="grid gap-3">
-              <VisibilityRow
-                label="Profilbild & Name"
-                publicVisible
-                privateVisible
-              />
-              <VisibilityRow
-                label="Bio & Stadt"
-                publicVisible
-                privateVisible={false}
-              />
-              <VisibilityRow
-                label="Aktive Routen"
-                publicVisible
-                privateVisible={false}
-              />
-              <VisibilityRow
-                label="Schulungsort"
-                publicVisible
-                privateVisible={false}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Data Export */}
       <Card>
         <CardHeader>
@@ -215,7 +107,8 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
                 <li>Deine Profildaten</li>
                 <li>Alle erstellten Routen</li>
                 <li>Deine Nachrichten</li>
-                <li>Verbindungen zu anderen Nutzern</li>
+                <li>Konversationen</li>
+                <li>Rechtliche Zustimmungen</li>
               </ul>
             </div>
           </div>
@@ -260,7 +153,7 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
               <p className="text-sm text-muted-foreground mt-1">
                 Wir speichern deine Daten sicher in der EU und geben sie nicht
                 an Dritte weiter. Mehr dazu in unserer{" "}
-                <a href="/privacy" className="underline hover:text-foreground">
+                <a href="/datenschutz" className="underline hover:text-foreground">
                   Datenschutzerklärung
                 </a>
                 .
@@ -269,40 +162,6 @@ export function PrivacyTab({ profile, onUpdate }: PrivacyTabProps) {
           </div>
         </CardContent>
       </Card>
-    </div>
-  )
-}
-
-function VisibilityRow({
-  label,
-  publicVisible,
-  privateVisible,
-}: {
-  label: string
-  publicVisible: boolean
-  privateVisible: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-4">
-        <span className="flex items-center gap-1.5 text-xs">
-          <Eye className="h-3.5 w-3.5" />
-          {publicVisible ? (
-            <span className="text-emerald-600">Sichtbar</span>
-          ) : (
-            <span className="text-muted-foreground">Versteckt</span>
-          )}
-        </span>
-        <span className="flex items-center gap-1.5 text-xs">
-          <EyeOff className="h-3.5 w-3.5" />
-          {privateVisible ? (
-            <span className="text-emerald-600">Sichtbar</span>
-          ) : (
-            <span className="text-muted-foreground">Versteckt</span>
-          )}
-        </span>
-      </div>
     </div>
   )
 }

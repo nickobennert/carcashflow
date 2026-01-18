@@ -10,7 +10,6 @@ import {
   Calendar,
   Car,
   Settings,
-  ExternalLink,
   Loader2,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -115,9 +114,6 @@ export default function ProfilePage() {
                 <h1 className="text-2xl font-bold">
                   {profile.first_name} {profile.last_name}
                 </h1>
-                {profile.is_public && (
-                  <Badge variant="secondary">Öffentlich</Badge>
-                )}
               </div>
 
               <p className="text-muted-foreground mb-3">@{profile.username}</p>
@@ -145,21 +141,10 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => router.push("/settings")}>
-                <Settings className="h-4 w-4 mr-2" />
-                Bearbeiten
-              </Button>
-              {profile.is_public && (
-                <Button
-                  variant="ghost"
-                  onClick={() => window.open(`/u/${profile.username}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Öffentlich
-                </Button>
-              )}
-            </div>
+            <Button variant="outline" onClick={() => router.push("/settings")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Bearbeiten
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -186,8 +171,10 @@ export default function ProfilePage() {
 
         <Card>
           <CardContent className="py-4">
-            <p className="text-2xl font-bold text-purple-600">0</p>
-            <p className="text-sm text-muted-foreground">Verbindungen</p>
+            <p className="text-2xl font-bold text-purple-600">
+              {format(new Date(profile.created_at), "MMM yyyy", { locale: de })}
+            </p>
+            <p className="text-sm text-muted-foreground">Mitglied seit</p>
           </CardContent>
         </Card>
       </div>

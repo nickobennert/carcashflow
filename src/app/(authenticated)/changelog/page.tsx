@@ -65,20 +65,6 @@ const changelog: ChangelogEntry[] = [
     ],
   },
   {
-    id: "3",
-    date: new Date("2026-01-12"),
-    version: "0.9.0-beta",
-    title: "Verbindungen",
-    description:
-      "Vernetze dich mit anderen Nutzern und baue dein Netzwerk auf.",
-    type: "feature",
-    highlights: [
-      "Verbindungsanfragen senden",
-      "Anfragen akzeptieren/ablehnen",
-      "Verbindungsliste verwalten",
-    ],
-  },
-  {
     id: "4",
     date: new Date("2026-01-12"),
     version: "0.9.0-beta",
@@ -88,8 +74,8 @@ const changelog: ChangelogEntry[] = [
     type: "feature",
     highlights: [
       "Profilbild hochladen",
-      "Öffentliches Profil",
       "Benachrichtigungs-Einstellungen",
+      "Daten-Export (DSGVO)",
       "Dark/Light Mode",
     ],
   },

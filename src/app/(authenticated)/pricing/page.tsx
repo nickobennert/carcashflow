@@ -30,7 +30,6 @@ const plans = [
     features: [
       "20 Routen pro Monat",
       "Unbegrenzte Nachrichten",
-      "50 Verbindungen",
       "Erweiterte Filter",
     ],
     popular: false,
@@ -44,7 +43,6 @@ const plans = [
     features: [
       "Unbegrenzte Routen",
       "Unbegrenzte Nachrichten",
-      "Unbegrenzte Verbindungen",
       "Prioritäts-Support",
       "Keine Werbung",
       "Früher Zugang zu Features",
