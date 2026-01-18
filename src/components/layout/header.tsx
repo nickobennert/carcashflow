@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -50,6 +51,7 @@ export function Header({
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const supabase = createClient()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -61,7 +63,7 @@ export function Header({
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 w-full items-center px-4">
         {/* Mobile Menu */}
-        <Sheet>
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="mr-2 md:hidden">
               <Menu className="h-5 w-5" />
@@ -69,7 +71,7 @@ export function Header({
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0">
-            <Sidebar />
+            <Sidebar isMobile onNavigate={() => setMobileMenuOpen(false)} />
           </SheetContent>
         </Sheet>
 

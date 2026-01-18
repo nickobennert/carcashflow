@@ -239,17 +239,18 @@ select {
   position: absolute;
   inset: 0;
   border-radius: 0.75rem;
-  padding: 1px;
+  padding: 2px;
   background: linear-gradient(
     90deg,
-    #10b981,
-    #34d399,
-    #6ee7b7,
-    #34d399,
-    #10b981
+    #f59e0b,
+    #fbbf24,
+    #ec4899,
+    #f472b6,
+    #fbbf24,
+    #f59e0b
   );
-  background-size: 200% 100%;
-  animation: gradient-shift 3s ease-in-out infinite;
+  background-size: 300% 100%;
+  animation: gradient-shift 4s ease-in-out infinite;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);

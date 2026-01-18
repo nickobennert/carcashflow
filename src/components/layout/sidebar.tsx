@@ -17,7 +17,6 @@ import {
 
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
@@ -69,31 +68,38 @@ const footerNavItems: NavItem[] = [
 
 interface SidebarProps {
   className?: string
+  isMobile?: boolean
+  onNavigate?: () => void
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, isMobile = false, onNavigate }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  // Force expanded on mobile
+  const effectiveCollapsed = isMobile ? false : isCollapsed
 
   return (
     <TooltipProvider delayDuration={0}>
       <div className={cn(
         "flex h-full flex-col transition-all duration-300",
-        isCollapsed ? "w-16" : "w-56",
+        effectiveCollapsed ? "w-16" : "w-56",
+        isMobile && "w-full",
         className
       )}>
         {/* Main Navigation */}
         <ScrollArea className="flex-1 py-4">
           <div className={cn(
             "flex flex-col gap-1.5",
-            isCollapsed ? "px-2" : "px-3"
+            effectiveCollapsed ? "px-2" : "px-3"
           )}>
             {mainNavItems.map((item) => (
               <NavLink
                 key={item.href}
                 item={item}
                 isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
-                isCollapsed={isCollapsed}
+                isCollapsed={effectiveCollapsed}
+                onClick={onNavigate}
               />
             ))}
           </div>
@@ -102,18 +108,19 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Footer Links */}
         <div className={cn(
           "border-t py-3",
-          isCollapsed ? "px-2" : "px-3"
+          effectiveCollapsed ? "px-2" : "px-3"
         )}>
           <div className={cn(
             "flex flex-col gap-0.5",
-            isCollapsed && "gap-1.5"
+            effectiveCollapsed && "gap-1.5"
           )}>
             {footerNavItems.map((item) => (
               <FooterLink
                 key={item.href}
                 item={item}
                 isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
-                isCollapsed={isCollapsed}
+                isCollapsed={effectiveCollapsed}
+                onClick={onNavigate}
               />
             ))}
           </div>
@@ -121,30 +128,32 @@ export function Sidebar({ className }: SidebarProps) {
 
         {/* Collapse Button & Copyright */}
         <div className="border-t px-3 py-3">
-          {/* Collapse Toggle */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 mb-3 py-2 px-3 rounded-lg",
-              "text-xs text-muted-foreground",
-              "border border-dashed border-muted-foreground/30",
-              "hover:border-muted-foreground/50 hover:text-foreground",
-              "transition-colors",
-              isCollapsed && "px-2"
-            )}
-          >
-            {isCollapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
-              <>
-                <PanelLeftClose className="h-4 w-4" />
-                <span>Einklappen</span>
-              </>
-            )}
-          </button>
+          {/* Collapse Toggle - hide on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 mb-3 py-2 px-3 rounded-lg",
+                "text-xs text-muted-foreground",
+                "border border-dashed border-muted-foreground/30",
+                "hover:border-muted-foreground/50 hover:text-foreground",
+                "transition-colors",
+                effectiveCollapsed && "px-2"
+              )}
+            >
+              {effectiveCollapsed ? (
+                <PanelLeft className="h-4 w-4" />
+              ) : (
+                <>
+                  <PanelLeftClose className="h-4 w-4" />
+                  <span>Einklappen</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Copyright */}
-          {isCollapsed ? (
+          {effectiveCollapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex justify-center cursor-default">
@@ -152,13 +161,13 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={10}>
-                <p className="font-medium">© 2026 Carcashflow</p>
+                <p className="font-medium">© 2026 Fahr mit!</p>
                 <p className="text-xs text-muted-foreground">BETA 1.0</p>
               </TooltipContent>
             </Tooltip>
           ) : (
             <div className="text-center">
-              <p className="text-xs text-muted-foreground">© 2026 Carcashflow</p>
+              <p className="text-xs text-muted-foreground">© 2026 Fahr mit!</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">BETA 1.0</p>
             </div>
           )}
@@ -172,13 +181,14 @@ interface NavLinkProps {
   item: NavItem
   isActive: boolean
   isCollapsed: boolean
+  onClick?: () => void
 }
 
-function NavLink({ item, isActive, isCollapsed }: NavLinkProps) {
+function NavLink({ item, isActive, isCollapsed, onClick }: NavLinkProps) {
   const Icon = item.icon
 
   const linkContent = (
-    <Link href={item.href}>
+    <Link href={item.href} onClick={onClick}>
       <div
         className={cn(
           "group flex items-center rounded-lg text-sm font-medium transition-colors",
@@ -235,14 +245,16 @@ interface FooterLinkProps {
   item: NavItem
   isActive: boolean
   isCollapsed: boolean
+  onClick?: () => void
 }
 
-function FooterLink({ item, isActive, isCollapsed }: FooterLinkProps) {
+function FooterLink({ item, isActive, isCollapsed, onClick }: FooterLinkProps) {
   const Icon = item.icon
 
   const linkContent = (
     <Link
       href={item.href}
+      onClick={onClick}
       className={cn(
         "flex items-center gap-2 py-1.5 text-sm transition-colors rounded-md",
         isCollapsed ? "justify-center p-2" : "px-2.5",

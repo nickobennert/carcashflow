@@ -4,7 +4,6 @@ import { useState } from "react"
 import {
   Download,
   FileText,
-  FileSpreadsheet,
   FileJson,
   Loader2,
   Shield,
@@ -27,7 +26,7 @@ interface PrivacyTabProps {
   onUpdate: (profile: Profile) => void
 }
 
-type ExportFormat = "json" | "csv" | "excel"
+type ExportFormat = "json" | "csv"
 
 export function PrivacyTab({ profile }: PrivacyTabProps) {
   const [isExporting, setIsExporting] = useState(false)
@@ -88,60 +87,6 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
     return [headers.join(","), ...rows].join("\n")
   }
 
-  function convertToExcel(exportData: {
-    profile: unknown
-    rides: unknown[]
-    messages: unknown[]
-    conversations: unknown[]
-    legalAcceptances: unknown[]
-  }): string {
-    // Create a simple CSV-based Excel format (can be opened in Excel)
-    let content = ""
-
-    // Profile section
-    content += "=== PROFIL ===\n"
-    if (exportData.profile) {
-      const profileRows = Object.entries(exportData.profile as Record<string, unknown>)
-        .map(([key, value]) => `"${key}","${typeof value === "object" ? JSON.stringify(value) : value}"`)
-        .join("\n")
-      content += profileRows + "\n\n"
-    }
-
-    // Rides section
-    content += "=== ROUTEN ===\n"
-    if (exportData.rides.length > 0) {
-      content += convertToCSV(exportData.rides as Record<string, unknown>[]) + "\n\n"
-    } else {
-      content += "Keine Routen vorhanden\n\n"
-    }
-
-    // Messages section
-    content += "=== NACHRICHTEN ===\n"
-    if (exportData.messages.length > 0) {
-      content += convertToCSV(exportData.messages as Record<string, unknown>[]) + "\n\n"
-    } else {
-      content += "Keine Nachrichten vorhanden\n\n"
-    }
-
-    // Conversations section
-    content += "=== KONVERSATIONEN ===\n"
-    if (exportData.conversations.length > 0) {
-      content += convertToCSV(exportData.conversations as Record<string, unknown>[]) + "\n\n"
-    } else {
-      content += "Keine Konversationen vorhanden\n\n"
-    }
-
-    // Legal acceptances section
-    content += "=== RECHTLICHE ZUSTIMMUNGEN ===\n"
-    if (exportData.legalAcceptances.length > 0) {
-      content += convertToCSV(exportData.legalAcceptances as Record<string, unknown>[]) + "\n"
-    } else {
-      content += "Keine rechtlichen Zustimmungen vorhanden\n"
-    }
-
-    return content
-  }
-
   async function handleExportData(format: ExportFormat) {
     setIsExporting(true)
 
@@ -157,14 +102,9 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
           break
         }
         case "csv": {
-          // Export rides as CSV (most useful data)
+          // Export all data as CSV
           const csvContent = convertToCSV(exportData.rides as Record<string, unknown>[])
-          downloadFile(csvContent || "Keine Routen vorhanden", `${baseFilename}-routen.csv`, "text/csv")
-          break
-        }
-        case "excel": {
-          const excelContent = convertToExcel(exportData)
-          downloadFile(excelContent, `${baseFilename}.csv`, "text/csv;charset=utf-8")
+          downloadFile(csvContent || "Keine Routen vorhanden", `${baseFilename}.csv`, "text/csv")
           break
         }
       }
@@ -224,11 +164,7 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExportData("csv")}>
                 <FileText className="mr-2 h-4 w-4" />
-                Routen als CSV exportieren
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportData("excel")}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Alle Daten (Excel-kompatibel)
+                Als CSV exportieren
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
