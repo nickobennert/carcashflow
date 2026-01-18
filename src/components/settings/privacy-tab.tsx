@@ -4,6 +4,8 @@ import { useState } from "react"
 import {
   Download,
   FileText,
+  FileSpreadsheet,
+  FileJson,
   Loader2,
   Shield,
   Info,
@@ -13,16 +15,11 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { Profile } from "@/types"
 
 interface PrivacyTabProps {
@@ -30,51 +27,147 @@ interface PrivacyTabProps {
   onUpdate: (profile: Profile) => void
 }
 
+type ExportFormat = "json" | "csv" | "excel"
+
 export function PrivacyTab({ profile }: PrivacyTabProps) {
   const [isExporting, setIsExporting] = useState(false)
   const supabase = createClient()
 
-  async function handleExportData() {
+  async function fetchExportData() {
+    const [profileData, ridesData, messagesData, conversationsData, legalData] =
+      await Promise.all([
+        supabase.from("profiles").select("*").eq("id", profile.id).single(),
+        supabase.from("rides").select("*").eq("user_id", profile.id),
+        supabase.from("messages").select("*").eq("sender_id", profile.id),
+        supabase
+          .from("conversation_participants")
+          .select("*, conversations(*)")
+          .eq("user_id", profile.id),
+        supabase
+          .from("legal_acceptances")
+          .select("*")
+          .eq("user_id", profile.id),
+      ])
+
+    return {
+      exportedAt: new Date().toISOString(),
+      profile: profileData.data,
+      rides: ridesData.data || [],
+      messages: messagesData.data || [],
+      conversations: conversationsData.data || [],
+      legalAcceptances: legalData.data || [],
+    }
+  }
+
+  function downloadFile(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function convertToCSV(data: Record<string, unknown>[]): string {
+    if (data.length === 0) return ""
+    const headers = Object.keys(data[0])
+    const rows = data.map((row) =>
+      headers
+        .map((header) => {
+          const val = row[header]
+          if (val === null || val === undefined) return ""
+          if (typeof val === "object") return JSON.stringify(val).replace(/"/g, '""')
+          return String(val).replace(/"/g, '""')
+        })
+        .map((v) => `"${v}"`)
+        .join(",")
+    )
+    return [headers.join(","), ...rows].join("\n")
+  }
+
+  function convertToExcel(exportData: {
+    profile: unknown
+    rides: unknown[]
+    messages: unknown[]
+    conversations: unknown[]
+    legalAcceptances: unknown[]
+  }): string {
+    // Create a simple CSV-based Excel format (can be opened in Excel)
+    let content = ""
+
+    // Profile section
+    content += "=== PROFIL ===\n"
+    if (exportData.profile) {
+      const profileRows = Object.entries(exportData.profile as Record<string, unknown>)
+        .map(([key, value]) => `"${key}","${typeof value === "object" ? JSON.stringify(value) : value}"`)
+        .join("\n")
+      content += profileRows + "\n\n"
+    }
+
+    // Rides section
+    content += "=== ROUTEN ===\n"
+    if (exportData.rides.length > 0) {
+      content += convertToCSV(exportData.rides as Record<string, unknown>[]) + "\n\n"
+    } else {
+      content += "Keine Routen vorhanden\n\n"
+    }
+
+    // Messages section
+    content += "=== NACHRICHTEN ===\n"
+    if (exportData.messages.length > 0) {
+      content += convertToCSV(exportData.messages as Record<string, unknown>[]) + "\n\n"
+    } else {
+      content += "Keine Nachrichten vorhanden\n\n"
+    }
+
+    // Conversations section
+    content += "=== KONVERSATIONEN ===\n"
+    if (exportData.conversations.length > 0) {
+      content += convertToCSV(exportData.conversations as Record<string, unknown>[]) + "\n\n"
+    } else {
+      content += "Keine Konversationen vorhanden\n\n"
+    }
+
+    // Legal acceptances section
+    content += "=== RECHTLICHE ZUSTIMMUNGEN ===\n"
+    if (exportData.legalAcceptances.length > 0) {
+      content += convertToCSV(exportData.legalAcceptances as Record<string, unknown>[]) + "\n"
+    } else {
+      content += "Keine rechtlichen Zustimmungen vorhanden\n"
+    }
+
+    return content
+  }
+
+  async function handleExportData(format: ExportFormat) {
     setIsExporting(true)
 
     try {
-      // Fetch all user data
-      const [profileData, ridesData, messagesData, conversationsData, legalData] =
-        await Promise.all([
-          supabase.from("profiles").select("*").eq("id", profile.id).single(),
-          supabase.from("rides").select("*").eq("user_id", profile.id),
-          supabase.from("messages").select("*").eq("sender_id", profile.id),
-          supabase
-            .from("conversation_participants")
-            .select("*, conversations(*)")
-            .eq("user_id", profile.id),
-          supabase
-            .from("legal_acceptances")
-            .select("*")
-            .eq("user_id", profile.id),
-        ])
+      const exportData = await fetchExportData()
+      const timestamp = Date.now()
+      const baseFilename = `fahrmit-export-${profile.username}-${timestamp}`
 
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        profile: profileData.data,
-        rides: ridesData.data,
-        messages: messagesData.data,
-        conversations: conversationsData.data,
-        legalAcceptances: legalData.data,
+      switch (format) {
+        case "json": {
+          const content = JSON.stringify(exportData, null, 2)
+          downloadFile(content, `${baseFilename}.json`, "application/json")
+          break
+        }
+        case "csv": {
+          // Export rides as CSV (most useful data)
+          const csvContent = convertToCSV(exportData.rides as Record<string, unknown>[])
+          downloadFile(csvContent || "Keine Routen vorhanden", `${baseFilename}-routen.csv`, "text/csv")
+          break
+        }
+        case "excel": {
+          const excelContent = convertToExcel(exportData)
+          downloadFile(excelContent, `${baseFilename}.csv`, "text/csv;charset=utf-8")
+          break
+        }
       }
-
-      // Create and download JSON file
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: "application/json",
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `carcashflow-export-${profile.username}-${Date.now()}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
 
       toast.success("Daten erfolgreich exportiert")
     } catch (error) {
@@ -113,33 +206,32 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
             </div>
           </div>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full" disabled={isExporting}>
                 {isExporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <FileText className="mr-2 h-4 w-4" />
+                  <Download className="mr-2 h-4 w-4" />
                 )}
-                Daten als JSON exportieren
+                Daten exportieren
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Daten exportieren?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Es wird eine JSON-Datei mit all deinen Daten erstellt und
-                  heruntergeladen. Dies kann einen Moment dauern.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                <AlertDialogAction onClick={handleExportData}>
-                  Exportieren
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56">
+              <DropdownMenuItem onClick={() => handleExportData("json")}>
+                <FileJson className="mr-2 h-4 w-4" />
+                Als JSON exportieren
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportData("csv")}>
+                <FileText className="mr-2 h-4 w-4" />
+                Routen als CSV exportieren
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportData("excel")}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Alle Daten (Excel-kompatibel)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardContent>
       </Card>
 

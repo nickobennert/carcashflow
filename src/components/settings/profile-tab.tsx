@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import type { Profile } from "@/types"
 
 const profileSchema = z.object({
@@ -31,7 +30,6 @@ const profileSchema = z.object({
     .min(3, "Mindestens 3 Zeichen")
     .max(30, "Maximal 30 Zeichen")
     .regex(/^[a-z0-9_]+$/, "Nur Kleinbuchstaben, Zahlen und Unterstriche"),
-  bio: z.string().max(500, "Maximal 500 Zeichen").optional(),
   city: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
 })
@@ -55,7 +53,6 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
       first_name: profile.first_name || "",
       last_name: profile.last_name || "",
       username: profile.username || "",
-      bio: profile.bio || "",
       city: profile.city || "",
       phone: profile.phone || "",
     },
@@ -75,7 +72,6 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
           first_name: data.first_name,
           last_name: data.last_name || null,
           username: data.username,
-          bio: data.bio || null,
           city: data.city || null,
           phone: data.phone || null,
           updated_at: new Date().toISOString(),
@@ -263,7 +259,7 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
         <CardHeader>
           <CardTitle>Persönliche Daten</CardTitle>
           <CardDescription>
-            Diese Informationen werden in deinem öffentlichen Profil angezeigt
+            Diese Informationen werden anderen Nutzern angezeigt
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -309,28 +305,7 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
                       <Input placeholder="max_mustermann" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Deine öffentliche URL: carcashflow.de/u/{field.value || "..."}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Über mich</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Erzähle etwas über dich..."
-                        className="resize-none h-24"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {field.value?.length || 0}/500 Zeichen
+                      Dein eindeutiger Benutzername in der App
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

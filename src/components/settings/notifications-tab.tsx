@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle, AlertCircle } from "lucide-react"
+import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,7 +15,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { Profile } from "@/types"
 
 interface NotificationPreferences {
@@ -78,15 +77,6 @@ export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Coming Soon Alert */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>E-Mail-Benachrichtigungen</strong> sind in Kürze verfügbar.
-            In-App-Benachrichtigungen funktionieren bereits.
-          </AlertDescription>
-        </Alert>
-
         {/* Notification Channels */}
         <Card>
           <CardHeader>
@@ -178,7 +168,7 @@ export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
             <NotificationRow
               icon={Megaphone}
               title="Marketing & Updates"
-              description="Neuigkeiten und Tipps zu Carcashflow"
+              description="Neuigkeiten und Tipps zu Fahr mit!"
               checked={preferences.marketing}
               onCheckedChange={(checked) => updatePreference("marketing", checked)}
               isLoading={isLoading === "marketing"}

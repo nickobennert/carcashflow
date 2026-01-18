@@ -78,8 +78,8 @@ export function Header({
           <motion.div {...buttonPress}>
             {/* Dark mode: show light logo (for dark backgrounds) */}
             <Image
-              src="/logoipsum-391-dark.svg"
-              alt="Carcashflow"
+              src="/carcashflow-fahrmit-light.svg"
+              alt="Fahr mit!"
               width={140}
               height={32}
               className="hidden dark:block"
@@ -87,8 +87,8 @@ export function Header({
             />
             {/* Light mode: show dark logo (for light backgrounds) */}
             <Image
-              src="/logoipsum-391-light.svg"
-              alt="Carcashflow"
+              src="/carcashflow-fahrmit-dark.svg"
+              alt="Fahr mit!"
               width={140}
               height={32}
               className="block dark:hidden"

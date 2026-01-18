@@ -18,6 +18,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { RedeemCodeForm } from "@/components/promo"
 import type { Profile } from "@/types"
@@ -77,8 +85,9 @@ const plans = [
   },
 ]
 
-export function SubscriptionTab({ profile, onUpdate }: SubscriptionTabProps) {
+export function SubscriptionTab({ profile }: SubscriptionTabProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const currentTier = profile.subscription_tier || "trial"
   const status = profile.subscription_status || "trialing"
@@ -245,112 +254,124 @@ export function SubscriptionTab({ profile, onUpdate }: SubscriptionTabProps) {
             </div>
           )}
 
-          {/* Manage Subscription Button */}
-          {profile.stripe_subscription_id && !isLifetime && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleManageSubscription}
-              disabled={isLoading === "manage"}
-            >
-              {isLoading === "manage" ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ExternalLink className="mr-2 h-4 w-4" />
-              )}
-              Abonnement verwalten
-            </Button>
-          )}
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {!isLifetime && (
+              <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+                <DialogTrigger asChild>
+                  <Button className="flex-1">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Plan auswählen
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Wähle deinen Plan</DialogTitle>
+                    <DialogDescription>
+                      Wähle den Plan, der am besten zu dir passt
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 sm:grid-cols-3 mt-4">
+                    {plans
+                      .filter((plan) => plan.id !== "trial")
+                      .map((plan) => {
+                        const isCurrent = plan.id === currentTier
+                        const isUpgrade =
+                          plans.findIndex((p) => p.id === plan.id) >
+                          plans.findIndex((p) => p.id === currentTier)
+
+                        return (
+                          <div
+                            key={plan.id}
+                            className={cn(
+                              "relative rounded-xl p-5 transition-all",
+                              plan.popular
+                                ? "animated-border-gradient"
+                                : "border",
+                              isCurrent && "bg-muted/50"
+                            )}
+                          >
+                            {plan.popular && (
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                                <Badge className="gap-1 bg-emerald-500 hover:bg-emerald-500">
+                                  <Sparkles className="h-3 w-3" />
+                                  Beliebt
+                                </Badge>
+                              </div>
+                            )}
+
+                            <div className="mb-4">
+                              <h3 className="font-semibold text-lg">{plan.name}</h3>
+                              <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-2xl font-bold">
+                                  {plan.price.toFixed(2).replace(".", ",")} €
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {plan.period}
+                                </span>
+                              </div>
+                            </div>
+
+                            <ul className="space-y-2 mb-5">
+                              {plan.features.map((feature) => (
+                                <li
+                                  key={feature}
+                                  className="flex items-center gap-2 text-sm"
+                                >
+                                  <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+
+                            <Button
+                              className={cn(
+                                "w-full",
+                                plan.popular && "bg-emerald-500 hover:bg-emerald-600"
+                              )}
+                              variant={plan.popular ? "default" : "outline"}
+                              disabled={isCurrent || isLoading === plan.id}
+                              onClick={() => handleUpgrade(plan.id)}
+                            >
+                              {isLoading === plan.id ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : isCurrent ? (
+                                "Aktueller Plan"
+                              ) : isUpgrade ? (
+                                "Upgraden"
+                              ) : (
+                                "Auswählen"
+                              )}
+                            </Button>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {profile.stripe_subscription_id && !isLifetime && (
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleManageSubscription}
+                disabled={isLoading === "manage"}
+              >
+                {isLoading === "manage" ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                )}
+                Abonnement verwalten
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Promo Code Redemption */}
       <RedeemCodeForm onSuccess={() => window.location.reload()} />
-
-      {/* Available Plans */}
-      {!isLifetime && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Verfügbare Pläne</CardTitle>
-            <CardDescription>
-              Wähle den Plan, der am besten zu dir passt
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {plans
-                .filter((plan) => plan.id !== "trial")
-                .map((plan) => {
-                  const isCurrent = plan.id === currentTier
-                  const isUpgrade =
-                    plans.findIndex((p) => p.id === plan.id) >
-                    plans.findIndex((p) => p.id === currentTier)
-
-                  return (
-                    <div
-                      key={plan.id}
-                      className={cn(
-                        "relative rounded-xl border p-5 transition-all",
-                        plan.popular && "border-primary shadow-md",
-                        isCurrent && "bg-muted/50"
-                      )}
-                    >
-                      {plan.popular && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <Badge className="gap-1 bg-primary">
-                            <Sparkles className="h-3 w-3" />
-                            Beliebt
-                          </Badge>
-                        </div>
-                      )}
-
-                      <div className="mb-4">
-                        <h3 className="font-semibold text-lg">{plan.name}</h3>
-                        <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-bold">
-                            {plan.price.toFixed(2).replace(".", ",")} €
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {plan.period}
-                          </span>
-                        </div>
-                      </div>
-
-                      <ul className="space-y-2 mb-5">
-                        {plan.features.map((feature) => (
-                          <li
-                            key={feature}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-
-                      <Button
-                        className="w-full"
-                        variant={plan.popular ? "default" : "outline"}
-                        disabled={isCurrent || isLoading === plan.id}
-                        onClick={() => handleUpgrade(plan.id)}
-                      >
-                        {isLoading === plan.id ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : isCurrent ? (
-                          "Aktueller Plan"
-                        ) : isUpgrade ? (
-                          "Upgraden"
-                        ) : (
-                          "Auswählen"
-                        )}
-                      </Button>
-                    </div>
-                  )
-                })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

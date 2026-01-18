@@ -7,30 +7,18 @@ import {
   Shield,
   Smartphone,
   Monitor,
-  Globe,
   Loader2,
   HelpCircle,
   Trash2,
   Clock,
   MapPin,
-  AlertCircle,
-  Languages,
   CheckCircle,
 } from "lucide-react"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +36,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { Profile } from "@/types"
 
 interface Session {
@@ -69,8 +56,6 @@ export function SecurityTab({ profile, onUpdate }: SecurityTabProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isTerminating, setIsTerminating] = useState<string | null>(null)
-  const [selectedLanguage, setSelectedLanguage] = useState("de")
-  const supabase = createClient()
 
   // Simulate loading sessions (in real app, this would come from Supabase auth sessions)
   useEffect(() => {
@@ -151,81 +136,9 @@ export function SecurityTab({ profile, onUpdate }: SecurityTabProps) {
     }
   }
 
-  async function handleLanguageChange(language: string) {
-    setSelectedLanguage(language)
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          language_preference: language,
-          updated_at: new Date().toISOString(),
-        } as never)
-        .eq("id", profile.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      onUpdate(data as Profile)
-      toast.success("Sprache geändert")
-    } catch (error) {
-      console.error("Error updating language:", error)
-      toast.error("Fehler beim Ändern der Sprache")
-    }
-  }
-
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Language Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Languages className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>Sprache</CardTitle>
-              <Tooltip>
-                <TooltipTrigger>
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  Ändere die Anzeigesprache der App
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <CardDescription>
-              Wähle deine bevorzugte Sprache für die Benutzeroberfläche
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Anzeigesprache</Label>
-                <p className="text-sm text-muted-foreground">
-                  Die Sprache, in der die App angezeigt wird
-                </p>
-              </div>
-              <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="de">
-                    <span className="flex items-center gap-2">
-                      🇩🇪 Deutsch
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="en" disabled>
-                    <span className="flex items-center gap-2">
-                      🇬🇧 English (Coming Soon)
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Active Sessions */}
         <Card>
           <CardHeader>
@@ -348,33 +261,6 @@ export function SecurityTab({ profile, onUpdate }: SecurityTabProps) {
             )}
           </CardContent>
         </Card>
-
-        {/* Security Tips */}
-        <Card className="bg-muted/50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Sicherheitstipps</p>
-                <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                  <li>• Melde dich ab, wenn du öffentliche Computer nutzt</li>
-                  <li>• Ändere dein Passwort regelmäßig</li>
-                  <li>• Verwende ein starkes, einzigartiges Passwort</li>
-                  <li>• Beende unbekannte Sitzungen sofort</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coming Soon Features */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Bald verfügbar:</strong> Zwei-Faktor-Authentifizierung (2FA)
-            für zusätzliche Sicherheit.
-          </AlertDescription>
-        </Alert>
       </div>
     </TooltipProvider>
   )

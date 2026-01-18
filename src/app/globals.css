@@ -225,3 +225,44 @@ select {
     font-size: inherit;
   }
 }
+
+/* Animated Gradient Border */
+.animated-border-gradient {
+  position: relative;
+  background: var(--background);
+  border-radius: 0.75rem;
+  z-index: 0;
+}
+
+.animated-border-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  padding: 1px;
+  background: linear-gradient(
+    90deg,
+    #10b981,
+    #34d399,
+    #6ee7b7,
+    #34d399,
+    #10b981
+  );
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease-in-out infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
