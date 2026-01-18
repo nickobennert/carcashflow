@@ -144,9 +144,9 @@ export default function SettingsPage() {
 
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row gap-6">
-        {/* Tab Navigation - Sidebar on desktop, horizontal on mobile */}
+        {/* Tab Navigation - Sidebar on desktop, grid on mobile */}
         <nav className="sm:w-56 shrink-0">
-          <div className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="grid grid-cols-6 sm:grid-cols-1 gap-1 sm:gap-1">
             {tabs.map((tab) => {
               const Icon = tab.icon
               const isActive = derivedActiveTab === tab.id
@@ -156,15 +156,15 @@ export default function SettingsPage() {
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={cn(
-                    "relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                    "relative flex items-center justify-center sm:justify-start gap-3 p-2.5 sm:px-4 sm:py-2.5 rounded-lg text-sm font-medium transition-colors",
                     "hover:bg-muted/80",
                     isActive
                       ? "text-foreground bg-muted"
                       : "text-muted-foreground"
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{tab.label}</span>
+                  <Icon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="hidden sm:inline">{tab.label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"

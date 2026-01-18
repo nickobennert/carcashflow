@@ -255,7 +255,7 @@ export function NotificationsDropdown() {
 
       {/* Full Notifications Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl flex flex-col">
           <DialogHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>

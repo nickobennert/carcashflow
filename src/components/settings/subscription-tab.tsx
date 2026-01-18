@@ -264,7 +264,7 @@ export function SubscriptionTab({ profile }: SubscriptionTabProps) {
                     Plan auswählen
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[60vw] max-w-5xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Wähle deinen Plan</DialogTitle>
                     <DialogDescription>

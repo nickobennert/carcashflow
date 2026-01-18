@@ -84,7 +84,7 @@ export function Sidebar({ className, isMobile = false, onNavigate }: SidebarProp
       <div className={cn(
         "flex h-full flex-col transition-all duration-300",
         effectiveCollapsed ? "w-16" : "w-56",
-        isMobile && "w-full",
+        isMobile && "w-full pt-12",
         className
       )}>
         {/* Main Navigation */}
