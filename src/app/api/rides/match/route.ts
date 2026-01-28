@@ -118,6 +118,101 @@ function isPointInCorridor(
   return (viaDistance - directDistance) <= maxDetour
 }
 
+// Find the closest segment index on a route for a given point
+// Returns the segment index and the projected t-parameter (0-1) along the route
+function findClosestSegmentIndex(
+  point: { lat: number; lng: number },
+  route: { lat: number; lng: number }[]
+): { segmentIndex: number; t: number; distance: number } {
+  let bestIndex = 0
+  let bestT = 0
+  let bestDistance = Infinity
+
+  for (let i = 0; i < route.length - 1; i++) {
+    const ax = route[i].lat
+    const ay = route[i].lng
+    const bx = route[i + 1].lat
+    const by = route[i + 1].lng
+
+    const abx = bx - ax
+    const aby = by - ay
+    const apx = point.lat - ax
+    const apy = point.lng - ay
+    const abSquared = abx * abx + aby * aby
+
+    let t = 0
+    if (abSquared > 0) {
+      t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abSquared))
+    }
+
+    const closestLat = ax + t * abx
+    const closestLng = ay + t * aby
+    const distance = calculateDistance(point.lat, point.lng, closestLat, closestLng)
+
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestIndex = i
+      bestT = t
+    }
+  }
+
+  return { segmentIndex: bestIndex, t: bestT, distance: bestDistance }
+}
+
+// Check if a sub-route (start + end) lies on a given route in the correct order
+// This is the "Route-auf-Route" detection for the München→Berlin / Nürnberg→Leipzig scenario
+function isSubRouteOnRoute(
+  subStart: { lat: number; lng: number },
+  subEnd: { lat: number; lng: number },
+  mainRoute: { lat?: number; lng?: number }[],
+  thresholdKm: number = 25
+): { isOnRoute: boolean; detourKm: number; startDistance: number; endDistance: number } {
+  const validRoute = mainRoute.filter((p) => p.lat && p.lng) as { lat: number; lng: number }[]
+  if (validRoute.length < 2) {
+    return { isOnRoute: false, detourKm: Infinity, startDistance: Infinity, endDistance: Infinity }
+  }
+
+  // Find where subStart and subEnd project onto the main route
+  const startProjection = findClosestSegmentIndex(subStart, validRoute)
+  const endProjection = findClosestSegmentIndex(subEnd, validRoute)
+
+  // Both points must be within threshold distance of the route
+  if (startProjection.distance > thresholdKm || endProjection.distance > thresholdKm) {
+    return {
+      isOnRoute: false,
+      detourKm: Infinity,
+      startDistance: startProjection.distance,
+      endDistance: endProjection.distance,
+    }
+  }
+
+  // Check order: subStart must come BEFORE subEnd along the route
+  // Compare using segment index + t-parameter for precise ordering
+  const startProgress = startProjection.segmentIndex + startProjection.t
+  const endProgress = endProjection.segmentIndex + endProjection.t
+
+  if (startProgress >= endProgress) {
+    // Wrong direction - subStart is after subEnd on the main route
+    return {
+      isOnRoute: false,
+      detourKm: Infinity,
+      startDistance: startProjection.distance,
+      endDistance: endProjection.distance,
+    }
+  }
+
+  // Calculate detour: how much extra distance would the driver need?
+  // The detour is the sum of distances from the route to the pickup/dropoff points
+  const detourKm = startProjection.distance + endProjection.distance
+
+  return {
+    isOnRoute: true,
+    detourKm: Math.round(detourKm * 10) / 10,
+    startDistance: Math.round(startProjection.distance * 10) / 10,
+    endDistance: Math.round(endProjection.distance * 10) / 10,
+  }
+}
+
 // Calculate similarity score between two routes (0-100)
 function calculateRouteSimilarity(
   route1: RoutePoint[],
@@ -295,6 +390,41 @@ export async function POST(request: NextRequest) {
                 onTheWay = true
                 matchDetails.push(`Dein Stopp ${stop.address?.split(",")[0] || ""} liegt auf der Route`)
               }
+            }
+          }
+
+          // 5. Route-auf-Route detection
+          // Check if ride's entire sub-route (start→end) lies on user's route
+          if (!onTheWay) {
+            const rideOnUserRoute = isSubRouteOnRoute(
+              { lat: rideStart.lat, lng: rideStart.lng! },
+              { lat: rideEnd.lat, lng: rideEnd.lng! },
+              route,
+              threshold_km
+            )
+            if (rideOnUserRoute.isOnRoute) {
+              onTheWay = true
+              matchDetails.push(
+                `Route liegt auf deinem Weg (${rideOnUserRoute.detourKm} km Umweg)`
+              )
+              if (rideOnUserRoute.detourKm < minDistance) minDistance = rideOnUserRoute.detourKm
+            }
+          }
+
+          // 6. Check reverse: if user's sub-route lies on ride's route
+          if (!onTheWay) {
+            const userOnRideRoute = isSubRouteOnRoute(
+              { lat: userStart.lat, lng: userStart.lng! },
+              { lat: userEnd.lat, lng: userEnd.lng! },
+              ride.route,
+              threshold_km
+            )
+            if (userOnRideRoute.isOnRoute) {
+              onTheWay = true
+              matchDetails.push(
+                `Deine Route liegt auf diesem Weg (${userOnRideRoute.detourKm} km Umweg)`
+              )
+              if (userOnRideRoute.detourKm < minDistance) minDistance = userOnRideRoute.detourKm
             }
           }
         }
