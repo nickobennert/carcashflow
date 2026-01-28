@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
@@ -37,14 +37,11 @@ import {
   MapIcon,
   Navigation,
   Repeat,
-  Star,
-  Heart,
   X,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -85,26 +82,12 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { LocationSearch, reverseGeocode } from "@/components/map/location-search"
 import { RouteMap, type MapPoint, type RouteInfo } from "@/components/map"
 import { cn } from "@/lib/utils"
 import {
   calculateRouteDistance,
   formatDistance,
-  getFavoriteRoutes,
-  saveFavoriteRoute,
-  deleteFavoriteRoute,
-  incrementFavoriteRouteUseCount,
-  type FavoriteRoute,
-  type RoutePointData,
 } from "@/lib/location-storage"
 import { MatchingRides } from "./matching-rides"
 
@@ -256,17 +239,8 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
   const [showFullMap, setShowFullMap] = useState(false)
   const [mapClickTarget, setMapClickTarget] = useState<number | null>(null)
   const [showMatches, setShowMatches] = useState(true)
-  const [favoriteRoutes, setFavoriteRoutes] = useState<FavoriteRoute[]>([])
-  const [showSaveDialog, setShowSaveDialog] = useState(false)
-  const [favoriteName, setFavoriteName] = useState("")
   // Store calculated route geometry for submission
   const [calculatedRoute, setCalculatedRoute] = useState<RouteInfo | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      setFavoriteRoutes(getFavoriteRoutes())
-    }
-  }, [open])
 
   const form = useForm<CreateRideFormValues>({
     resolver: zodResolver(createRideSchema),
@@ -384,56 +358,6 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
       lat: location.lat,
       lng: location.lng,
     })
-  }
-
-  function loadFavoriteRoute(favorite: FavoriteRoute) {
-    const newFields = favorite.route.map((point, index) => ({
-      id: crypto.randomUUID(),
-      type: point.type,
-      address: point.address,
-      lat: point.lat,
-      lng: point.lng,
-      order: index,
-    }))
-
-    replace(newFields)
-    incrementFavoriteRouteUseCount(favorite.id)
-    toast.success(`Route "${favorite.name}" geladen`)
-  }
-
-  function saveCurrentRouteAsFavorite() {
-    const validPoints = routePoints.filter((p) => p.lat !== 0 && p.lng !== 0)
-    if (validPoints.length < 2) {
-      toast.error("Bitte füge mindestens Start und Ziel hinzu")
-      return
-    }
-
-    if (!favoriteName.trim()) {
-      toast.error("Bitte gib einen Namen ein")
-      return
-    }
-
-    const routeData: RoutePointData[] = routePoints.map((p) => ({
-      type: p.type,
-      address: p.address,
-      lat: p.lat,
-      lng: p.lng,
-      order: p.order,
-    }))
-
-    const saved = saveFavoriteRoute(favoriteName.trim(), routeData)
-    if (saved) {
-      setFavoriteRoutes(getFavoriteRoutes())
-      setShowSaveDialog(false)
-      setFavoriteName("")
-      toast.success(`Route als "${favoriteName}" gespeichert`)
-    }
-  }
-
-  function handleDeleteFavorite(id: string, name: string) {
-    deleteFavoriteRoute(id)
-    setFavoriteRoutes(getFavoriteRoutes())
-    toast.success(`"${name}" gelöscht`)
   }
 
   async function handleMapClick(lat: number, lng: number) {
@@ -646,61 +570,6 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                   <div className="flex items-center justify-between">
                     <FormLabel>Route</FormLabel>
                     <div className="flex items-center gap-2">
-                      {/* Favorites Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="outline" size="sm">
-                            <Star className="mr-2 h-4 w-4" />
-                            Favoriten
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                          <DropdownMenuLabel>Gespeicherte Routen</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          {favoriteRoutes.length === 0 ? (
-                            <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                              Noch keine Favoriten gespeichert
-                            </div>
-                          ) : (
-                            favoriteRoutes.map((fav) => (
-                              <DropdownMenuItem
-                                key={fav.id}
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => loadFavoriteRoute(fav)}
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{fav.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {fav.route.find((p) => p.type === "start")?.address?.split(",")[0]} →{" "}
-                                    {fav.route.find((p) => p.type === "end")?.address?.split(",")[0]}
-                                  </span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDeleteFavorite(fav.id, fav.name)
-                                  }}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuItem>
-                            ))
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setShowSaveDialog(true)}
-                            disabled={routePoints.filter((p) => p.lat !== 0).length < 2}
-                          >
-                            <Heart className="mr-2 h-4 w-4" />
-                            Aktuelle Route speichern
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
                       <Button
                         type="button"
                         variant="outline"
@@ -713,42 +582,6 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                       </Button>
                     </div>
                   </div>
-
-                  {/* Save Favorite Dialog */}
-                  {showSaveDialog && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border"
-                    >
-                      <Input
-                        placeholder="Name für diese Route..."
-                        value={favoriteName}
-                        onChange={(e) => setFavoriteName(e.target.value)}
-                        className="flex-1"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault()
-                            saveCurrentRouteAsFavorite()
-                          }
-                        }}
-                      />
-                      <Button type="button" size="sm" onClick={saveCurrentRouteAsFavorite}>
-                        Speichern
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setShowSaveDialog(false)
-                          setFavoriteName("")
-                        }}
-                      >
-                        Abbrechen
-                      </Button>
-                    </motion.div>
-                  )}
 
                   <DndContext
                     sensors={sensors}
@@ -882,16 +715,18 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
                             <Calendar
                               mode="single"
                               selected={field.value}
-                              onSelect={field.onChange}
+                              onSelect={(date) => {
+                                field.onChange(date)
+                              }}
                               disabled={(date) =>
                                 date < new Date(new Date().setHours(0, 0, 0, 0))
                               }
                               locale={de}
-                              initialFocus
+                              autoFocus
                             />
                           </PopoverContent>
                         </Popover>

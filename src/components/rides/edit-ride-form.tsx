@@ -37,6 +37,7 @@ import { toast } from "sonner"
 
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -233,6 +234,7 @@ export function EditRideForm({ ride }: EditRideFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
 
   const supabase = createClient()
 
@@ -385,11 +387,16 @@ export function EditRideForm({ ride }: EditRideFormProps) {
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      const { error } = await supabase.from("rides").delete().eq("id", ride.id)
+      const response = await fetch(`/api/rides/${ride.id}`, {
+        method: "DELETE",
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to delete ride")
+      }
 
-      toast.success("Route erfolgreich gelöscht!")
+      toast.success("Route und zugehörige Nachrichten wurden gelöscht!")
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
@@ -516,16 +523,18 @@ export function EditRideForm({ ride }: EditRideFormProps) {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                        field.onChange(date)
+                      }}
                       disabled={(date) =>
                         date < new Date(new Date().setHours(0, 0, 0, 0))
                       }
                       locale={de}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -625,7 +634,7 @@ export function EditRideForm({ ride }: EditRideFormProps) {
 
         {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-          <AlertDialog>
+          <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText("") }}>
             <AlertDialogTrigger asChild>
               <Button type="button" variant="destructive" disabled={isDeleting}>
                 {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -634,16 +643,41 @@ export function EditRideForm({ ride }: EditRideFormProps) {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Route wirklich löschen?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Diese Aktion kann nicht rückgängig gemacht werden. Die Route wird
-                  dauerhaft gelöscht.
+                <AlertDialogTitle>Route unwiderruflich löschen?</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>
+                      Diese Aktion kann <strong className="text-destructive">nicht rückgängig</strong> gemacht werden.
+                      Folgendes wird dauerhaft gelöscht:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>Die Route selbst</li>
+                      <li>Alle zugehörigen Nachrichtenverläufe</li>
+                      <li>Alle Benachrichtigungen zu dieser Route</li>
+                    </ul>
+                    <div className="pt-2">
+                      <p className="text-sm font-medium mb-2">
+                        Tippe <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-destructive">LÖSCHEN</span> zur Bestätigung:
+                      </p>
+                      <Input
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        placeholder="LÖSCHEN"
+                        className="font-mono"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  Löschen
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={deleteConfirmText !== "LÖSCHEN"}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Endgültig löschen
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

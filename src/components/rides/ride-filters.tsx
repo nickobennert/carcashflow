@@ -143,7 +143,7 @@ export function RideFilters({ className }: RideFiltersProps) {
               {date ? format(date, "PPP", { locale: de }) : "Datum filtern"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
             <Calendar
               mode="single"
               selected={date}
@@ -154,7 +154,7 @@ export function RideFilters({ className }: RideFiltersProps) {
                 })
               }}
               locale={de}
-              initialFocus
+              autoFocus
             />
           </PopoverContent>
         </Popover>

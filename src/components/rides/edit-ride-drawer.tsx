@@ -36,8 +36,6 @@ import {
   HelpCircle,
   MapIcon,
   Navigation,
-  Star,
-  Heart,
   X,
   Pencil,
 } from "lucide-react"
@@ -95,25 +93,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { LocationSearch, reverseGeocode } from "@/components/map/location-search"
 import { RouteMap, type MapPoint, type RouteInfo } from "@/components/map"
 import { cn } from "@/lib/utils"
 import {
   calculateRouteDistance,
   formatDistance,
-  getFavoriteRoutes,
-  saveFavoriteRoute,
-  deleteFavoriteRoute,
-  type FavoriteRoute,
-  type RoutePointData,
 } from "@/lib/location-storage"
 
 const routePointSchema = z.object({
@@ -268,23 +253,15 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
   const [internalOpen, setInternalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
   const [showFullMap, setShowFullMap] = useState(false)
   const [mapClickTarget, setMapClickTarget] = useState<number | null>(null)
-  const [favoriteRoutes, setFavoriteRoutes] = useState<FavoriteRoute[]>([])
-  const [showSaveDialog, setShowSaveDialog] = useState(false)
-  const [favoriteName, setFavoriteName] = useState("")
 
   const supabase = createClient()
 
   // Support both controlled and uncontrolled modes
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
-
-  useEffect(() => {
-    if (open) {
-      setFavoriteRoutes(getFavoriteRoutes())
-    }
-  }, [open])
 
   // Parse the route to ensure IDs exist
   const initialRoute = ride.route.map((point, index) => ({
@@ -419,55 +396,6 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
     })
   }
 
-  function loadFavoriteRoute(favorite: FavoriteRoute) {
-    const newFields = favorite.route.map((point, index) => ({
-      id: crypto.randomUUID(),
-      type: point.type,
-      address: point.address,
-      lat: point.lat,
-      lng: point.lng,
-      order: index,
-    }))
-
-    replace(newFields)
-    toast.success(`Route "${favorite.name}" geladen`)
-  }
-
-  function saveCurrentRouteAsFavorite() {
-    const validPoints = routePoints.filter((p) => p.lat !== 0 && p.lng !== 0)
-    if (validPoints.length < 2) {
-      toast.error("Bitte füge mindestens Start und Ziel hinzu")
-      return
-    }
-
-    if (!favoriteName.trim()) {
-      toast.error("Bitte gib einen Namen ein")
-      return
-    }
-
-    const routeData: RoutePointData[] = routePoints.map((p) => ({
-      type: p.type,
-      address: p.address,
-      lat: p.lat,
-      lng: p.lng,
-      order: p.order,
-    }))
-
-    const saved = saveFavoriteRoute(favoriteName.trim(), routeData)
-    if (saved) {
-      setFavoriteRoutes(getFavoriteRoutes())
-      setShowSaveDialog(false)
-      setFavoriteName("")
-      toast.success(`Route als "${favoriteName}" gespeichert`)
-    }
-  }
-
-  function handleDeleteFavorite(id: string, name: string) {
-    deleteFavoriteRoute(id)
-    setFavoriteRoutes(getFavoriteRoutes())
-    toast.success(`"${name}" gelöscht`)
-  }
-
   async function handleMapClick(lat: number, lng: number) {
     if (mapClickTarget === null) return
 
@@ -530,11 +458,16 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      const { error } = await supabase.from("rides").delete().eq("id", ride.id)
+      const response = await fetch(`/api/rides/${ride.id}`, {
+        method: "DELETE",
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to delete ride")
+      }
 
-      toast.success("Route erfolgreich gelöscht!")
+      toast.success("Route und zugehörige Nachrichten wurden gelöscht!")
       setOpen(false)
       router.refresh()
     } catch (error) {
@@ -633,110 +566,17 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <FormLabel>Route</FormLabel>
-                    <div className="flex items-center gap-2">
-                      {/* Favorites Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="outline" size="sm">
-                            <Star className="mr-2 h-4 w-4" />
-                            Favoriten
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                          <DropdownMenuLabel>Gespeicherte Routen</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          {favoriteRoutes.length === 0 ? (
-                            <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                              Noch keine Favoriten gespeichert
-                            </div>
-                          ) : (
-                            favoriteRoutes.map((fav) => (
-                              <DropdownMenuItem
-                                key={fav.id}
-                                className="flex items-center justify-between cursor-pointer"
-                                onClick={() => loadFavoriteRoute(fav)}
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{fav.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {fav.route.find((p) => p.type === "start")?.address?.split(",")[0]} →{" "}
-                                    {fav.route.find((p) => p.type === "end")?.address?.split(",")[0]}
-                                  </span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDeleteFavorite(fav.id, fav.name)
-                                  }}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuItem>
-                            ))
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setShowSaveDialog(true)}
-                            disabled={routePoints.filter((p) => p.lat !== 0).length < 2}
-                          >
-                            <Heart className="mr-2 h-4 w-4" />
-                            Aktuelle Route speichern
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addStop}
-                        disabled={fields.length >= 5}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Zwischenstopp
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Save Favorite Dialog */}
-                  {showSaveDialog && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border"
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addStop}
+                      disabled={fields.length >= 5}
                     >
-                      <Input
-                        placeholder="Name für diese Route..."
-                        value={favoriteName}
-                        onChange={(e) => setFavoriteName(e.target.value)}
-                        className="flex-1"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault()
-                            saveCurrentRouteAsFavorite()
-                          }
-                        }}
-                      />
-                      <Button type="button" size="sm" onClick={saveCurrentRouteAsFavorite}>
-                        Speichern
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setShowSaveDialog(false)
-                          setFavoriteName("")
-                        }}
-                      >
-                        Abbrechen
-                      </Button>
-                    </motion.div>
-                  )}
+                      <Plus className="mr-2 h-4 w-4" />
+                      Zwischenstopp
+                    </Button>
+                  </div>
 
                   <DndContext
                     sensors={sensors}
@@ -853,16 +693,18 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
+                          <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
                             <Calendar
                               mode="single"
                               selected={field.value}
-                              onSelect={field.onChange}
+                              onSelect={(date) => {
+                                field.onChange(date)
+                              }}
                               disabled={(date) =>
                                 date < new Date(new Date().setHours(0, 0, 0, 0))
                               }
                               locale={de}
-                              initialFocus
+                              autoFocus
                             />
                           </PopoverContent>
                         </Popover>
@@ -966,7 +808,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
           {/* Footer */}
           <div className="px-6 py-4 border-t shrink-0 bg-background">
             <div className="flex justify-between gap-3">
-              <AlertDialog>
+              <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText("") }}>
                 <AlertDialogTrigger asChild>
                   <Button
                     type="button"
@@ -980,16 +822,41 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Route wirklich löschen?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden. Die Route wird
-                      dauerhaft gelöscht.
+                    <AlertDialogTitle>Route unwiderruflich löschen?</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3">
+                        <p>
+                          Diese Aktion kann <strong className="text-destructive">nicht rückgängig</strong> gemacht werden.
+                          Folgendes wird dauerhaft gelöscht:
+                        </p>
+                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                          <li>Die Route selbst</li>
+                          <li>Alle zugehörigen Nachrichtenverläufe</li>
+                          <li>Alle Benachrichtigungen zu dieser Route</li>
+                        </ul>
+                        <div className="pt-2">
+                          <p className="text-sm font-medium mb-2">
+                            Tippe <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-destructive">LÖSCHEN</span> zur Bestätigung:
+                          </p>
+                          <Input
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder="LÖSCHEN"
+                            className="font-mono"
+                            autoComplete="off"
+                          />
+                        </div>
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      Löschen
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={deleteConfirmText !== "LÖSCHEN"}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Endgültig löschen
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
