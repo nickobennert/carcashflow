@@ -62,28 +62,46 @@ export function NotificationsDropdown() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadNotifications()
+    let channel: ReturnType<typeof supabase.channel> | null = null
 
-    // Subscribe to realtime notifications
-    const channel = supabase
-      .channel("notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification
-          setNotifications((prev) => [newNotification, ...prev])
-          setUnreadCount((prev) => prev + 1)
-        }
-      )
-      .subscribe()
+    async function initNotifications() {
+      // Load notifications first
+      await loadNotifications()
+
+      // Get current user for realtime filter
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Subscribe to realtime notifications filtered by user_id
+      channel = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            const newNotification = payload.new as Notification
+            setNotifications((prev) => {
+              // Prevent duplicates
+              if (prev.some(n => n.id === newNotification.id)) return prev
+              return [newNotification, ...prev]
+            })
+            setUnreadCount((prev) => prev + 1)
+          }
+        )
+        .subscribe()
+    }
+
+    initNotifications()
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [supabase])
 

@@ -162,14 +162,33 @@ export async function POST(request: NextRequest) {
       ? conversation.participant_2
       : conversation.participant_1
 
+    // Get sender profile for a more descriptive notification title
+    const { data: senderProfile } = await supabase
+      .from("profiles")
+      .select("first_name, username")
+      .eq("id", user.id)
+      .single()
+
+    const profile = senderProfile as { first_name: string | null; username: string | null } | null
+    const senderName = profile?.first_name || profile?.username || "Jemand"
+
     // Create notification for the recipient
-    await supabase.from("notifications").insert({
-      user_id: otherUserId,
-      type: "new_message",
-      title: "Neue Nachricht",
-      message: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
-      data: { conversation_id, sender_id: user.id },
-    } as never)
+    // Always create notification - the frontend suppresses display if user is in the active chat
+    try {
+      const { error: notifError } = await supabase.from("notifications").insert({
+        user_id: otherUserId,
+        type: "new_message",
+        title: `Neue Nachricht von ${senderName}`,
+        message: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+        data: { conversation_id, sender_id: user.id },
+      } as never)
+
+      if (notifError) {
+        console.error("Error creating notification:", notifError)
+      }
+    } catch (notifErr) {
+      console.error("Notification creation failed:", notifErr)
+    }
 
     return NextResponse.json({ data: message }, { status: 201 })
   } catch (error) {
