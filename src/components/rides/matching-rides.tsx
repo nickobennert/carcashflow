@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { Sparkles, MapPin, ChevronRight, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -185,7 +185,23 @@ export function MatchingRides({
           </AnimatePresence>
 
           {rides.length > 3 && (
-            <Link href="/dashboard">
+            <Link
+              href={(() => {
+                const start = route.find(p => p.type === "start")
+                const params = new URLSearchParams()
+                if (start?.lat && start?.lng) {
+                  params.set("nearby_lat", String(start.lat))
+                  params.set("nearby_lng", String(start.lng))
+                  params.set("nearby_address", start.address?.split(",")[0] || "")
+                  params.set("nearby_radius", "30")
+                }
+                if (departureDate) {
+                  params.set("date", departureDate.toISOString().split("T")[0])
+                }
+                params.set("type", type === "offer" ? "request" : "offer")
+                return `/dashboard?${params.toString()}`
+              })()}
+            >
               <Button variant="ghost" size="sm" className="w-full text-xs">
                 Alle {rides.length} Ergebnisse anzeigen
               </Button>
