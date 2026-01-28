@@ -54,6 +54,16 @@ export interface ApiResponse<T = unknown> {
   message?: string
 }
 
+// Match data for ride cards in the feed
+export interface MatchData {
+  similarity?: number
+  onTheWay?: boolean
+  matchTier?: "direct" | "small_detour" | "detour" | "none"
+  minDistance?: number | null
+  matchDetails?: string[]
+  distance?: number
+}
+
 // Notification preferences
 export interface NotificationPreferences {
   email: boolean

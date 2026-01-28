@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { staggerContainer, staggerItem } from "@/lib/animations"
 import { formatDistance } from "@/lib/location-storage"
 import type { RideWithUser, RoutePoint } from "@/types"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
@@ -29,6 +30,7 @@ interface MatchingRidesProps {
   departureDate?: Date
   routeGeometry?: [number, number][]
   onClose?: () => void
+  onShowAllInFeed?: () => void
 }
 
 export function MatchingRides({
@@ -37,7 +39,9 @@ export function MatchingRides({
   departureDate,
   routeGeometry,
   onClose,
+  onShowAllInFeed,
 }: MatchingRidesProps) {
+  const router = useRouter()
   const [rides, setRides] = useState<MatchingRide[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -206,27 +210,33 @@ export function MatchingRides({
           </AnimatePresence>
 
           {rides.length > 3 && (
-            <Link
-              href={(() => {
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => {
                 const start = route.find(p => p.type === "start")
+                const end = route.find(p => p.type === "end")
                 const params = new URLSearchParams()
                 if (start?.lat && start?.lng) {
-                  params.set("nearby_lat", String(start.lat))
-                  params.set("nearby_lng", String(start.lng))
-                  params.set("nearby_address", start.address?.split(",")[0] || "")
-                  params.set("nearby_radius", "30")
+                  params.set("match_start_lat", String(start.lat))
+                  params.set("match_start_lng", String(start.lng))
+                }
+                if (end?.lat && end?.lng) {
+                  params.set("match_end_lat", String(end.lat))
+                  params.set("match_end_lng", String(end.lng))
                 }
                 if (departureDate) {
-                  params.set("date", departureDate.toISOString().split("T")[0])
+                  params.set("match_date", departureDate.toISOString().split("T")[0])
                 }
-                params.set("type", type === "offer" ? "request" : "offer")
-                return `/dashboard?${params.toString()}`
-              })()}
+                params.set("match_type", type)
+                // Close drawer first, then navigate
+                onShowAllInFeed?.()
+                router.push(`/dashboard?${params.toString()}`)
+              }}
             >
-              <Button variant="ghost" size="sm" className="w-full text-xs">
-                Alle {rides.length} Ergebnisse anzeigen
-              </Button>
-            </Link>
+              Alle {rides.length} Ergebnisse anzeigen
+            </Button>
           )}
         </motion.div>
       </CardContent>

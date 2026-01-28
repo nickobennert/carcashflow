@@ -15,12 +15,24 @@ export const metadata: Metadata = {
   description: "Finde Mitfahrgelegenheiten für deine Rückfahrt nach der Fahrzeugüberführung",
 }
 
+export interface MatchParams {
+  match_start_lat?: string
+  match_start_lng?: string
+  match_end_lat?: string
+  match_end_lng?: string
+  match_type?: string
+  match_date?: string
+  nearby_lat?: string
+  nearby_lng?: string
+  nearby_radius?: string
+}
+
 interface DashboardPageProps {
   searchParams: Promise<{
     type?: string
     search?: string
     date?: string
-  }>
+  } & MatchParams>
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -74,6 +86,22 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         )
       })
     : rides
+
+  // Extract match params for route-based matching in the feed
+  const hasMatchParams = !!(params.match_start_lat || params.nearby_lat)
+  const matchParams: MatchParams | undefined = hasMatchParams
+    ? {
+        match_start_lat: params.match_start_lat,
+        match_start_lng: params.match_start_lng,
+        match_end_lat: params.match_end_lat,
+        match_end_lng: params.match_end_lng,
+        match_type: params.match_type,
+        match_date: params.match_date,
+        nearby_lat: params.nearby_lat,
+        nearby_lng: params.nearby_lng,
+        nearby_radius: params.nearby_radius,
+      }
+    : undefined
 
   // Get counts from filtered rides (only active future rides)
   const offerCount = rides.filter((r) => r.type === "offer").length
@@ -151,8 +179,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </Suspense>
 
       {/* Rides List or Empty State */}
-      {filteredRides.length > 0 ? (
-        <RideList rides={filteredRides} currentUserId={user?.id} />
+      {filteredRides.length > 0 || matchParams ? (
+        <RideList rides={filteredRides} currentUserId={user?.id} matchParams={matchParams} />
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">

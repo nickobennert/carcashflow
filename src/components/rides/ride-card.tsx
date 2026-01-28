@@ -11,14 +11,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EditRideDrawer } from "@/components/rides/edit-ride-drawer"
 import { cn } from "@/lib/utils"
-import type { RideWithUser } from "@/types"
+import type { RideWithUser, MatchData } from "@/types"
 
 interface RideCardProps {
   ride: RideWithUser
   currentUserId?: string
+  matchData?: MatchData
 }
 
-export function RideCard({ ride, currentUserId }: RideCardProps) {
+export function RideCard({ ride, currentUserId, matchData }: RideCardProps) {
   const isOwnRide = currentUserId === ride.user_id
   const isOffer = ride.type === "offer"
 
@@ -38,7 +39,12 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
     : ride.profiles.username[0].toUpperCase()
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5">
+    <Card className={cn(
+      "overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5",
+      matchData?.onTheWay && matchData.matchTier === "direct" && "border-l-2 border-l-offer",
+      matchData?.onTheWay && matchData.matchTier === "small_detour" && "border-l-2 border-l-yellow-500",
+      matchData?.onTheWay && matchData.matchTier === "detour" && "border-l-2 border-l-muted-foreground",
+    )}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <Link
@@ -74,6 +80,32 @@ export function RideCard({ ride, currentUserId }: RideCardProps) {
             </Badge>
           </div>
         </CardHeader>
+
+        {/* Match Badges */}
+        {matchData?.onTheWay && (
+          <div className="px-6 pb-1 flex flex-wrap gap-1.5">
+            {matchData.matchTier === "direct" && (
+              <Badge variant="secondary" className="text-xs bg-offer/15 text-offer border-offer/30">
+                Auf der Route
+              </Badge>
+            )}
+            {matchData.matchTier === "small_detour" && (
+              <Badge variant="secondary" className="text-xs bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30">
+                {matchData.minDistance ? `${Math.round(matchData.minDistance)} km Umweg` : "Kleiner Umweg"}
+              </Badge>
+            )}
+            {matchData.matchTier === "detour" && (
+              <Badge variant="secondary" className="text-xs">
+                {matchData.minDistance ? `${Math.round(matchData.minDistance)} km Umweg` : "Umweg"}
+              </Badge>
+            )}
+            {matchData.similarity && matchData.similarity >= 70 && (
+              <Badge variant="secondary" className="text-xs bg-offer/15 text-offer border-offer/30">
+                {matchData.similarity}% Match
+              </Badge>
+            )}
+          </div>
+        )}
 
         <CardContent className="space-y-3">
           {/* Route */}

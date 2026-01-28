@@ -684,6 +684,7 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                       departureDate={form.watch("departure_date")}
                       routeGeometry={calculatedRoute?.geometry}
                       onClose={() => setShowMatches(false)}
+                      onShowAllInFeed={() => setOpen(false)}
                     />
                   )}
                 </div>
