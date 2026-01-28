@@ -195,7 +195,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE /api/rides/[id] - Delete a ride
+// DELETE /api/rides/[id] - Delete a ride and associated conversations/messages
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params
   const supabase = await createClient()
@@ -231,15 +231,51 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Soft delete by setting status to cancelled (preserves data for conversations)
+    // 1. Find all conversations linked to this ride
+    const { data: conversations } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("ride_id", id)
+
+    // 2. Delete messages and conversations linked to this ride
+    if (conversations && conversations.length > 0) {
+      const conversationIds = (conversations as { id: string }[]).map((c) => c.id)
+
+      // Delete all messages in these conversations
+      await supabase
+        .from("messages")
+        .delete()
+        .in("conversation_id", conversationIds)
+
+      // Delete notifications related to these conversations
+      // We use a raw filter since data is JSONB
+      for (const convId of conversationIds) {
+        await supabase
+          .from("notifications")
+          .delete()
+          .eq("type", "new_message")
+          .filter("data->>conversation_id", "eq", convId)
+      }
+
+      // Delete the conversations themselves
+      await supabase
+        .from("conversations")
+        .delete()
+        .in("id", conversationIds)
+    }
+
+    // 3. Delete the ride itself (hard delete)
     const { error } = await supabase
       .from("rides")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() } as never)
+      .delete()
       .eq("id", id)
 
     if (error) throw error
 
-    return NextResponse.json({ message: "Ride deleted successfully" })
+    return NextResponse.json({
+      message: "Ride and associated data deleted successfully",
+      deleted_conversations: conversations?.length || 0,
+    })
   } catch (error) {
     console.error("Error deleting ride:", error)
     return NextResponse.json(
