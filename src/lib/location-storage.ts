@@ -17,16 +17,7 @@ export interface RoutePointData {
   order: number
 }
 
-export interface FavoriteRoute {
-  id: string
-  name: string
-  route: RoutePointData[]
-  createdAt: string
-  useCount: number
-}
-
 const RECENT_LOCATIONS_KEY = "fahrmit_recent_locations"
-const FAVORITE_ROUTES_KEY = "fahrmit_favorite_routes"
 const ROUTE_WATCHES_KEY = "fahrmit_route_watches"
 const MAX_RECENT_LOCATIONS = 5
 const MAX_ROUTE_WATCHES = 10
@@ -89,83 +80,6 @@ export function saveRecentLocation(location: { address: string; lat: number; lng
 export function clearRecentLocations(): void {
   if (typeof window === "undefined") return
   localStorage.removeItem(RECENT_LOCATIONS_KEY)
-}
-
-// Get favorite routes
-export function getFavoriteRoutes(): FavoriteRoute[] {
-  if (typeof window === "undefined") return []
-
-  try {
-    const stored = localStorage.getItem(FAVORITE_ROUTES_KEY)
-    if (!stored) return []
-    return JSON.parse(stored)
-  } catch {
-    return []
-  }
-}
-
-// Save a favorite route
-export function saveFavoriteRoute(name: string, route: RoutePointData[]): FavoriteRoute | null {
-  if (typeof window === "undefined") return null
-
-  try {
-    const routes = getFavoriteRoutes()
-
-    // Check if a route with the same name exists
-    const existingIndex = routes.findIndex((r) => r.name.toLowerCase() === name.toLowerCase())
-
-    let newRoute: FavoriteRoute
-    if (existingIndex >= 0) {
-      // Update existing route
-      routes[existingIndex].route = route
-      routes[existingIndex].useCount++
-      newRoute = routes[existingIndex]
-    } else {
-      // Add new route
-      newRoute = {
-        id: crypto.randomUUID(),
-        name,
-        route,
-        createdAt: new Date().toISOString(),
-        useCount: 1,
-      }
-      routes.push(newRoute)
-    }
-
-    localStorage.setItem(FAVORITE_ROUTES_KEY, JSON.stringify(routes))
-    return newRoute
-  } catch (error) {
-    console.error("Error saving favorite route:", error)
-    return null
-  }
-}
-
-// Update favorite route use count
-export function incrementFavoriteRouteUseCount(id: string): void {
-  if (typeof window === "undefined") return
-
-  try {
-    const routes = getFavoriteRoutes()
-    const route = routes.find((r) => r.id === id)
-    if (route) {
-      route.useCount++
-      localStorage.setItem(FAVORITE_ROUTES_KEY, JSON.stringify(routes))
-    }
-  } catch (error) {
-    console.error("Error updating favorite route:", error)
-  }
-}
-
-// Delete a favorite route
-export function deleteFavoriteRoute(id: string): void {
-  if (typeof window === "undefined") return
-
-  try {
-    const routes = getFavoriteRoutes().filter((r) => r.id !== id)
-    localStorage.setItem(FAVORITE_ROUTES_KEY, JSON.stringify(routes))
-  } catch (error) {
-    console.error("Error deleting favorite route:", error)
-  }
 }
 
 // ============================================
