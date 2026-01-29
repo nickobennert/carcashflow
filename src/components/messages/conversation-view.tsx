@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { format, isToday, isYesterday } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, MoreVertical, Check, CheckCheck } from "lucide-react"
+import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2 } from "lucide-react"
 import Link from "next/link"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -14,8 +14,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { MessageInput } from "./message-input"
 import { TypingIndicator } from "./typing-indicator"
 import { useNotificationSound } from "@/hooks/use-notification-sound"
@@ -44,6 +55,8 @@ export function ConversationView({
   const [messages, setMessages] = useState<MessageWithSender[]>(initialMessages)
   const [isOtherTyping, setIsOtherTyping] = useState(false)
   const [isOtherOnline, setIsOtherOnline] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const supabase = createClient()
   const { playSound } = useNotificationSound()
 
@@ -192,6 +205,23 @@ export function ConversationView({
     []
   )
 
+  // Delete conversation
+  const handleDeleteConversation = useCallback(async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) throw new Error("Failed to delete")
+      router.push("/messages")
+      router.refresh()
+    } catch (err) {
+      console.error("Error deleting conversation:", err)
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }, [conversationId, router])
+
   // Group messages by date
   const messagesByDate = groupMessagesByDate(messages)
 
@@ -250,8 +280,38 @@ export function ConversationView({
                 <Link href={`/rides/${ride.id}`}>Route anzeigen</Link>
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Chat löschen
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Die gesamte Konversation mit {displayName} wird unwiderruflich gelöscht.
+                Alle Nachrichten gehen verloren.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConversation}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Wird gelöscht..." : "Endgültig löschen"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </header>
 
       {/* Ride Context Banner */}

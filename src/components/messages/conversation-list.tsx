@@ -1,10 +1,23 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import type { ConversationWithDetails } from "@/types"
 
@@ -37,6 +50,10 @@ interface ConversationItemProps {
 }
 
 function ConversationItem({ conversation, currentUserId }: ConversationItemProps) {
+  const router = useRouter()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Determine the other participant
   const isParticipant1 = conversation.participant_1 === currentUserId
   const otherParticipant = isParticipant1
@@ -72,84 +89,140 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
     ? `${extractCity(conversation.ride.route[0]?.address)} → ${extractCity(conversation.ride.route[conversation.ride.route.length - 1]?.address)}`
     : null
 
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/conversations/${conversation.id}`, {
+        method: "DELETE",
+      })
+      if (!response.ok) throw new Error("Failed to delete")
+      router.refresh()
+    } catch (err) {
+      console.error("Error deleting conversation:", err)
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
   return (
-    <Link
-      href={`/messages/${conversation.id}`}
-      className={cn(
-        "flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors",
+    <>
+      <div className={cn(
+        "group relative flex items-center",
         hasUnread && "bg-primary/5"
-      )}
-    >
-      {/* Avatar */}
-      <div className="relative shrink-0">
-        <Avatar className="h-12 w-12">
-          <AvatarImage src={otherParticipant.avatar_url || undefined} />
-          <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
-        </Avatar>
-        {hasUnread && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground ring-2 ring-card">
-            {(conversation.unread_count || 0) > 9 ? "9+" : conversation.unread_count}
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className={cn(
-            "font-medium text-sm truncate",
-            hasUnread && "font-semibold"
-          )}>
-            {displayName}
-          </span>
-          {lastMessageTime && (
-            <span className={cn(
-              "text-[11px] shrink-0",
-              hasUnread ? "text-primary font-medium" : "text-muted-foreground"
-            )}>
-              {lastMessageTime}
-            </span>
-          )}
-        </div>
-
-        {/* Last message preview */}
-        <div className="flex items-center gap-2 mt-0.5">
-          <p
-            className={cn(
-              "text-[13px] truncate flex-1",
-              hasUnread ? "text-foreground font-medium" : "text-muted-foreground"
+      )}>
+        <Link
+          href={`/messages/${conversation.id}`}
+          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors flex-1 min-w-0"
+        >
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={otherParticipant.avatar_url || undefined} />
+              <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
+            </Avatar>
+            {hasUnread && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground ring-2 ring-card">
+                {(conversation.unread_count || 0) > 9 ? "9+" : conversation.unread_count}
+              </span>
             )}
-          >
-            {conversation.last_message ? (
-              <>
-                {!isLastMessageFromOther && (
-                  <span className="text-muted-foreground">Du: </span>
-                )}
-                {conversation.last_message.content}
-              </>
-            ) : (
-              <span className="italic">Keine Nachrichten</span>
-            )}
-          </p>
-        </div>
-
-        {/* Route reference */}
-        {routeInfo && (
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className={cn(
-              "h-1.5 w-1.5 rounded-full shrink-0",
-              conversation.ride?.type === "offer" ? "bg-emerald-500" : "bg-blue-500"
-            )} />
-            <span className="text-[11px] text-muted-foreground truncate">
-              {routeInfo}
-            </span>
           </div>
-        )}
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className={cn(
+                "font-medium text-sm truncate",
+                hasUnread && "font-semibold"
+              )}>
+                {displayName}
+              </span>
+              {lastMessageTime && (
+                <span className={cn(
+                  "text-[11px] shrink-0",
+                  hasUnread ? "text-primary font-medium" : "text-muted-foreground"
+                )}>
+                  {lastMessageTime}
+                </span>
+              )}
+            </div>
+
+            {/* Last message preview */}
+            <div className="flex items-center gap-2 mt-0.5">
+              <p
+                className={cn(
+                  "text-[13px] truncate flex-1",
+                  hasUnread ? "text-foreground font-medium" : "text-muted-foreground"
+                )}
+              >
+                {conversation.last_message ? (
+                  <>
+                    {!isLastMessageFromOther && (
+                      <span className="text-muted-foreground">Du: </span>
+                    )}
+                    {conversation.last_message.content}
+                  </>
+                ) : (
+                  <span className="italic">Keine Nachrichten</span>
+                )}
+              </p>
+            </div>
+
+            {/* Route reference */}
+            {routeInfo && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className={cn(
+                  "h-1.5 w-1.5 rounded-full shrink-0",
+                  conversation.ride?.type === "offer" ? "bg-emerald-500" : "bg-blue-500"
+                )} />
+                <span className="text-[11px] text-muted-foreground truncate">
+                  {routeInfo}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Arrow */}
+          <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+        </Link>
+
+        {/* Delete button - visible on hover (desktop) and always on mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setShowDeleteDialog(true)
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Arrow */}
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-    </Link>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die gesamte Konversation mit {displayName} wird unwiderruflich gelöscht.
+              Alle Nachrichten gehen verloren.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Wird gelöscht..." : "Endgültig löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
