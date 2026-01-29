@@ -19,21 +19,21 @@ export async function DELETE(
 
   try {
     // Verify the user is a participant of this conversation
-    const { data: participant } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id")
-      .eq("conversation_id", id)
-      .eq("user_id", user.id)
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("id", id)
+      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
       .single()
 
-    if (!participant) {
+    if (!conversation) {
       return NextResponse.json(
         { error: "Conversation not found or access denied" },
         { status: 404 }
       )
     }
 
-    // Delete in order: messages → notifications → participants → conversation
+    // Delete in order: messages → notifications → conversation
     // 1. Delete all messages in this conversation
     await supabase
       .from("messages")
@@ -47,13 +47,7 @@ export async function DELETE(
       .eq("type", "new_message")
       .filter("data->>conversation_id", "eq", id)
 
-    // 3. Delete conversation participants
-    await supabase
-      .from("conversation_participants")
-      .delete()
-      .eq("conversation_id", id)
-
-    // 4. Delete the conversation itself
+    // 3. Delete the conversation itself
     const { error } = await supabase
       .from("conversations")
       .delete()

@@ -12,10 +12,7 @@
 -- Schritt 1: Alle Nachrichten löschen
 DELETE FROM messages;
 
--- Schritt 2: Alle Conversation Participants löschen
-DELETE FROM conversation_participants;
-
--- Schritt 3: Alle Conversations löschen
+-- Schritt 2: Alle Conversations löschen (nutzt participant_1/participant_2, keine separate Tabelle)
 DELETE FROM conversations;
 
 -- Schritt 4: Alle Notifications löschen
