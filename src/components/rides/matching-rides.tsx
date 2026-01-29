@@ -17,6 +17,9 @@ import { de } from "date-fns/locale"
 interface MatchingRide extends RideWithUser {
   similarity?: number
   onTheWay?: boolean
+  matchTier?: "direct" | "small_detour" | "detour" | "none"
+  matchDetails?: string[]
+  minDistance?: number | null
   distance?: number
 }
 
@@ -153,7 +156,22 @@ export function MatchingRides({
                             {ride.similarity}% Match
                           </Badge>
                         )}
-                        {ride.onTheWay && (
+                        {ride.onTheWay && ride.matchTier === "direct" && (
+                          <Badge variant="secondary" className="text-xs bg-offer/20 text-offer">
+                            Auf der Route
+                          </Badge>
+                        )}
+                        {ride.onTheWay && ride.matchTier === "small_detour" && (
+                          <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-400">
+                            {ride.minDistance} km Umweg
+                          </Badge>
+                        )}
+                        {ride.onTheWay && ride.matchTier === "detour" && (
+                          <Badge variant="secondary" className="text-xs">
+                            {ride.minDistance} km Umweg
+                          </Badge>
+                        )}
+                        {ride.onTheWay && !ride.matchTier && (
                           <Badge variant="secondary" className="text-xs">
                             Unterwegs
                           </Badge>

@@ -62,15 +62,41 @@ function pointToSegmentDistance(
   return calculateDistance(px, py, closestLat, closestLng)
 }
 
+// Match quality tiers based on distance from route
+type MatchTier = "direct" | "small_detour" | "detour" | "none"
+
+function getMatchTier(distanceKm: number): MatchTier {
+  if (distanceKm <= 5) return "direct"       // Directly on the route (e.g. next highway exit)
+  if (distanceKm <= 15) return "small_detour" // Small detour (~1-2 exits off highway)
+  if (distanceKm <= 30) return "detour"       // Noticeable detour but still reasonable
+  return "none"
+}
+
+function getMatchTierLabel(tier: MatchTier, distanceKm: number): string {
+  const rounded = Math.round(distanceKm)
+  switch (tier) {
+    case "direct": return `direkt auf der Route`
+    case "small_detour": return `${rounded} km Umweg`
+    case "detour": return `${rounded} km Umweg`
+    case "none": return ""
+  }
+}
+
+const TIER_RANK: Record<MatchTier, number> = { direct: 3, small_detour: 2, detour: 1, none: 0 }
+
+function betterTier(a: MatchTier, b: MatchTier): MatchTier {
+  return TIER_RANK[a] >= TIER_RANK[b] ? a : b
+}
+
 // Check if a point is "on the way" of a route (within threshold km of any segment)
-// IMPROVED: Now uses proper point-to-segment distance calculation
+// Returns match tier and distance for graduated matching
 function isPointOnRoute(
   point: { lat: number; lng: number },
   route: { lat?: number; lng?: number }[],
-  thresholdKm: number = 20
-): { onRoute: boolean; minDistance: number } {
+  thresholdKm: number = 30
+): { onRoute: boolean; minDistance: number; tier: MatchTier } {
   const validRoute = route.filter((p) => p.lat && p.lng) as { lat: number; lng: number }[]
-  if (validRoute.length < 2) return { onRoute: false, minDistance: Infinity }
+  if (validRoute.length < 2) return { onRoute: false, minDistance: Infinity, tier: "none" }
 
   let minDistance = Infinity
 
@@ -86,13 +112,14 @@ function isPointOnRoute(
       minDistance = segmentDistance
     }
 
-    // Early exit if we found a close enough point
-    if (segmentDistance <= thresholdKm) {
-      return { onRoute: true, minDistance: segmentDistance }
+    // Early exit if we found a direct match
+    if (segmentDistance <= 5) {
+      return { onRoute: true, minDistance: segmentDistance, tier: "direct" }
     }
   }
 
-  return { onRoute: minDistance <= thresholdKm, minDistance }
+  const tier = getMatchTier(minDistance)
+  return { onRoute: tier !== "none", minDistance, tier }
 }
 
 // Check if point is within a "corridor" between two points
@@ -351,7 +378,8 @@ export async function POST(request: NextRequest) {
           )
           if (startOnRoute.onRoute) {
             onTheWay = true
-            matchDetails.push(`Start liegt auf deiner Route (${Math.round(startOnRoute.minDistance)} km)`)
+            const tierLabel = getMatchTierLabel(startOnRoute.tier, startOnRoute.minDistance)
+            matchDetails.push(`Start ${tierLabel}`)
             if (startOnRoute.minDistance < minDistance) minDistance = startOnRoute.minDistance
           }
 
@@ -362,7 +390,8 @@ export async function POST(request: NextRequest) {
           )
           if (endOnRoute.onRoute) {
             onTheWay = true
-            matchDetails.push(`Ziel liegt auf deiner Route (${Math.round(endOnRoute.minDistance)} km)`)
+            const tierLabel = getMatchTierLabel(endOnRoute.tier, endOnRoute.minDistance)
+            matchDetails.push(`Ziel ${tierLabel}`)
             if (endOnRoute.minDistance < minDistance) minDistance = endOnRoute.minDistance
           }
 
@@ -374,7 +403,8 @@ export async function POST(request: NextRequest) {
           )
           if (userStartOnRide.onRoute && !startOnRoute.onRoute) {
             onTheWay = true
-            matchDetails.push(`Dein Start liegt auf dieser Route`)
+            const tierLabel = getMatchTierLabel(userStartOnRide.tier, userStartOnRide.minDistance)
+            matchDetails.push(`Dein Start ${tierLabel}`)
             if (userStartOnRide.minDistance < minDistance) minDistance = userStartOnRide.minDistance
           }
 
@@ -385,7 +415,8 @@ export async function POST(request: NextRequest) {
           )
           if (userEndOnRide.onRoute && !endOnRoute.onRoute) {
             onTheWay = true
-            matchDetails.push(`Dein Ziel liegt auf dieser Route`)
+            const tierLabel = getMatchTierLabel(userEndOnRide.tier, userEndOnRide.minDistance)
+            matchDetails.push(`Dein Ziel ${tierLabel}`)
             if (userEndOnRide.minDistance < minDistance) minDistance = userEndOnRide.minDistance
           }
 
@@ -507,19 +538,28 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Derive match tier from best distance
+        const matchTier: MatchTier = onTheWay ? getMatchTier(minDistance === Infinity ? 0 : minDistance) : "none"
+
         return {
           ...ride,
           similarity,
           onTheWay,
+          matchTier,
           matchDetails: matchDetails.slice(0, 3), // Limit to 3 details
           minDistance: minDistance === Infinity ? null : Math.round(minDistance),
         }
       })
       .filter((ride) => ride.similarity >= 20 || ride.onTheWay)
       .sort((a, b) => {
-        // Sort by: onTheWay first, then similarity, then minDistance
+        // Sort by: onTheWay first, then by tier (direct > small_detour > detour),
+        // then by similarity, then by distance
         if (a.onTheWay && !b.onTheWay) return -1
         if (!a.onTheWay && b.onTheWay) return 1
+        if (a.onTheWay && b.onTheWay) {
+          const tierDiff = (TIER_RANK[b.matchTier] || 0) - (TIER_RANK[a.matchTier] || 0)
+          if (tierDiff !== 0) return tierDiff
+        }
         if (b.similarity !== a.similarity) return b.similarity - a.similarity
         return (a.minDistance || 999) - (b.minDistance || 999)
       })
