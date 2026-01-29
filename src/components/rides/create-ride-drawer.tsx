@@ -434,13 +434,12 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
         }
       }
 
-      // TODO: Re-enable route geometry once database columns are verified
-      // Temporarily disabled to isolate the error
-      // if (calculatedRoute?.geometry && calculatedRoute.geometry.length > 0) {
-      //   requestBody.route_geometry = calculatedRoute.geometry
-      //   requestBody.route_distance = calculatedRoute.distance
-      //   requestBody.route_duration = calculatedRoute.duration
-      // }
+      // Add OSRM route geometry for accurate matching
+      if (calculatedRoute?.geometry && calculatedRoute.geometry.length > 0) {
+        requestBody.route_geometry = calculatedRoute.geometry
+        requestBody.route_distance = calculatedRoute.distance
+        requestBody.route_duration = calculatedRoute.duration
+      }
 
       const response = await fetch("/api/rides", {
         method: "POST",
@@ -683,6 +682,7 @@ export function CreateRideDrawer({ userId, trigger }: CreateRideDrawerProps) {
                       }))}
                       type={routeType}
                       departureDate={form.watch("departure_date")}
+                      routeGeometry={calculatedRoute?.geometry}
                       onClose={() => setShowMatches(false)}
                     />
                   )}

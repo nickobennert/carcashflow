@@ -24,6 +24,7 @@ interface MatchingRidesProps {
   route: RoutePoint[]
   type: "offer" | "request"
   departureDate?: Date
+  routeGeometry?: [number, number][]
   onClose?: () => void
 }
 
@@ -31,6 +32,7 @@ export function MatchingRides({
   route,
   type,
   departureDate,
+  routeGeometry,
   onClose,
 }: MatchingRidesProps) {
   const [rides, setRides] = useState<MatchingRide[]>([])
@@ -70,6 +72,7 @@ export function MatchingRides({
             route: currentRoute,
             type,
             departure_date: departureDate?.toISOString().split("T")[0],
+            ...(routeGeometry && routeGeometry.length >= 2 ? { route_geometry: routeGeometry } : {}),
           }),
         })
 

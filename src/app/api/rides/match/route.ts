@@ -213,6 +213,22 @@ function isSubRouteOnRoute(
   }
 }
 
+// Build a detailed route for matching: prefer route_geometry (OSRM polyline),
+// fall back to the basic route points (start/stops/end)
+function getDetailedRoute(
+  ride: { route: RoutePoint[]; route_geometry?: [number, number][] | null }
+): { lat: number; lng: number }[] {
+  // If OSRM geometry is available, use it (hundreds of points along the road)
+  if (ride.route_geometry && Array.isArray(ride.route_geometry) && ride.route_geometry.length >= 2) {
+    return ride.route_geometry.map(([lat, lng]) => ({ lat, lng }))
+  }
+  // Fallback: use the basic route points
+  return ride.route
+    .filter((p) => p.lat && p.lng)
+    .sort((a, b) => a.order - b.order)
+    .map((p) => ({ lat: p.lat!, lng: p.lng! }))
+}
+
 // Calculate similarity score between two routes (0-100)
 function calculateRouteSimilarity(
   route1: RoutePoint[],
@@ -251,7 +267,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { route, type, departure_date, threshold_km = 25 } = body
+    const { route, type, departure_date, threshold_km = 25, route_geometry } = body
 
     if (!route || !Array.isArray(route) || route.length < 2) {
       return NextResponse.json(
@@ -295,9 +311,18 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    // Build detailed user route (prefer geometry if available)
+    const userDetailedRoute: { lat: number; lng: number }[] =
+      route_geometry && Array.isArray(route_geometry) && route_geometry.length >= 2
+        ? route_geometry.map(([lat, lng]: [number, number]) => ({ lat, lng }))
+        : route
+            .filter((p: RoutePoint) => p.lat && p.lng)
+            .sort((a: RoutePoint, b: RoutePoint) => a.order - b.order)
+            .map((p: RoutePoint) => ({ lat: p.lat!, lng: p.lng! }))
+
     // Calculate similarity scores and filter
-    // IMPROVED: Better matching including intermediate stops and corridor detection
-    const matchedRides = (rides as RideWithUser[])
+    // Uses route_geometry (OSRM polyline) when available for accurate matching
+    const matchedRides = (rides as (RideWithUser & { route_geometry?: [number, number][] | null })[])
       .map((ride) => {
         const similarity = calculateRouteSimilarity(route, ride.route)
 
@@ -310,15 +335,18 @@ export async function POST(request: NextRequest) {
         const rideEnd = ride.route.find((p) => p.type === "end")
         const rideStops = ride.route.filter((p) => p.type === "stop")
 
+        // Build detailed route for this ride (prefer OSRM geometry)
+        const rideDetailedRoute = getDetailedRoute(ride)
+
         let onTheWay = false
         const matchDetails: string[] = []
         let minDistance = Infinity
 
         if (userStart?.lat && userEnd?.lat && rideStart?.lat && rideEnd?.lat) {
-          // 1. Check if ride's start/end is on user's route (using segment distance)
+          // 1. Check if ride's start/end is on user's route (using detailed geometry)
           const startOnRoute = isPointOnRoute(
             { lat: rideStart.lat, lng: rideStart.lng! },
-            route,
+            userDetailedRoute,
             threshold_km
           )
           if (startOnRoute.onRoute) {
@@ -329,7 +357,7 @@ export async function POST(request: NextRequest) {
 
           const endOnRoute = isPointOnRoute(
             { lat: rideEnd.lat, lng: rideEnd.lng! },
-            route,
+            userDetailedRoute,
             threshold_km
           )
           if (endOnRoute.onRoute) {
@@ -338,10 +366,10 @@ export async function POST(request: NextRequest) {
             if (endOnRoute.minDistance < minDistance) minDistance = endOnRoute.minDistance
           }
 
-          // 2. Check if user's points are on ride's route
+          // 2. Check if user's points are on ride's route (using ride's detailed geometry)
           const userStartOnRide = isPointOnRoute(
             { lat: userStart.lat, lng: userStart.lng! },
-            ride.route,
+            rideDetailedRoute,
             threshold_km
           )
           if (userStartOnRide.onRoute && !startOnRoute.onRoute) {
@@ -352,7 +380,7 @@ export async function POST(request: NextRequest) {
 
           const userEndOnRide = isPointOnRoute(
             { lat: userEnd.lat, lng: userEnd.lng! },
-            ride.route,
+            rideDetailedRoute,
             threshold_km
           )
           if (userEndOnRide.onRoute && !endOnRoute.onRoute) {
@@ -378,12 +406,12 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // 4. Check if user's stops are on ride's route
+          // 4. Check if user's stops are on ride's route (using detailed geometry)
           for (const stop of userStops) {
             if (stop.lat && stop.lng) {
               const stopOnRide = isPointOnRoute(
                 { lat: stop.lat, lng: stop.lng },
-                ride.route,
+                rideDetailedRoute,
                 threshold_km
               )
               if (stopOnRide.onRoute) {
@@ -393,13 +421,13 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // 5. Route-auf-Route detection
+          // 5. Route-auf-Route detection (using detailed geometries)
           // Check if ride's entire sub-route (start→end) lies on user's route
           if (!onTheWay) {
             const rideOnUserRoute = isSubRouteOnRoute(
               { lat: rideStart.lat, lng: rideStart.lng! },
               { lat: rideEnd.lat, lng: rideEnd.lng! },
-              route,
+              userDetailedRoute,
               threshold_km
             )
             if (rideOnUserRoute.isOnRoute) {
@@ -411,12 +439,12 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // 6. Check reverse: if user's sub-route lies on ride's route
+          // 6. Check reverse: if user's sub-route lies on ride's route (using detailed geometry)
           if (!onTheWay) {
             const userOnRideRoute = isSubRouteOnRoute(
               { lat: userStart.lat, lng: userStart.lng! },
               { lat: userEnd.lat, lng: userEnd.lng! },
-              ride.route,
+              rideDetailedRoute,
               threshold_km
             )
             if (userOnRideRoute.isOnRoute) {
@@ -425,6 +453,56 @@ export async function POST(request: NextRequest) {
                 `Deine Route liegt auf diesem Weg (${userOnRideRoute.detourKm} km Umweg)`
               )
               if (userOnRideRoute.detourKm < minDistance) minDistance = userOnRideRoute.detourKm
+            }
+          }
+
+          // 7. Corridor fallback: check if ride's start AND end are both
+          // in the corridor between user's start and end (detour-based check)
+          // This catches cases where routes don't have geometry and segment distance is too rough
+          if (!onTheWay) {
+            const rideStartInCorridor = isPointInCorridor(
+              { lat: rideStart.lat, lng: rideStart.lng! },
+              { lat: userStart.lat, lng: userStart.lng! },
+              { lat: userEnd.lat, lng: userEnd.lng! },
+              threshold_km
+            )
+            const rideEndInCorridor = isPointInCorridor(
+              { lat: rideEnd.lat, lng: rideEnd.lng! },
+              { lat: userStart.lat, lng: userStart.lng! },
+              { lat: userEnd.lat, lng: userEnd.lng! },
+              threshold_km
+            )
+            if (rideStartInCorridor && rideEndInCorridor) {
+              onTheWay = true
+              matchDetails.push(`Fährt in die gleiche Richtung`)
+              const detour =
+                calculateDistance(userStart.lat, userStart.lng!, rideStart.lat, rideStart.lng!) +
+                calculateDistance(userEnd.lat, userEnd.lng!, rideEnd.lat, rideEnd.lng!)
+              if (detour < minDistance) minDistance = detour
+            }
+          }
+
+          // 8. Reverse corridor: check if user's start AND end are in ride's corridor
+          if (!onTheWay) {
+            const userStartInCorridor = isPointInCorridor(
+              { lat: userStart.lat, lng: userStart.lng! },
+              { lat: rideStart.lat, lng: rideStart.lng! },
+              { lat: rideEnd.lat, lng: rideEnd.lng! },
+              threshold_km
+            )
+            const userEndInCorridor = isPointInCorridor(
+              { lat: userEnd.lat, lng: userEnd.lng! },
+              { lat: rideStart.lat, lng: rideStart.lng! },
+              { lat: rideEnd.lat, lng: rideEnd.lng! },
+              threshold_km
+            )
+            if (userStartInCorridor && userEndInCorridor) {
+              onTheWay = true
+              matchDetails.push(`Route liegt auf dem gleichen Weg`)
+              const detour =
+                calculateDistance(rideStart.lat, rideStart.lng!, userStart.lat, userStart.lng!) +
+                calculateDistance(rideEnd.lat, rideEnd.lng!, userEnd.lat, userEnd.lng!)
+              if (detour < minDistance) minDistance = detour
             }
           }
         }
@@ -516,13 +594,14 @@ export async function GET(request: NextRequest) {
     if (error) throw error
 
     // Filter rides that pass through the given location
-    // IMPROVED: Uses proper segment-based distance calculation
-    const nearbyRides = (rides as RideWithUser[])
+    // Uses route_geometry (OSRM polyline) when available for accurate matching
+    const nearbyRides = (rides as (RideWithUser & { route_geometry?: [number, number][] | null })[])
       .map((ride) => {
         const userPoint = { lat, lng }
 
-        // Use improved isPointOnRoute with segment distance
-        const routeCheck = isPointOnRoute(userPoint, ride.route, radius)
+        // Use detailed route (OSRM geometry if available) for accurate matching
+        const detailedRoute = getDetailedRoute(ride)
+        const routeCheck = isPointOnRoute(userPoint, detailedRoute, radius)
 
         return {
           ...ride,

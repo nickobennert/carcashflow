@@ -358,13 +358,12 @@ export async function POST(request: NextRequest) {
       rideData.comment = comment
     }
 
-    // TODO: Re-enable route geometry once database columns are verified
-    // Temporarily disabled to isolate the error
-    // if (route_geometry && Array.isArray(route_geometry) && route_geometry.length > 0) {
-    //   rideData.route_geometry = route_geometry
-    //   if (route_distance) rideData.route_distance = route_distance
-    //   if (route_duration) rideData.route_duration = route_duration
-    // }
+    // Add route geometry if provided (from OSRM routing)
+    if (route_geometry && Array.isArray(route_geometry) && route_geometry.length > 0) {
+      rideData.route_geometry = route_geometry
+      if (route_distance) rideData.route_distance = route_distance
+      if (route_duration) rideData.route_duration = route_duration
+    }
 
     const { data, error } = await supabase
       .from("rides")
