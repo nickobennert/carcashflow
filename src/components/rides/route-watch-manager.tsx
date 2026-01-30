@@ -9,6 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -250,17 +256,28 @@ export function RouteWatchManager({ className }: RouteWatchManagerProps) {
   return (
     <div className={className}>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Bell className="h-4 w-4" />
-            Benachrichtigungen
-            {activeWatches > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {activeWatches}
-              </Badge>
-            )}
-          </Button>
-        </DialogTrigger>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="relative h-9 w-9">
+                  <Bell className="h-4 w-4" />
+                  {activeWatches > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                    >
+                      {activeWatches}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Route-Benachrichtigungen verwalten</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

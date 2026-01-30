@@ -17,9 +17,10 @@ interface RideCardProps {
   ride: RideWithUser
   currentUserId?: string
   matchData?: MatchData
+  onOpenDetail?: (ride: RideWithUser) => void
 }
 
-export function RideCard({ ride, currentUserId, matchData }: RideCardProps) {
+export function RideCard({ ride, currentUserId, matchData, onOpenDetail }: RideCardProps) {
   const isOwnRide = currentUserId === ride.user_id
   const isOffer = ride.type === "offer"
 
@@ -39,12 +40,18 @@ export function RideCard({ ride, currentUserId, matchData }: RideCardProps) {
     : ride.profiles.username[0].toUpperCase()
 
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5",
-      matchData?.onTheWay && matchData.matchTier === "direct" && "border-l-2 border-l-offer",
-      matchData?.onTheWay && matchData.matchTier === "small_detour" && "border-l-2 border-l-yellow-500",
-      matchData?.onTheWay && matchData.matchTier === "detour" && "border-l-2 border-l-muted-foreground",
-    )}>
+    <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5">
+      {/* Match indicator line */}
+      {matchData?.onTheWay && (
+        <div
+          className={cn(
+            "absolute left-0 top-[10%] bottom-[10%] w-[3px] rounded-full z-10",
+            matchData.matchTier === "direct" && "bg-offer",
+            matchData.matchTier === "small_detour" && "bg-yellow-500",
+            matchData.matchTier === "detour" && "bg-muted-foreground",
+          )}
+        />
+      )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <Link
@@ -99,7 +106,7 @@ export function RideCard({ ride, currentUserId, matchData }: RideCardProps) {
                 {matchData.minDistance ? `${Math.round(matchData.minDistance)} km Umweg` : "Umweg"}
               </Badge>
             )}
-            {matchData.similarity && matchData.similarity >= 70 && (
+            {matchData.similarity != null && matchData.similarity >= 70 && (
               <Badge variant="secondary" className="text-xs bg-offer/15 text-offer border-offer/30">
                 {matchData.similarity}% Match
               </Badge>
@@ -210,12 +217,10 @@ export function RideCard({ ride, currentUserId, matchData }: RideCardProps) {
                   ? "bg-offer hover:bg-offer/90"
                   : "bg-request hover:bg-request/90"
               )}
-              asChild
+              onClick={() => onOpenDetail?.(ride)}
             >
-              <Link href={`/rides/${ride.id}`}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Kontakt aufnehmen
-              </Link>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Kontakt aufnehmen
             </Button>
           )}
         </CardFooter>

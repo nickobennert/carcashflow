@@ -240,6 +240,54 @@ function isSubRouteOnRoute(
   }
 }
 
+// Calculate bearing (direction angle) between two points in degrees (0-360)
+function calculateBearing(
+  lat1: number, lng1: number,
+  lat2: number, lng2: number
+): number {
+  const dLng = toRad(lng2 - lng1)
+  const y = Math.sin(dLng) * Math.cos(toRad(lat2))
+  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLng)
+  const bearing = Math.atan2(y, x) * (180 / Math.PI)
+  return (bearing + 360) % 360
+}
+
+// Check if two bearings point roughly in the same direction (within tolerance degrees)
+function isSameDirection(bearing1: number, bearing2: number, toleranceDeg: number = 60): boolean {
+  let diff = Math.abs(bearing1 - bearing2)
+  if (diff > 180) diff = 360 - diff
+  return diff <= toleranceDeg
+}
+
+// "Same direction" matching for parallel routes (e.g., Köln→Berlin vs Düsseldorf→Potsdam)
+// Matches routes that travel in a similar direction with start/end points within maxDistanceKm
+function isSameDirectionRoute(
+  start1: { lat: number; lng: number },
+  end1: { lat: number; lng: number },
+  start2: { lat: number; lng: number },
+  end2: { lat: number; lng: number },
+  maxDistanceKm: number = 60
+): { isMatch: boolean; startDistance: number; endDistance: number } {
+  const bearing1 = calculateBearing(start1.lat, start1.lng, end1.lat, end1.lng)
+  const bearing2 = calculateBearing(start2.lat, start2.lng, end2.lat, end2.lng)
+
+  if (!isSameDirection(bearing1, bearing2)) {
+    return { isMatch: false, startDistance: Infinity, endDistance: Infinity }
+  }
+
+  // Check that start and end points are within reasonable distance
+  const startDist = calculateDistance(start1.lat, start1.lng, start2.lat, start2.lng)
+  const endDist = calculateDistance(end1.lat, end1.lng, end2.lat, end2.lng)
+
+  // Both starts and both ends must be within maxDistanceKm
+  if (startDist <= maxDistanceKm && endDist <= maxDistanceKm) {
+    return { isMatch: true, startDistance: startDist, endDistance: endDist }
+  }
+
+  return { isMatch: false, startDistance: startDist, endDistance: endDist }
+}
+
 // Build a detailed route for matching: prefer route_geometry (OSRM polyline),
 // fall back to the basic route points (start/stops/end)
 function getDetailedRoute(
@@ -534,6 +582,25 @@ export async function POST(request: NextRequest) {
                 calculateDistance(rideStart.lat, rideStart.lng!, userStart.lat, userStart.lng!) +
                 calculateDistance(rideEnd.lat, rideEnd.lng!, userEnd.lat, userEnd.lng!)
               if (detour < minDistance) minDistance = detour
+            }
+          }
+
+          // 9. "Same direction" fallback: if routes go in same direction and
+          // start/end points are within 60km of each other (e.g., Köln→Berlin vs Düsseldorf→Potsdam)
+          if (!onTheWay) {
+            const sameDir = isSameDirectionRoute(
+              { lat: userStart.lat, lng: userStart.lng! },
+              { lat: userEnd.lat, lng: userEnd.lng! },
+              { lat: rideStart.lat, lng: rideStart.lng! },
+              { lat: rideEnd.lat, lng: rideEnd.lng! },
+              60 // 60km max distance between start/end points
+            )
+            if (sameDir.isMatch) {
+              onTheWay = true
+              const avgDetour = Math.round((sameDir.startDistance + sameDir.endDistance) / 2)
+              matchDetails.push(`Ähnliche Strecke (∅ ${avgDetour} km entfernt)`)
+              const totalDetour = sameDir.startDistance + sameDir.endDistance
+              if (totalDetour < minDistance) minDistance = totalDetour
             }
           }
         }

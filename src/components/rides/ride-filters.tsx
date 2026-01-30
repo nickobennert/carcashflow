@@ -21,6 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
@@ -253,27 +259,33 @@ export function RideFilters({ className }: RideFiltersProps) {
         </Popover>
 
         {/* "Unterwegs" Filter Toggle */}
-        <Button
-          variant={nearbyMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => {
-            if (nearbyMode) {
-              clearNearby()
-            } else {
-              setNearbyMode(true)
-            }
-          }}
-          className={cn(
-            "gap-2",
-            (hasLocationSearch || hasRouteSearch) && "bg-offer text-white hover:bg-offer/90"
-          )}
-        >
-          <Navigation className="h-4 w-4" />
-          Unterwegs
-        </Button>
-
-        {/* Route Watch Manager */}
-        <RouteWatchManager />
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={nearbyMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  if (nearbyMode) {
+                    clearNearby()
+                  } else {
+                    setNearbyMode(true)
+                  }
+                }}
+                className={cn(
+                  "gap-2",
+                  (hasLocationSearch || hasRouteSearch) && "bg-offer text-white hover:bg-offer/90"
+                )}
+              >
+                <Navigation className="h-4 w-4" />
+                Unterwegs
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Fahrten auf deiner Strecke finden</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         {/* Search */}
         {!nearbyMode && (
@@ -307,6 +319,9 @@ export function RideFilters({ className }: RideFiltersProps) {
             Filter zurücksetzen
           </Button>
         )}
+
+        {/* Route Watch Manager - right-aligned, icon only */}
+        <RouteWatchManager className="sm:ml-auto" />
       </div>
 
       {/* "Unterwegs" Search Panel */}

@@ -5,6 +5,7 @@ import { Car, Sparkles, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RideCard } from "./ride-card"
+import { RideDetailModal } from "./ride-detail-modal"
 import type { RideWithUser, MatchData } from "@/types"
 import type { MatchParams } from "@/app/(authenticated)/dashboard/page"
 
@@ -27,6 +28,15 @@ interface RideListProps {
 export function RideList({ rides, currentUserId, emptyMessage, matchParams }: RideListProps) {
   const [matchedRides, setMatchedRides] = useState<MatchedRide[] | null>(null)
   const [isLoadingMatches, setIsLoadingMatches] = useState(false)
+  const [selectedRide, setSelectedRide] = useState<RideWithUser | null>(null)
+  const [selectedMatchData, setSelectedMatchData] = useState<MatchData | undefined>(undefined)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  function handleOpenDetail(ride: RideWithUser, matchData?: MatchData) {
+    setSelectedRide(ride)
+    setSelectedMatchData(matchData)
+    setModalOpen(true)
+  }
 
   // Fetch matching rides when matchParams are present
   useEffect(() => {
@@ -154,10 +164,18 @@ export function RideList({ rides, currentUserId, emptyMessage, matchParams }: Ri
                 ride={ride}
                 currentUserId={currentUserId}
                 matchData={matchData}
+                onOpenDetail={(r) => handleOpenDetail(r, matchData)}
               />
             )
           })}
         </div>
+        <RideDetailModal
+          ride={selectedRide}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          currentUserId={currentUserId}
+          matchData={selectedMatchData}
+        />
       </div>
     )
   }
@@ -176,10 +194,24 @@ export function RideList({ rides, currentUserId, emptyMessage, matchParams }: Ri
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {rides.map((ride) => (
-        <RideCard key={ride.id} ride={ride} currentUserId={currentUserId} />
-      ))}
-    </div>
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        {rides.map((ride) => (
+          <RideCard
+            key={ride.id}
+            ride={ride}
+            currentUserId={currentUserId}
+            onOpenDetail={(r) => handleOpenDetail(r)}
+          />
+        ))}
+      </div>
+      <RideDetailModal
+        ride={selectedRide}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        currentUserId={currentUserId}
+        matchData={selectedMatchData}
+      />
+    </>
   )
 }

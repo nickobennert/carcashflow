@@ -1,6 +1,7 @@
 export { RideCard } from "./ride-card"
 export { RideList } from "./ride-list"
 export { RideFilters } from "./ride-filters"
+export { RideDetailModal } from "./ride-detail-modal"
 export { CreateRideDialog } from "./create-ride-dialog"
 export { CreateRideDrawer } from "./create-ride-drawer"
 export { EditRideDrawer } from "./edit-ride-drawer"
