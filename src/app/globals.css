@@ -96,62 +96,64 @@
   --sidebar-ring: oklch(0.75 0.025 230);
 
   /* Carcashflow Semantic Colors - Light */
-  --offer: oklch(0.55 0.14 158);
+  /* Gedämpft, passend zur blau-grauen Winterlandschaft */
+  --offer: oklch(0.55 0.08 195);
   --offer-foreground: oklch(1 0 0);
-  --request: oklch(0.52 0.14 245);
+  --request: oklch(0.50 0.08 250);
   --request-foreground: oklch(1 0 0);
-  --success: oklch(0.55 0.14 158);
+  --success: oklch(0.55 0.08 195);
   --success-foreground: oklch(1 0 0);
-  --warning: oklch(0.769 0.188 70.08);
+  --warning: oklch(0.72 0.10 70);
   --warning-foreground: oklch(0.21 0.006 285.885);
 }
 
 .dark {
-  /* Dark Mode - Teal-Slate Palette */
-  /* DARK-1: #152026 (bg), DARK-2: #253840 (card), DARK-3: #516973 (muted-fg), DARK-4: #92A4A6 (fg-secondary), DARK-5: #0D0D0D (deepest) */
-  --background: oklch(0.20 0.02 210);
-  --foreground: oklch(0.92 0.01 200);
-  --card: oklch(0.26 0.025 205);
-  --card-foreground: oklch(0.92 0.01 200);
-  --popover: oklch(0.26 0.025 205);
-  --popover-foreground: oklch(0.92 0.01 200);
-  --primary: oklch(0.80 0.04 200);
-  --primary-foreground: oklch(0.20 0.02 210);
-  --secondary: oklch(0.30 0.025 205);
-  --secondary-foreground: oklch(0.92 0.01 200);
-  --muted: oklch(0.30 0.025 205);
-  --muted-foreground: oklch(0.52 0.03 200);
-  --accent: oklch(0.30 0.025 205);
-  --accent-foreground: oklch(0.92 0.01 200);
-  --hover: oklch(0.30 0.025 205);
-  --hover-foreground: oklch(0.92 0.01 200);
-  --destructive: oklch(0.65 0.28 25);
-  --border: oklch(0.38 0.025 200 / 40%);
-  --input: oklch(0.38 0.025 200 / 50%);
-  --ring: oklch(0.52 0.03 200);
+  /* Dark Mode - Exakte Palette aus Behance "DARK" Theme */
+  /* #0D0D0D (deepest), #152026 (bg), #253840 (card), #516973 (muted-fg), #92A4A6 (fg-light) */
+  --background: #152026;
+  --foreground: #e0e6e8;
+  --card: #253840;
+  --card-foreground: #e0e6e8;
+  --popover: #253840;
+  --popover-foreground: #e0e6e8;
+  --primary: #92A4A6;
+  --primary-foreground: #0D0D0D;
+  --secondary: #1e2e35;
+  --secondary-foreground: #e0e6e8;
+  --muted: #1e2e35;
+  --muted-foreground: #516973;
+  --accent: #1e2e35;
+  --accent-foreground: #e0e6e8;
+  --hover: #1e2e35;
+  --hover-foreground: #e0e6e8;
+  --destructive: oklch(0.65 0.22 25);
+  --border: #253840;
+  --input: #2d4550;
+  --ring: #516973;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.17 0.02 210);
-  --sidebar-foreground: oklch(0.92 0.01 200);
-  --sidebar-primary: oklch(0.80 0.04 200);
-  --sidebar-primary-foreground: oklch(0.92 0.01 200);
-  --sidebar-accent: oklch(0.30 0.025 205);
-  --sidebar-accent-foreground: oklch(0.92 0.01 200);
-  --sidebar-border: oklch(0.38 0.025 200 / 30%);
-  --sidebar-ring: oklch(0.52 0.03 200);
+  --sidebar: #0D0D0D;
+  --sidebar-foreground: #e0e6e8;
+  --sidebar-primary: #92A4A6;
+  --sidebar-primary-foreground: #e0e6e8;
+  --sidebar-accent: #1a2a30;
+  --sidebar-accent-foreground: #e0e6e8;
+  --sidebar-border: #253840;
+  --sidebar-ring: #516973;
 
   /* Carcashflow Semantic Colors - Dark */
-  --offer: oklch(0.72 0.17 155);
-  --offer-foreground: oklch(0.15 0.02 155);
-  --request: oklch(0.70 0.14 240);
-  --request-foreground: oklch(1 0 0);
-  --success: oklch(0.72 0.17 155);
-  --success-foreground: oklch(0.15 0.02 155);
-  --warning: oklch(0.828 0.189 84.429);
-  --warning-foreground: oklch(0.21 0.006 285.885);
+  /* Gedämpfte Töne, harmonisch mit der Slate-Palette */
+  --offer: #6a9ba0;
+  --offer-foreground: #0D0D0D;
+  --request: #7088a8;
+  --request-foreground: #ffffff;
+  --success: #6a9ba0;
+  --success-foreground: #0D0D0D;
+  --warning: oklch(0.78 0.14 80);
+  --warning-foreground: #0D0D0D;
 }
 
 @layer base {
