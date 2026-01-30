@@ -351,10 +351,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find the opposite type (if user offers, find requests; if user requests, find offers)
-    const searchType = type === "offer" ? "request" : "offer"
+    // Find matching rides based on type:
+    // "all" = search both offer and request, otherwise search for opposite type
+    const searchType = type === "all" ? null : (type === "offer" ? "request" : "offer")
 
-    // Get active rides of the opposite type
+    // Get active rides
     let query = supabase
       .from("rides")
       .select(`
@@ -364,8 +365,12 @@ export async function POST(request: NextRequest) {
         )
       `)
       .eq("status", "active")
-      .eq("type", searchType)
       .neq("user_id", user.id) // Exclude own rides
+
+    // Only filter by type if not "all"
+    if (searchType) {
+      query = query.eq("type", searchType)
+    }
 
     // Filter by date if provided (+-3 days)
     if (departure_date) {

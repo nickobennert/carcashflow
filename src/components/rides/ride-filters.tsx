@@ -138,6 +138,13 @@ export function RideFilters({ className }: RideFiltersProps) {
     })
   }
 
+  function getMatchType(): string {
+    // When type filter is "all", search both types
+    if (type === "all") return "all"
+    // Otherwise, search for the opposite type (offer wants request, request wants offer)
+    return type === "offer" ? "request" : "offer"
+  }
+
   function handleRouteStartSelect(location: { address: string; lat: number; lng: number }) {
     setRouteStart(location)
     // If end is also set, trigger search immediately
@@ -149,7 +156,8 @@ export function RideFilters({ className }: RideFiltersProps) {
         match_end_lat: routeEnd.lat.toString(),
         match_end_lng: routeEnd.lng.toString(),
         match_end_address: routeEnd.address,
-        match_type: type !== "all" ? (type === "offer" ? "request" : "offer") : "offer",
+        match_type: getMatchType(),
+        match_date: date ? format(date, "yyyy-MM-dd") : null,
         // Clear single location params
         nearby_lat: null,
         nearby_lng: null,
@@ -170,7 +178,8 @@ export function RideFilters({ className }: RideFiltersProps) {
         match_end_lat: location.lat.toString(),
         match_end_lng: location.lng.toString(),
         match_end_address: location.address,
-        match_type: type !== "all" ? (type === "offer" ? "request" : "offer") : "offer",
+        match_type: getMatchType(),
+        match_date: date ? format(date, "yyyy-MM-dd") : null,
         // Clear single location params
         nearby_lat: null,
         nearby_lng: null,
@@ -209,119 +218,125 @@ export function RideFilters({ className }: RideFiltersProps) {
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-        {/* Type Filter */}
-        <Select
-          value={type}
-          onValueChange={(value) => {
-            setType(value)
-            updateFilters({ type: value })
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="Alle Typen" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Routen</SelectItem>
-            <SelectItem value="offer">Nur Angebote</SelectItem>
-            <SelectItem value="request">Nur Gesuche</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Left Wrapper: Filter controls */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
+          {/* Type Filter */}
+          <Select
+            value={type}
+            onValueChange={(value) => {
+              setType(value)
+              updateFilters({ type: value })
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Alle Typen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Routen</SelectItem>
+              <SelectItem value="offer">Nur Angebote</SelectItem>
+              <SelectItem value="request">Nur Gesuche</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {/* Date Filter */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full sm:w-[180px] justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP", { locale: de }) : "Datum filtern"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => {
-                setDate(newDate)
-                updateFilters({
-                  date: newDate ? format(newDate, "yyyy-MM-dd") : null,
-                })
-              }}
-              locale={de}
-              autoFocus
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* "Unterwegs" Filter Toggle */}
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
+          {/* Date Filter */}
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
-                variant={nearbyMode ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (nearbyMode) {
-                    clearNearby()
-                  } else {
-                    setNearbyMode(true)
-                  }
-                }}
                 className={cn(
-                  "gap-2",
-                  (hasLocationSearch || hasRouteSearch) && "bg-offer text-white hover:bg-offer/90"
+                  "w-full sm:w-auto justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
                 )}
               >
-                <Navigation className="h-4 w-4" />
-                Unterwegs
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "d. MMM", { locale: de }) : "Datum"}
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Fahrten auf deiner Strecke finden</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start" side="bottom" avoidCollisions>
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => {
+                  setDate(newDate)
+                  updateFilters({
+                    date: newDate ? format(newDate, "yyyy-MM-dd") : null,
+                  })
+                }}
+                locale={de}
+                autoFocus
+              />
+            </PopoverContent>
+          </Popover>
 
-        {/* Search */}
-        {!nearbyMode && (
-          <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Stadt oder Adresse suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  updateFilters({ search })
-                }
-              }}
-              onBlur={() => updateFilters({ search })}
-              className="pl-9"
-            />
-          </div>
-        )}
+          {/* "Unterwegs" Filter Toggle */}
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={nearbyMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (nearbyMode) {
+                      clearNearby()
+                    } else {
+                      setNearbyMode(true)
+                    }
+                  }}
+                  className={cn(
+                    "gap-2",
+                    (hasLocationSearch || hasRouteSearch) && "bg-offer text-white hover:bg-offer/90"
+                  )}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Unterwegs
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Fahrten auf deiner Strecke finden</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="gap-2"
-          >
-            <X className="h-4 w-4" />
-            Filter zurücksetzen
-          </Button>
-        )}
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="gap-1.5 text-muted-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+              Zurücksetzen
+            </Button>
+          )}
+        </div>
 
-        {/* Route Watch Manager - right-aligned, icon only */}
-        <RouteWatchManager className="sm:ml-auto" />
+        {/* Right Wrapper: Search + Notifications */}
+        <div className="flex items-center gap-2">
+          {!nearbyMode && (
+            <div className="relative flex-1 sm:w-[180px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Suchen..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    updateFilters({ search })
+                  }
+                }}
+                onBlur={() => updateFilters({ search })}
+                className="pl-9 h-9"
+              />
+            </div>
+          )}
+
+          {/* Route Watch Manager */}
+          <RouteWatchManager />
+        </div>
       </div>
 
       {/* "Unterwegs" Search Panel */}

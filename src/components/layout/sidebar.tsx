@@ -194,8 +194,8 @@ function NavLink({ item, isActive, isCollapsed, onClick }: NavLinkProps) {
           "group flex items-center rounded-lg text-sm font-medium transition-colors",
           isCollapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2",
           isActive
-            ? "bg-[#4ADE80] text-[#1A421A]"
-            : "text-muted-foreground hover:bg-[#4ADE80] hover:text-[#1A421A]"
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-primary/90 hover:text-primary-foreground"
         )}
       >
         {/* Icon wrapper - nur im expanded state sichtbar */}
@@ -204,21 +204,15 @@ function NavLink({ item, isActive, isCollapsed, onClick }: NavLinkProps) {
             "flex items-center justify-center rounded-md transition-all duration-200",
             "h-7 w-7",
             isActive
-              ? "bg-[#1A421A]/20"
-              : "bg-muted group-hover:bg-[#1A421A]"
+              ? "bg-primary-foreground/15"
+              : "bg-muted group-hover:bg-primary-foreground/15"
           )}>
-            <Icon className={cn(
-              "h-4 w-4 transition-colors",
-              isActive ? "" : "group-hover:text-white/60"
-            )} />
+            <Icon className="h-4 w-4 transition-colors" />
           </div>
         )}
         {/* Icon ohne Wrapper im collapsed state */}
         {isCollapsed && (
-          <Icon className={cn(
-            "h-5 w-5 transition-colors",
-            isActive ? "" : "group-hover:text-white/60"
-          )} />
+          <Icon className="h-5 w-5 transition-colors" />
         )}
         {!isCollapsed && <span className="flex-1">{item.title}</span>}
       </div>
