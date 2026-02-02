@@ -376,7 +376,11 @@ export async function POST(request: NextRequest) {
       `)
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Supabase insert error:", JSON.stringify(error))
+      console.error("Ride data sent:", JSON.stringify(rideData, null, 2))
+      throw error
+    }
 
     // Trigger route watches for this new ride (async, don't wait)
     triggerRouteWatches(
@@ -387,9 +391,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
-    console.error("Error creating ride:", error)
-    // Return detailed error in development for debugging
-    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    console.error("Error creating ride:", JSON.stringify(error, null, 2))
+    // Extract error message from various error shapes
+    let errorMessage = "Unbekannter Fehler"
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (error && typeof error === "object") {
+      const errObj = error as Record<string, unknown>
+      errorMessage = (errObj.message || errObj.error_description || errObj.details || errObj.hint || "Datenbankfehler") as string
+    }
     const errorDetails = error && typeof error === "object" && "code" in error
       ? (error as { code?: string; details?: string; hint?: string })
       : null

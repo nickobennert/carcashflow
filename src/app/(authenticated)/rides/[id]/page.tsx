@@ -191,7 +191,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
           <div
             className={cn(
               "px-6 py-4",
-              isOffer ? "bg-emerald-500/10" : "bg-blue-500/10"
+              isOffer ? "bg-offer/10" : "bg-request/10"
             )}
           >
             <Badge
@@ -199,8 +199,8 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
               className={cn(
                 "gap-1.5 px-3 py-1 text-sm font-medium",
                 isOffer
-                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+                  ? "bg-offer text-offer-foreground hover:bg-offer/90"
+                  : "bg-request text-request-foreground hover:bg-request/90"
               )}
             >
               {isOffer ? (
@@ -377,17 +377,17 @@ function RouteTimeline({
   return (
     <div className="relative">
       {/* Vertical line */}
-      <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-emerald-500 via-muted-foreground/30 to-blue-500" />
+      <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-gradient-to-b from-offer via-muted-foreground/30 to-request" />
 
       <div className="space-y-4 sm:space-y-6">
         {/* Start */}
         {startPoint && (
           <div className="flex items-start gap-3 sm:gap-4">
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md shrink-0">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-offer text-white shadow-md shrink-0">
               <CircleDot className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
-              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <p className="text-xs font-medium text-offer uppercase tracking-wider">
                 Start
               </p>
               <p className="font-semibold text-base sm:text-lg truncate">{extractCity(startPoint.address)}</p>
@@ -417,7 +417,7 @@ function RouteTimeline({
         {/* End */}
         {endPoint && (
           <div className="flex items-start gap-3 sm:gap-4">
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white shadow-md shrink-0">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-request text-request-foreground shadow-md shrink-0">
               <MapPin className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0 pt-0.5">

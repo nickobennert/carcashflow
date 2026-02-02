@@ -178,8 +178,8 @@ export function SubscriptionTab({ profile }: SubscriptionTabProps) {
             <Badge
               variant="secondary"
               className={cn(
-                status === "active" && "bg-emerald-500/10 text-emerald-600",
-                status === "trialing" && "bg-blue-500/10 text-blue-600",
+                status === "active" && "bg-offer/10 text-offer",
+                status === "trialing" && "bg-request/10 text-request",
                 status === "canceled" && "bg-amber-500/10 text-amber-600",
                 status === "frozen" && "bg-red-500/10 text-red-600"
               )}
@@ -293,7 +293,7 @@ export function SubscriptionTab({ profile }: SubscriptionTabProps) {
                           >
                             {plan.popular && (
                               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                                <Badge className="gap-1 bg-emerald-500 hover:bg-emerald-500">
+                                <Badge className="gap-1 bg-primary hover:bg-primary">
                                   <Sparkles className="h-3 w-3" />
                                   Beliebt
                                 </Badge>
@@ -318,7 +318,7 @@ export function SubscriptionTab({ profile }: SubscriptionTabProps) {
                                   key={feature}
                                   className="flex items-center gap-2 text-sm"
                                 >
-                                  <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  <Check className="h-4 w-4 text-offer shrink-0" />
                                   {feature}
                                 </li>
                               ))}
@@ -327,7 +327,7 @@ export function SubscriptionTab({ profile }: SubscriptionTabProps) {
                             <Button
                               className={cn(
                                 "w-full",
-                                plan.popular && "bg-emerald-500 hover:bg-emerald-600"
+                                plan.popular && "bg-primary hover:bg-primary/90"
                               )}
                               variant={plan.popular ? "default" : "outline"}
                               disabled={isCurrent || isLoading === plan.id}

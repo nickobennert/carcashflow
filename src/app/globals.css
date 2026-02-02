@@ -73,7 +73,7 @@
   --secondary-foreground: oklch(0.22 0.02 240);
   --muted: oklch(0.95 0.006 230);
   --muted-foreground: oklch(0.64 0.03 230);
-  --accent: oklch(0.82 0.22 128);
+  --accent: oklch(0.95 0.006 230);
   --accent-foreground: oklch(0.22 0.02 240);
   --hover: oklch(0.95 0.006 230);
   --hover-foreground: oklch(0.22 0.02 240);
@@ -96,12 +96,12 @@
   --sidebar-ring: oklch(0.75 0.025 230);
 
   /* Carcashflow Semantic Colors - Light */
-  /* Gedämpft, passend zur blau-grauen Winterlandschaft */
-  --offer: oklch(0.55 0.08 195);
+  /* Dunkle Blau-Töne, kein Grün */
+  --offer: oklch(0.50 0.06 230);
   --offer-foreground: oklch(1 0 0);
-  --request: oklch(0.50 0.08 250);
+  --request: oklch(0.45 0.08 255);
   --request-foreground: oklch(1 0 0);
-  --success: oklch(0.55 0.08 195);
+  --success: oklch(0.50 0.06 230);
   --success-foreground: oklch(1 0 0);
   --warning: oklch(0.72 0.10 70);
   --warning-foreground: oklch(0.21 0.006 285.885);
@@ -146,12 +146,12 @@
 
   /* Carcashflow Semantic Colors - Dark */
   /* Gedämpfte Töne, harmonisch mit der Slate-Palette */
-  --offer: #6a9ba0;
-  --offer-foreground: #0D0D0D;
-  --request: #7088a8;
-  --request-foreground: #ffffff;
-  --success: #6a9ba0;
-  --success-foreground: #0D0D0D;
+  --offer: #6889a0;
+  --offer-foreground: #e0e6e8;
+  --request: #5d78a8;
+  --request-foreground: #e0e6e8;
+  --success: #6889a0;
+  --success-foreground: #e0e6e8;
   --warning: oklch(0.78 0.14 80);
   --warning-foreground: #0D0D0D;
 }

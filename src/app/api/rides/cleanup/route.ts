@@ -87,7 +87,13 @@ export async function POST(request: NextRequest) {
         .delete()
         .in("conversation_id", conversationIds)
 
-      // 4. Delete notifications related to these conversations
+      // 4. Delete conversation participants
+      await supabase
+        .from("conversation_participants")
+        .delete()
+        .in("conversation_id", conversationIds)
+
+      // 5. Delete notifications related to these conversations
       for (const convId of conversationIds) {
         await supabase
           .from("notifications")
@@ -96,7 +102,7 @@ export async function POST(request: NextRequest) {
           .filter("data->>conversation_id", "eq", convId)
       }
 
-      // 5. Delete the conversations
+      // 6. Delete the conversations
       await supabase
         .from("conversations")
         .delete()
@@ -105,7 +111,16 @@ export async function POST(request: NextRequest) {
       deletedConversations = conversationIds.length
     }
 
-    // 6. Delete the expired rides
+    // 7. Delete ride-match notifications for expired rides
+    for (const rideId of rideIds) {
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("type", "ride_match")
+        .filter("data->>ride_id", "eq", rideId)
+    }
+
+    // 8. Delete the expired rides (DSGVO: complete data removal)
     const { error: deleteError } = await supabase
       .from("rides")
       .delete()

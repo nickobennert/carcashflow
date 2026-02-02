@@ -54,11 +54,14 @@ export default function ProfilePage() {
         .eq("id", user.id)
         .single()
 
+      const today = new Date().toISOString().split("T")[0]
       const { data: ridesData } = await supabase
         .from("rides")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+        .eq("status", "active")
+        .gte("departure_date", today)
+        .order("departure_date", { ascending: true })
         .limit(5)
 
       if (profileData) {
@@ -118,12 +121,6 @@ export default function ProfilePage() {
 
               <p className="text-muted-foreground mb-3">@{profile.username}</p>
 
-              {profile.bio && (
-                <p className="text-sm text-muted-foreground mb-4 max-w-lg">
-                  {profile.bio}
-                </p>
-              )}
-
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {profile.city && (
                   <span className="flex items-center gap-1">
@@ -153,7 +150,7 @@ export default function ProfilePage() {
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
         <Card>
           <CardContent className="py-4">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-offer">
               {rides.filter((r) => r.type === "offer").length}
             </p>
             <p className="text-sm text-muted-foreground">Angebote</p>
@@ -162,7 +159,7 @@ export default function ProfilePage() {
 
         <Card>
           <CardContent className="py-4">
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-request">
               {rides.filter((r) => r.type === "request").length}
             </p>
             <p className="text-sm text-muted-foreground">Gesuche</p>
@@ -171,7 +168,7 @@ export default function ProfilePage() {
 
         <Card>
           <CardContent className="py-4">
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-primary">
               {format(new Date(profile.created_at), "MMM yyyy", { locale: de })}
             </p>
             <p className="text-sm text-muted-foreground">Mitglied seit</p>
@@ -182,8 +179,8 @@ export default function ProfilePage() {
       {/* Recent Rides */}
       <Card>
         <CardHeader>
-          <CardTitle>Letzte Aktivitäten</CardTitle>
-          <CardDescription>Deine letzten Fahrten und Gesuche</CardDescription>
+          <CardTitle>Aktive Fahrten</CardTitle>
+          <CardDescription>Deine aktuellen Angebote und Gesuche</CardDescription>
         </CardHeader>
         <CardContent>
           {rides.length === 0 ? (
@@ -217,8 +214,8 @@ export default function ProfilePage() {
                       variant="secondary"
                       className={
                         ride.type === "offer"
-                          ? "bg-green-500/10 text-green-600"
-                          : "bg-blue-500/10 text-blue-600"
+                          ? "bg-offer/10 text-offer"
+                          : "bg-request/10 text-request"
                       }
                     >
                       {ride.type === "offer" ? "Biete" : "Suche"}

@@ -100,14 +100,14 @@ const typeConfig = {
   feature: {
     icon: Sparkles,
     label: "Feature",
-    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    dotColor: "bg-emerald-500",
+    color: "bg-offer/10 text-offer border-offer/20",
+    dotColor: "bg-offer",
   },
   improvement: {
     icon: Wrench,
     label: "Verbesserung",
-    color: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-    dotColor: "bg-blue-500",
+    color: "bg-request/10 text-request border-request/20",
+    dotColor: "bg-request",
   },
   fix: {
     icon: Bug,

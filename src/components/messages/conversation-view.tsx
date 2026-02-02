@@ -247,7 +247,7 @@ export function ConversationView({
             <span
               className={cn(
                 "absolute bottom-0 right-0 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full ring-2 ring-card",
-                isOtherOnline ? "bg-emerald-500" : "bg-zinc-400"
+                isOtherOnline ? "bg-offer" : "bg-zinc-400"
               )}
             />
           </div>
@@ -255,9 +255,9 @@ export function ConversationView({
             <p className="font-semibold text-sm truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground truncate">
               {isOtherTyping ? (
-                <span className="text-emerald-500 font-medium">tippt...</span>
+                <span className="text-offer font-medium">tippt...</span>
               ) : isOtherOnline ? (
-                <span className="text-emerald-500">Online</span>
+                <span className="text-offer">Online</span>
               ) : (
                 "Offline"
               )}
@@ -322,7 +322,7 @@ export function ConversationView({
         >
           <span className={cn(
             "h-2 w-2 rounded-full shrink-0",
-            ride.type === "offer" ? "bg-emerald-500" : "bg-blue-500"
+            ride.type === "offer" ? "bg-offer" : "bg-request"
           )} />
           <span className="text-muted-foreground shrink-0">
             {ride.type === "offer" ? "Angebot" : "Gesuch"}:

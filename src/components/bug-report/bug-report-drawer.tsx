@@ -273,7 +273,7 @@ export function BugReportDrawer() {
         )
       case "resolved":
         return (
-          <Badge variant="secondary" className="gap-1 bg-emerald-500 text-white">
+          <Badge variant="secondary" className="gap-1 bg-offer text-offer-foreground">
             <CheckCircle className="h-3 w-3" />
             Erledigt
           </Badge>
@@ -579,7 +579,7 @@ export function BugReportDrawer() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="gap-1 text-emerald-600 hover:text-emerald-700"
+                                        className="gap-1 text-offer hover:text-offer/80"
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           handleStatusChange(report.id, "resolved")

@@ -255,7 +255,7 @@ export function UsersTable() {
     }
 
     const statusColors: Record<string, string> = {
-      active: "bg-emerald-500",
+      active: "bg-offer",
       trialing: "bg-blue-500",
       canceled: "bg-amber-500",
       frozen: "bg-red-500",
@@ -439,7 +439,7 @@ export function UsersTable() {
                   {getSubscriptionBadge(user)}
                   {user.legal_acceptance ? (
                     <div className="flex items-center gap-1">
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                      <ShieldCheck className="h-3.5 w-3.5 text-offer" />
                       <span className="text-muted-foreground">AGB akzeptiert</span>
                     </div>
                   ) : (
@@ -512,7 +512,7 @@ export function UsersTable() {
                     <TableCell>
                       {user.legal_acceptance ? (
                         <div className="flex items-center gap-1.5">
-                          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                          <ShieldCheck className="h-4 w-4 text-offer" />
                           <span className="text-xs text-muted-foreground" title={`Akzeptiert am ${format(new Date(user.legal_acceptance.accepted_at), "dd.MM.yyyy HH:mm", { locale: de })}${user.legal_acceptance.ip_address ? ` von IP ${user.legal_acceptance.ip_address}` : ""}`}>
                             {format(new Date(user.legal_acceptance.accepted_at), "dd.MM.yy", { locale: de })}
                           </span>

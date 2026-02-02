@@ -146,8 +146,8 @@ export default function Home() {
                       </div>
                       <div className={`rounded-full px-2.5 py-0.5 text-xs ${
                         ride.type === "offer"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          ? "bg-offer/10 text-offer"
+                          : "bg-request/10 text-request"
                       }`}>
                         {ride.type === "offer" ? "Bietet" : "Sucht"}
                       </div>

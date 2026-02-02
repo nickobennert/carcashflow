@@ -379,8 +379,8 @@ function NotificationItem({
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-          notification.type === "new_message" && "bg-blue-500/10 text-blue-600",
-          notification.type === "ride_match" && "bg-green-500/10 text-green-600",
+          notification.type === "new_message" && "bg-request/10 text-request",
+          notification.type === "ride_match" && "bg-offer/10 text-offer",
           notification.type === "system" && "bg-muted text-muted-foreground"
         )}
       >

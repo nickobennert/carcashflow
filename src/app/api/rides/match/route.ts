@@ -542,51 +542,64 @@ export async function POST(request: NextRequest) {
 
           // 7. Corridor fallback: check if ride's start AND end are both
           // in the corridor between user's start and end (detour-based check)
-          // This catches cases where routes don't have geometry and segment distance is too rough
+          // IMPORTANT: Also verify direction to prevent matching rides that just
+          // share an endpoint but go in opposite directions (e.g., Berlin→München for Düsseldorf→Berlin)
           if (!onTheWay) {
-            const rideStartInCorridor = isPointInCorridor(
-              { lat: rideStart.lat, lng: rideStart.lng! },
-              { lat: userStart.lat, lng: userStart.lng! },
-              { lat: userEnd.lat, lng: userEnd.lng! },
-              threshold_km
-            )
-            const rideEndInCorridor = isPointInCorridor(
-              { lat: rideEnd.lat, lng: rideEnd.lng! },
-              { lat: userStart.lat, lng: userStart.lng! },
-              { lat: userEnd.lat, lng: userEnd.lng! },
-              threshold_km
-            )
-            if (rideStartInCorridor && rideEndInCorridor) {
-              onTheWay = true
-              matchDetails.push(`Fährt in die gleiche Richtung`)
-              const detour =
-                calculateDistance(userStart.lat, userStart.lng!, rideStart.lat, rideStart.lng!) +
-                calculateDistance(userEnd.lat, userEnd.lng!, rideEnd.lat, rideEnd.lng!)
-              if (detour < minDistance) minDistance = detour
+            const userBearing = calculateBearing(userStart.lat, userStart.lng!, userEnd.lat, userEnd.lng!)
+            const rideBearing = calculateBearing(rideStart.lat, rideStart.lng!, rideEnd.lat, rideEnd.lng!)
+            const sameGeneralDirection = isSameDirection(userBearing, rideBearing, 90)
+
+            if (sameGeneralDirection) {
+              const rideStartInCorridor = isPointInCorridor(
+                { lat: rideStart.lat, lng: rideStart.lng! },
+                { lat: userStart.lat, lng: userStart.lng! },
+                { lat: userEnd.lat, lng: userEnd.lng! },
+                threshold_km
+              )
+              const rideEndInCorridor = isPointInCorridor(
+                { lat: rideEnd.lat, lng: rideEnd.lng! },
+                { lat: userStart.lat, lng: userStart.lng! },
+                { lat: userEnd.lat, lng: userEnd.lng! },
+                threshold_km
+              )
+              if (rideStartInCorridor && rideEndInCorridor) {
+                onTheWay = true
+                matchDetails.push(`Fährt in die gleiche Richtung`)
+                const detour =
+                  calculateDistance(userStart.lat, userStart.lng!, rideStart.lat, rideStart.lng!) +
+                  calculateDistance(userEnd.lat, userEnd.lng!, rideEnd.lat, rideEnd.lng!)
+                if (detour < minDistance) minDistance = detour
+              }
             }
           }
 
           // 8. Reverse corridor: check if user's start AND end are in ride's corridor
           if (!onTheWay) {
-            const userStartInCorridor = isPointInCorridor(
-              { lat: userStart.lat, lng: userStart.lng! },
-              { lat: rideStart.lat, lng: rideStart.lng! },
-              { lat: rideEnd.lat, lng: rideEnd.lng! },
-              threshold_km
-            )
-            const userEndInCorridor = isPointInCorridor(
-              { lat: userEnd.lat, lng: userEnd.lng! },
-              { lat: rideStart.lat, lng: rideStart.lng! },
-              { lat: rideEnd.lat, lng: rideEnd.lng! },
-              threshold_km
-            )
-            if (userStartInCorridor && userEndInCorridor) {
-              onTheWay = true
-              matchDetails.push(`Route liegt auf dem gleichen Weg`)
-              const detour =
-                calculateDistance(rideStart.lat, rideStart.lng!, userStart.lat, userStart.lng!) +
-                calculateDistance(rideEnd.lat, rideEnd.lng!, userEnd.lat, userEnd.lng!)
-              if (detour < minDistance) minDistance = detour
+            const userBearing = calculateBearing(userStart.lat, userStart.lng!, userEnd.lat, userEnd.lng!)
+            const rideBearing = calculateBearing(rideStart.lat, rideStart.lng!, rideEnd.lat, rideEnd.lng!)
+            const sameGeneralDirection = isSameDirection(userBearing, rideBearing, 90)
+
+            if (sameGeneralDirection) {
+              const userStartInCorridor = isPointInCorridor(
+                { lat: userStart.lat, lng: userStart.lng! },
+                { lat: rideStart.lat, lng: rideStart.lng! },
+                { lat: rideEnd.lat, lng: rideEnd.lng! },
+                threshold_km
+              )
+              const userEndInCorridor = isPointInCorridor(
+                { lat: userEnd.lat, lng: userEnd.lng! },
+                { lat: rideStart.lat, lng: rideStart.lng! },
+                { lat: rideEnd.lat, lng: rideEnd.lng! },
+                threshold_km
+              )
+              if (userStartInCorridor && userEndInCorridor) {
+                onTheWay = true
+                matchDetails.push(`Route liegt auf dem gleichen Weg`)
+                const detour =
+                  calculateDistance(rideStart.lat, rideStart.lng!, userStart.lat, userStart.lng!) +
+                  calculateDistance(rideEnd.lat, rideEnd.lng!, userEnd.lat, userEnd.lng!)
+                if (detour < minDistance) minDistance = detour
+              }
             }
           }
 
@@ -613,6 +626,14 @@ export async function POST(request: NextRequest) {
         // Derive match tier from best distance
         const matchTier: MatchTier = onTheWay ? getMatchTier(minDistance === Infinity ? 0 : minDistance) : "none"
 
+        // Check if ride goes in a roughly similar direction (filter out opposite-direction rides)
+        let goesInSimilarDirection = true
+        if (userStart?.lat && userEnd?.lat && rideStart?.lat && rideEnd?.lat) {
+          const userBearing = calculateBearing(userStart.lat, userStart.lng!, userEnd.lat, userEnd.lng!)
+          const rideBearing = calculateBearing(rideStart.lat, rideStart.lng!, rideEnd.lat, rideEnd.lng!)
+          goesInSimilarDirection = isSameDirection(userBearing, rideBearing, 90)
+        }
+
         return {
           ...ride,
           similarity,
@@ -620,9 +641,16 @@ export async function POST(request: NextRequest) {
           matchTier,
           matchDetails: matchDetails.slice(0, 3), // Limit to 3 details
           minDistance: minDistance === Infinity ? null : Math.round(minDistance),
+          goesInSimilarDirection,
         }
       })
-      .filter((ride) => ride.similarity >= 20 || ride.onTheWay)
+      .filter((ride) => {
+        // Must go in similar direction OR be explicitly on the way (via point-on-route checks 1-6)
+        if (!ride.goesInSimilarDirection && !ride.onTheWay) return false
+        // If not on the way but has high similarity and wrong direction, filter out
+        if (!ride.goesInSimilarDirection && !ride.onTheWay) return false
+        return ride.similarity >= 20 || ride.onTheWay
+      })
       .sort((a, b) => {
         // Sort by: onTheWay first, then by tier (direct > small_detour > detour),
         // then by similarity, then by distance

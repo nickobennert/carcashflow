@@ -115,14 +115,14 @@ function StatCard({
 }) {
   const colorMap = {
     emerald: {
-      bg: "bg-emerald-500/10",
-      text: "text-emerald-500",
-      border: "border-emerald-500/20",
+      bg: "bg-offer/10",
+      text: "text-offer",
+      border: "border-offer/20",
     },
     blue: {
-      bg: "bg-blue-500/10",
-      text: "text-blue-500",
-      border: "border-blue-500/20",
+      bg: "bg-request/10",
+      text: "text-request",
+      border: "border-request/20",
     },
     violet: {
       bg: "bg-violet-500/10",
@@ -157,7 +157,7 @@ function StatCard({
             </div>
             {trend && trendValue && (
               <div className={`flex items-center gap-1 text-xs font-medium ${
-                trend === "up" ? "text-emerald-500" : trend === "down" ? "text-rose-500" : "text-muted-foreground"
+                trend === "up" ? "text-offer" : trend === "down" ? "text-rose-500" : "text-muted-foreground"
               }`}>
                 {trend === "up" ? (
                   <TrendingUp className="h-3 w-3" />

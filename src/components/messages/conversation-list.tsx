@@ -173,7 +173,7 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
               <div className="flex items-center gap-1.5 mt-1">
                 <span className={cn(
                   "h-1.5 w-1.5 rounded-full shrink-0",
-                  conversation.ride?.type === "offer" ? "bg-emerald-500" : "bg-blue-500"
+                  conversation.ride?.type === "offer" ? "bg-offer" : "bg-request"
                 )} />
                 <span className="text-[11px] text-muted-foreground truncate">
                   {routeInfo}

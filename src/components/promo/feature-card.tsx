@@ -13,8 +13,8 @@ interface FeatureCardProps {
 }
 
 const colorClasses = {
-  green: "bg-green-500/10 text-green-600",
-  blue: "bg-blue-500/10 text-blue-600",
+  green: "bg-offer/10 text-offer",
+  blue: "bg-request/10 text-request",
   purple: "bg-purple-500/10 text-purple-600",
   amber: "bg-amber-500/10 text-amber-600",
 }
