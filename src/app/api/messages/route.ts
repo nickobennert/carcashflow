@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 // Type for conversation
 type ConversationData = { id: string; participant_1: string; participant_2: string }
@@ -172,10 +173,11 @@ export async function POST(request: NextRequest) {
     const profile = senderProfile as { first_name: string | null; username: string | null } | null
     const senderName = profile?.first_name || profile?.username || "Jemand"
 
-    // Create notification for the recipient
-    // Always create notification - the frontend suppresses display if user is in the active chat
+    // Create notification for the recipient using admin client (bypasses RLS)
+    // The regular server client uses ANON key which can't INSERT into notifications table
     try {
-      const { data: notifData, error: notifError } = await supabase.from("notifications").insert({
+      const adminClient = createAdminClient()
+      const { data: notifData, error: notifError } = await adminClient.from("notifications").insert({
         user_id: otherUserId,
         type: "new_message",
         title: `Neue Nachricht von ${senderName}`,
