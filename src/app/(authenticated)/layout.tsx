@@ -26,10 +26,6 @@ export default async function AuthenticatedLayout({
     .eq("id", user.id)
     .single() as { data: Profile | null; error: unknown }
 
-  // Get unread message count (placeholder - will be implemented later)
-  const unreadMessages = 0
-  const unreadNotifications = 0
-
   const userData = profile
     ? {
         name: `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || profile.username,
@@ -43,11 +39,7 @@ export default async function AuthenticatedLayout({
       }
 
   return (
-    <AppShell
-      user={userData}
-      unreadMessages={unreadMessages}
-      unreadNotifications={unreadNotifications}
-    >
+    <AppShell user={userData}>
       <LegalCheckWrapper />
       {children}
     </AppShell>

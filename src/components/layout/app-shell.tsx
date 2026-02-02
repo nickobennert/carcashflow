@@ -12,8 +12,6 @@ interface AppShellProps {
     email: string
     avatar?: string
   } | null
-  unreadMessages?: number
-  unreadNotifications?: number
 }
 
 // Routes that need fixed height layout (no page scroll, internal scroll only)
@@ -22,8 +20,6 @@ const fixedHeightRoutes = ["/messages/"]
 export function AppShell({
   children,
   user,
-  unreadMessages,
-  unreadNotifications,
 }: AppShellProps) {
   const pathname = usePathname()
 
@@ -33,11 +29,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       {/* Fixed Header */}
-      <Header
-        user={user}
-        unreadMessages={unreadMessages}
-        unreadNotifications={unreadNotifications}
-      />
+      <Header user={user} />
 
       {/* Content Area */}
       <div className={isFixedHeight ? "flex h-[calc(100vh-3.5rem)]" : "flex min-h-[calc(100vh-3.5rem)]"}>

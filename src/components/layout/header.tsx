@@ -27,11 +27,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
-import { NotificationsDropdown } from "@/components/notifications"
 import { buttonPress } from "@/lib/animations"
+import { useUnreadMessages } from "@/hooks"
 
 interface HeaderProps {
   user?: {
@@ -39,19 +38,16 @@ interface HeaderProps {
     email: string
     avatar?: string
   } | null
-  unreadMessages?: number
-  unreadNotifications?: number
 }
 
 export function Header({
   user,
-  unreadMessages = 0,
-  unreadNotifications = 0,
 }: HeaderProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const supabase = createClient()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const unreadMessages = useUnreadMessages()
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -104,28 +100,26 @@ export function Header({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1">
-          {/* Messages */}
+          {/* Messages with live unread count */}
           {user && (
             <Link href="/messages">
               <motion.div {...buttonPress}>
                 <Button variant="ghost" size="icon" className="relative">
                   <MessageSquare className="h-5 w-5" />
                   {unreadMessages > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground"
                     >
                       {unreadMessages > 9 ? "9+" : unreadMessages}
-                    </Badge>
+                    </motion.span>
                   )}
                   <span className="sr-only">Nachrichten</span>
                 </Button>
               </motion.div>
             </Link>
           )}
-
-          {/* Notifications */}
-          {user && <NotificationsDropdown />}
 
           {/* Theme Toggle */}
           <motion.div {...buttonPress}>
