@@ -11,7 +11,6 @@ import { staggerContainer, staggerItem } from "@/lib/animations"
 import { formatDistance } from "@/lib/location-storage"
 import type { RideWithUser, RoutePoint } from "@/types"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 
@@ -46,10 +45,12 @@ export function MatchingRides({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Create a stable key from route to prevent infinite loops
+  // Create stable keys from route and date to prevent infinite loops
   const routeKey = useMemo(() => {
     return route.map(p => `${p.type}:${p.lat}:${p.lng}`).join("|")
   }, [route])
+
+  const departureDateKey = departureDate?.toISOString().split("T")[0] || ""
 
   // Store route in ref to use current value in effect without causing re-runs
   const routeRef = useRef(route)
@@ -96,7 +97,7 @@ export function MatchingRides({
     }
 
     fetchMatches()
-  }, [routeKey, type, departureDate])
+  }, [routeKey, type, departureDateKey])
 
   if (isLoading) {
     return (
@@ -141,8 +142,14 @@ export function MatchingRides({
           <AnimatePresence>
             {rides.slice(0, 3).map((ride) => (
               <motion.div key={ride.id} variants={staggerItem}>
-                <Link href={`/dashboard?ride=${ride.id}`}>
-                  <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-background/80 transition-colors cursor-pointer">
+                <div
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-background/80 transition-colors cursor-pointer"
+                  onClick={() => {
+                    // Close drawer first, then navigate to the ride
+                    onShowAllInFeed?.()
+                    router.push(`/dashboard?ride=${ride.id}`)
+                  }}
+                >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={ride.profiles?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
@@ -204,40 +211,37 @@ export function MatchingRides({
 
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
-                </Link>
               </motion.div>
             ))}
           </AnimatePresence>
 
-          {rides.length > 3 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => {
-                const start = route.find(p => p.type === "start")
-                const end = route.find(p => p.type === "end")
-                const params = new URLSearchParams()
-                if (start?.lat && start?.lng) {
-                  params.set("match_start_lat", String(start.lat))
-                  params.set("match_start_lng", String(start.lng))
-                }
-                if (end?.lat && end?.lng) {
-                  params.set("match_end_lat", String(end.lat))
-                  params.set("match_end_lng", String(end.lng))
-                }
-                if (departureDate) {
-                  params.set("match_date", departureDate.toISOString().split("T")[0])
-                }
-                params.set("match_type", type)
-                // Close drawer first, then navigate
-                onShowAllInFeed?.()
-                router.push(`/dashboard?${params.toString()}`)
-              }}
-            >
-              Alle {rides.length} Ergebnisse anzeigen
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs mt-1"
+            onClick={() => {
+              const start = route.find(p => p.type === "start")
+              const end = route.find(p => p.type === "end")
+              const params = new URLSearchParams()
+              if (start?.lat && start?.lng) {
+                params.set("match_start_lat", String(start.lat))
+                params.set("match_start_lng", String(start.lng))
+              }
+              if (end?.lat && end?.lng) {
+                params.set("match_end_lat", String(end.lat))
+                params.set("match_end_lng", String(end.lng))
+              }
+              if (departureDate) {
+                params.set("match_date", departureDate.toISOString().split("T")[0])
+              }
+              params.set("match_type", type)
+              // Close drawer first, then navigate
+              onShowAllInFeed?.()
+              router.push(`/dashboard?${params.toString()}`)
+            }}
+          >
+            Alle {rides.length} Ergebnisse im Dashboard anzeigen
+          </Button>
         </motion.div>
       </CardContent>
     </Card>

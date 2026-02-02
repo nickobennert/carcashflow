@@ -175,16 +175,21 @@ export async function POST(request: NextRequest) {
     // Create notification for the recipient
     // Always create notification - the frontend suppresses display if user is in the active chat
     try {
-      const { error: notifError } = await supabase.from("notifications").insert({
+      const { data: notifData, error: notifError } = await supabase.from("notifications").insert({
         user_id: otherUserId,
         type: "new_message",
         title: `Neue Nachricht von ${senderName}`,
         message: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
         data: { conversation_id, sender_id: user.id },
       } as never)
+      .select("id")
+      .single()
 
       if (notifError) {
-        console.error("Error creating notification:", notifError)
+        console.error("Error creating notification:", JSON.stringify(notifError))
+        console.error("Notification payload:", { user_id: otherUserId, type: "new_message" })
+      } else {
+        console.log(`Notification created: ${(notifData as { id: string } | null)?.id} for user ${otherUserId}`)
       }
     } catch (notifErr) {
       console.error("Notification creation failed:", notifErr)
