@@ -63,6 +63,7 @@ export function NotificationsDropdown() {
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null
+    let pollInterval: ReturnType<typeof setInterval> | null = null
 
     async function initNotifications() {
       // Load notifications first
@@ -94,6 +95,11 @@ export function NotificationsDropdown() {
           }
         )
         .subscribe()
+
+      // Fallback polling every 30s in case Realtime is not enabled
+      pollInterval = setInterval(() => {
+        loadNotifications()
+      }, 30000)
     }
 
     initNotifications()
@@ -101,6 +107,9 @@ export function NotificationsDropdown() {
     return () => {
       if (channel) {
         supabase.removeChannel(channel)
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
       }
     }
   }, [supabase])
@@ -214,7 +223,13 @@ export function NotificationsDropdown() {
 
   return (
     <>
-      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={(open) => {
+        setIsDropdownOpen(open)
+        if (open) {
+          // Refresh notifications when dropdown opens
+          loadNotifications()
+        }
+      }}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
