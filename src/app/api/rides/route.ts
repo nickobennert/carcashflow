@@ -245,10 +245,10 @@ export async function POST(request: NextRequest) {
         (parentRideData as Record<string, unknown>).route_geometry = route_geometry
       }
       if (route_distance) {
-        (parentRideData as Record<string, unknown>).route_distance = route_distance
+        (parentRideData as Record<string, unknown>).route_distance = Math.round(Number(route_distance))
       }
       if (route_duration) {
-        (parentRideData as Record<string, unknown>).route_duration = route_duration
+        (parentRideData as Record<string, unknown>).route_duration = Math.round(Number(route_duration))
       }
 
       const { data: parentRide, error: parentError } = await supabase
@@ -291,8 +291,8 @@ export async function POST(request: NextRequest) {
 
           // Add route geometry fields only if provided
           if (route_geometry) childRide.route_geometry = route_geometry
-          if (route_distance) childRide.route_distance = route_distance
-          if (route_duration) childRide.route_duration = route_duration
+          if (route_distance) childRide.route_distance = Math.round(Number(route_distance))
+          if (route_duration) childRide.route_duration = Math.round(Number(route_duration))
 
           return childRide
         })
@@ -361,8 +361,8 @@ export async function POST(request: NextRequest) {
     // Add route geometry if provided (from OSRM routing)
     if (route_geometry && Array.isArray(route_geometry) && route_geometry.length > 0) {
       rideData.route_geometry = route_geometry
-      if (route_distance) rideData.route_distance = route_distance
-      if (route_duration) rideData.route_duration = route_duration
+      if (route_distance) rideData.route_distance = Math.round(Number(route_distance))
+      if (route_duration) rideData.route_duration = Math.round(Number(route_duration))
     }
 
     const { data, error } = await supabase

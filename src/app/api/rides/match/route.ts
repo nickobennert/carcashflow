@@ -473,6 +473,31 @@ export async function POST(request: NextRequest) {
             if (userEndOnRide.minDistance < minDistance) minDistance = userEndOnRide.minDistance
           }
 
+          // 2b. Direction sanity check for steps 1-2:
+          // If only ONE endpoint of the ride is on the user's route but the ride
+          // goes in an opposite direction, it's a false positive.
+          // Example: User searches Düsseldorf→Berlin. Max offers Berlin→München.
+          // Berlin (Max's start) IS on the route (it's the endpoint), but Berlin→München
+          // goes southeast while Düsseldorf→Berlin goes northeast → reject.
+          if (onTheWay) {
+            const bothEndpointsOnRoute = (startOnRoute.onRoute && endOnRoute.onRoute) ||
+              (userStartOnRide.onRoute && userEndOnRide.onRoute)
+
+            if (!bothEndpointsOnRoute) {
+              // Only one endpoint matched - verify direction
+              const userBearing = calculateBearing(userStart.lat, userStart.lng!, userEnd.lat, userEnd.lng!)
+              const rideBearing = calculateBearing(rideStart.lat, rideStart.lng!, rideEnd.lat, rideEnd.lng!)
+              const sameDir = isSameDirection(userBearing, rideBearing, 90)
+
+              if (!sameDir) {
+                // Opposite direction - reject this match
+                onTheWay = false
+                matchDetails.length = 0
+                minDistance = Infinity
+              }
+            }
+          }
+
           // 3. Check intermediate stops (the "Düsseldorf" scenario)
           // Check if any of ride's stops are in the corridor between user's start/end
           for (const stop of rideStops) {

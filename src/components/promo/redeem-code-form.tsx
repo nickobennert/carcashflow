@@ -101,7 +101,7 @@ export function RedeemCodeForm({ onSuccess }: RedeemCodeFormProps) {
                 exit="exit"
                 className={`flex items-start gap-3 rounded-lg p-3 ${
                   result.success
-                    ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200"
+                    ? "bg-offer/10 text-offer"
                     : "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200"
                 }`}
               >

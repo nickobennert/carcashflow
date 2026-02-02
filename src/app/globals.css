@@ -108,50 +108,50 @@
 }
 
 .dark {
-  /* Dark Mode - Exakte Palette aus Behance "DARK" Theme */
-  /* #0D0D0D (deepest), #152026 (bg), #253840 (card), #516973 (muted-fg), #92A4A6 (fg-light) */
-  --background: #152026;
-  --foreground: #e0e6e8;
-  --card: #253840;
-  --card-foreground: #e0e6e8;
-  --popover: #253840;
-  --popover-foreground: #e0e6e8;
-  --primary: #92A4A6;
+  /* Dark Mode - Blaue Slate-Palette (kein Grün/Teal) */
+  /* Alle Werte haben höheren Blau- als Grünanteil */
+  --background: #141a22;
+  --foreground: #e0e4e8;
+  --card: #1c2530;
+  --card-foreground: #e0e4e8;
+  --popover: #1c2530;
+  --popover-foreground: #e0e4e8;
+  --primary: #8fa0b0;
   --primary-foreground: #0D0D0D;
-  --secondary: #1e2e35;
-  --secondary-foreground: #e0e6e8;
-  --muted: #1e2e35;
-  --muted-foreground: #516973;
-  --accent: #1e2e35;
-  --accent-foreground: #e0e6e8;
-  --hover: #1e2e35;
-  --hover-foreground: #e0e6e8;
+  --secondary: #1a2230;
+  --secondary-foreground: #e0e4e8;
+  --muted: #1a2230;
+  --muted-foreground: #5a6a80;
+  --accent: #1a2230;
+  --accent-foreground: #e0e4e8;
+  --hover: #1a2230;
+  --hover-foreground: #e0e4e8;
   --destructive: oklch(0.65 0.22 25);
-  --border: #253840;
-  --input: #2d4550;
-  --ring: #516973;
+  --border: #243040;
+  --input: #2a3545;
+  --ring: #5a6a80;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: #0D0D0D;
-  --sidebar-foreground: #e0e6e8;
-  --sidebar-primary: #92A4A6;
-  --sidebar-primary-foreground: #e0e6e8;
-  --sidebar-accent: #1a2a30;
-  --sidebar-accent-foreground: #e0e6e8;
-  --sidebar-border: #253840;
-  --sidebar-ring: #516973;
+  --sidebar-foreground: #e0e4e8;
+  --sidebar-primary: #8fa0b0;
+  --sidebar-primary-foreground: #e0e4e8;
+  --sidebar-accent: #161e2a;
+  --sidebar-accent-foreground: #e0e4e8;
+  --sidebar-border: #243040;
+  --sidebar-ring: #5a6a80;
 
   /* Carcashflow Semantic Colors - Dark */
-  /* Gedämpfte Töne, harmonisch mit der Slate-Palette */
-  --offer: #6889a0;
-  --offer-foreground: #e0e6e8;
-  --request: #5d78a8;
-  --request-foreground: #e0e6e8;
-  --success: #6889a0;
-  --success-foreground: #e0e6e8;
+  /* Reine Blautöne, kein Grün/Teal */
+  --offer: #6080a0;
+  --offer-foreground: #e0e4e8;
+  --request: #5570a8;
+  --request-foreground: #e0e4e8;
+  --success: #6080a0;
+  --success-foreground: #e0e4e8;
   --warning: oklch(0.78 0.14 80);
   --warning-foreground: #0D0D0D;
 }

@@ -82,7 +82,7 @@ const typeLabels: Record<string, string> = {
 
 const typeBadgeColors: Record<string, string> = {
   percent_discount: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  fixed_discount: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  fixed_discount: "bg-offer/10 text-offer",
   free_months: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   lifetime_free: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
 }
@@ -407,7 +407,7 @@ export function PromoCodesTable() {
                   </TableCell>
                   <TableCell>
                     {code.is_active ? (
-                      <Badge variant="outline" className="text-green-600">
+                      <Badge variant="outline" className="text-offer">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Aktiv
                       </Badge>
