@@ -29,6 +29,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./sidebar"
+import { NotificationsDropdown } from "@/components/notifications"
 import { buttonPress } from "@/lib/animations"
 import { useUnreadMessages } from "@/hooks"
 
@@ -120,6 +121,9 @@ export function Header({
               </motion.div>
             </Link>
           )}
+
+          {/* Notifications (route matches, system) — no message notifications */}
+          {user && <NotificationsDropdown />}
 
           {/* Theme Toggle */}
           <motion.div {...buttonPress}>

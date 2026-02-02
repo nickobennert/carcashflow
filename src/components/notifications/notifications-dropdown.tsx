@@ -2,18 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { format, formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import {
   Bell,
-  MessageSquare,
   Car,
   Info,
-  Check,
   CheckCheck,
   Trash2,
   Loader2,
   X,
+  MapPin,
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
@@ -34,7 +33,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { fadeIn, staggerContainer, staggerItem } from "@/lib/animations"
+import { staggerContainer, staggerItem } from "@/lib/animations"
 
 interface Notification {
   id: string
@@ -46,9 +45,10 @@ interface Notification {
   created_at: string
 }
 
+// Only route-match and system notifications — messages have their own icon
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  new_message: MessageSquare,
   ride_match: Car,
+  route_watch: MapPin,
   system: Info,
 }
 
@@ -86,8 +86,9 @@ export function NotificationsDropdown() {
           },
           (payload) => {
             const newNotification = payload.new as Notification
+            // Skip message notifications — those are handled by the chat icon
+            if (newNotification.type === "new_message") return
             setNotifications((prev) => {
-              // Prevent duplicates
               if (prev.some(n => n.id === newNotification.id)) return prev
               return [newNotification, ...prev]
             })
@@ -122,10 +123,12 @@ export function NotificationsDropdown() {
 
       if (!user) return
 
+      // Only load non-message notifications (messages have their own badge)
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
+        .neq("type", "new_message")
         .order("created_at", { ascending: false })
         .limit(50)
 
@@ -171,6 +174,7 @@ export function NotificationsDropdown() {
         .update({ is_read: true } as never)
         .eq("user_id", user.id)
         .eq("is_read", false)
+        .neq("type", "new_message")
 
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
       setUnreadCount(0)
@@ -208,7 +212,7 @@ export function NotificationsDropdown() {
 
       if (!user) return
 
-      await supabase.from("notifications").delete().eq("user_id", user.id)
+      await supabase.from("notifications").delete().eq("user_id", user.id).neq("type", "new_message")
 
       setNotifications([])
       setUnreadCount(0)
@@ -394,8 +398,7 @@ function NotificationItem({
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-          notification.type === "new_message" && "bg-request/10 text-request",
-          notification.type === "ride_match" && "bg-offer/10 text-offer",
+          (notification.type === "ride_match" || notification.type === "route_watch") && "bg-offer/10 text-offer",
           notification.type === "system" && "bg-muted text-muted-foreground"
         )}
       >
