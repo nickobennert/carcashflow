@@ -49,30 +49,22 @@ export async function GET() {
       { count: totalMessages },
       { count: totalConversations },
       { count: pendingReports },
-      { count: activePromoCodes },
       { count: newUsersToday },
       { count: newUsersWeek },
-      { count: activeSubscriptions },
-      { count: trialingUsers },
-      { count: lifetimeUsers },
     ] = await Promise.all([
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("rides").select("*", { count: "exact", head: true }).eq("status", "active"),
       supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("conversations").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
-      supabaseAdmin.from("promo_codes").select("*", { count: "exact", head: true }).eq("is_active", true),
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayISO),
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgoISO),
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).eq("subscription_status", "active"),
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).eq("subscription_status", "trialing"),
-      supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).eq("is_lifetime", true),
     ])
 
     // Get recent users
     const { data: recentUsers } = await supabaseAdmin
       .from("profiles")
-      .select("id, username, first_name, last_name, avatar_url, subscription_status, created_at")
+      .select("id, username, first_name, last_name, avatar_url, created_at")
       .order("created_at", { ascending: false })
       .limit(5)
 
@@ -102,12 +94,8 @@ export async function GET() {
         totalMessages: totalMessages || 0,
         totalConversations: totalConversations || 0,
         pendingReports: pendingReports || 0,
-        activePromoCodes: activePromoCodes || 0,
         newUsersToday: newUsersToday || 0,
         newUsersWeek: newUsersWeek || 0,
-        activeSubscriptions: activeSubscriptions || 0,
-        trialingUsers: trialingUsers || 0,
-        lifetimeUsers: lifetimeUsers || 0,
       },
       recentUsers: recentUsers || [],
       pendingReportsList: pendingReportsList || [],

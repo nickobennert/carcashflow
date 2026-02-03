@@ -7,7 +7,6 @@ import {
   User,
   Settings as SettingsIcon,
   Bell,
-  CreditCard,
   Shield,
   Crown,
   Loader2,
@@ -19,7 +18,6 @@ import { fadeIn } from "@/lib/animations"
 import { ProfileTab } from "@/components/settings/profile-tab"
 import { AccountTab } from "@/components/settings/account-tab"
 import { NotificationsTab } from "@/components/settings/notifications-tab"
-import { SubscriptionTab } from "@/components/settings/subscription-tab"
 import { PrivacyTab } from "@/components/settings/privacy-tab"
 import { SecurityTab } from "@/components/settings/security-tab"
 import { AdminTab } from "@/components/settings/admin-tab"
@@ -30,7 +28,6 @@ const baseTabs = [
   { id: "account", label: "Account", icon: SettingsIcon },
   { id: "notifications", label: "Benachrichtigungen", icon: Bell },
   { id: "security", label: "Sicherheit", icon: Lock },
-  { id: "subscription", label: "Abonnement", icon: CreditCard },
   { id: "privacy", label: "Datenschutz", icon: Shield },
 ] as const
 
@@ -198,9 +195,6 @@ export default function SettingsPage() {
               {derivedActiveTab === "account" && <AccountTab profile={profile} />}
               {derivedActiveTab === "notifications" && (
                 <NotificationsTab profile={profile} onUpdate={handleProfileUpdate} />
-              )}
-              {derivedActiveTab === "subscription" && (
-                <SubscriptionTab profile={profile} onUpdate={handleProfileUpdate} />
               )}
               {derivedActiveTab === "privacy" && (
                 <PrivacyTab profile={profile} onUpdate={handleProfileUpdate} />

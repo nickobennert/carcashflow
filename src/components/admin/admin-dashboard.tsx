@@ -9,11 +9,7 @@ import {
   Flag,
   TrendingUp,
   Shield,
-  Gift,
   RefreshCw,
-  UserPlus,
-  CreditCard,
-  Sparkles,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReportsTable } from "./reports-table"
 import { UsersTable } from "./users-table"
-import { PromoCodesTable } from "./promo-codes-table"
 import { fadeIn, staggerContainer, staggerItem } from "@/lib/animations"
 
 interface AdminDashboardProps {
@@ -37,12 +32,8 @@ interface Stats {
   totalMessages: number
   totalConversations: number
   pendingReports: number
-  activePromoCodes: number
   newUsersToday: number
   newUsersWeek: number
-  activeSubscriptions: number
-  trialingUsers: number
-  lifetimeUsers: number
 }
 
 interface RecentUser {
@@ -189,44 +180,6 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
             </motion.div>
           </motion.div>
 
-          {/* Stats Grid - Row 2: Subscription Stats */}
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-            <motion.div variants={staggerItem}>
-              <StatCard
-                title="Aktive Abos"
-                value={stats.activeSubscriptions}
-                icon={CreditCard}
-                trend={stats.activeSubscriptions > 0 ? "up" : undefined}
-              />
-            </motion.div>
-            <motion.div variants={staggerItem}>
-              <StatCard
-                title="In Testphase"
-                value={stats.trialingUsers}
-                icon={UserPlus}
-              />
-            </motion.div>
-            <motion.div variants={staggerItem}>
-              <StatCard
-                title="Lifetime"
-                value={stats.lifetimeUsers}
-                icon={Sparkles}
-              />
-            </motion.div>
-            <motion.div variants={staggerItem}>
-              <StatCard
-                title="Aktive Promo Codes"
-                value={stats.activePromoCodes}
-                icon={Gift}
-              />
-            </motion.div>
-          </motion.div>
-
           {/* Quick Info Cards */}
           <div className="grid gap-4 md:grid-cols-2">
             {/* Recent Users */}
@@ -314,10 +267,6 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
             <Users className="h-4 w-4" />
             Benutzer
           </TabsTrigger>
-          <TabsTrigger value="promo-codes" className="gap-2">
-            <Gift className="h-4 w-4" />
-            Promo Codes
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reports">
@@ -344,20 +293,6 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
             </CardHeader>
             <CardContent>
               <UsersTable />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="promo-codes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Promo Codes</CardTitle>
-              <CardDescription>
-                Erstelle und verwalte Gutscheincodes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PromoCodesTable />
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,5 +1,4 @@
 export { ProfileTab } from "./profile-tab"
 export { AccountTab } from "./account-tab"
 export { NotificationsTab } from "./notifications-tab"
-export { SubscriptionTab } from "./subscription-tab"
 export { PrivacyTab } from "./privacy-tab"

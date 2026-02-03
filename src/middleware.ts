@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
-import type { Profile } from "@/types"
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -8,12 +7,8 @@ const protectedRoutes = [
   "/messages",
   "/profile",
   "/settings",
-  "/pricing",
   "/changelog",
 ]
-
-// Routes that require active subscription (not frozen)
-const subscriptionRequiredRoutes = ["/dashboard", "/messages"]
 
 // Routes only accessible when NOT authenticated
 const authRoutes = ["/login", "/signup"]
@@ -30,11 +25,6 @@ export async function middleware(request: NextRequest) {
   // Check if route is auth route (login/signup)
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
 
-  // Check if route requires subscription
-  const requiresSubscription = subscriptionRequiredRoutes.some((route) =>
-    pathname.startsWith(route)
-  )
-
   // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !user) {
     const redirectUrl = new URL("/login", request.url)
@@ -49,17 +39,15 @@ export async function middleware(request: NextRequest) {
 
   // For protected routes, check if profile exists and is complete
   if (isProtectedRoute && user) {
-    // Type assertion for profile query since table might not exist yet
-    const { data: profile, error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
-      .select("username, first_name, subscription_status, trial_ends_at")
+      .select("username, first_name")
       .eq("id", user.id)
-      .single() as {
-        data: Pick<Profile, "username" | "first_name" | "subscription_status" | "trial_ends_at"> | null
-        error: { code?: string } | null
-      }
+      .single()
 
-    // If table doesn't exist or no profile, redirect to profile setup
+    const profile = data as { username: string; first_name: string | null } | null
+
+    // If no profile, redirect to profile setup
     if ((error || !profile) && !pathname.startsWith("/profile/setup")) {
       return NextResponse.redirect(new URL("/profile/setup", request.url))
     }
@@ -67,22 +55,6 @@ export async function middleware(request: NextRequest) {
     // If profile is incomplete (no first_name), redirect to setup
     if (profile && !profile.first_name && !pathname.startsWith("/profile/setup")) {
       return NextResponse.redirect(new URL("/profile/setup", request.url))
-    }
-
-    // Check subscription status for routes that require it
-    if (requiresSubscription && profile) {
-      const isFrozen = profile.subscription_status === "frozen"
-      const trialExpired =
-        profile.subscription_status === "trialing" &&
-        profile.trial_ends_at &&
-        new Date(profile.trial_ends_at) < new Date()
-
-      if ((isFrozen || trialExpired) && !pathname.startsWith("/pricing")) {
-        // Allow access to settings and pricing even when frozen
-        if (!pathname.startsWith("/settings")) {
-          return NextResponse.redirect(new URL("/pricing", request.url))
-        }
-      }
     }
   }
 

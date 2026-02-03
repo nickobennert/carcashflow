@@ -9,7 +9,6 @@ import {
   Settings,
   HelpCircle,
   FileText,
-  CreditCard,
   PanelLeftClose,
   PanelLeft,
   Copyright,
@@ -48,11 +47,6 @@ const footerNavItems: NavItem[] = [
     title: "Einstellungen",
     href: "/settings",
     icon: Settings,
-  },
-  {
-    title: "Abonnement",
-    href: "/pricing",
-    icon: CreditCard,
   },
   {
     title: "Changelog",

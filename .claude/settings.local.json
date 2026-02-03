@@ -20,7 +20,12 @@
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run lint)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(git log:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:dev.digistore24.com)",
+      "WebFetch(domain:help.digistore24.com)",
+      "Bash(git status:*)"
     ]
   }
 }

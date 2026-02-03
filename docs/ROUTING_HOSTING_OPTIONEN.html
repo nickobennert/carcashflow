@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carcashflow - Routing-Infrastruktur</title>
+    <style>
+        :root {
+            --primary: #18181b;
+            --secondary: #3f3f46;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --warning: #d97706;
+            --bg: #fafafa;
+            --card-bg: #ffffff;
+            --border: #e4e4e7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--primary);
+            background: var(--bg);
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        header p {
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--secondary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .highlight-card {
+            border-left: 4px solid var(--accent);
+        }
+
+        .success-card {
+            border-left: 4px solid var(--success);
+        }
+
+        .warning-card {
+            border-left: 4px solid var(--warning);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        tr:hover {
+            background: var(--bg);
+        }
+
+        .price {
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .price-high {
+            color: var(--warning);
+        }
+
+        ul {
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: var(--secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .recommendation h4 {
+            color: #166534;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-diagram {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: var(--secondary);
+        }
+
+        .flow-diagram .arrow {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .summary-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .summary-box h4 {
+            color: #1e40af;
+            margin-bottom: 0.75rem;
+        }
+
+        .cost-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .cost-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .cost-item .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .cost-item .label {
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--secondary);
+            font-size: 0.85rem;
+        }
+
+        @media print {
+            body {
+                padding: 1rem;
+            }
+            .card, .recommendation, .summary-box {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Carcashflow</h1>
+        <p>Routing-Infrastruktur - Technische Dokumentation</p>
+        <span class="badge badge-info">Version 1.0 - Januar 2026</span>
+    </header>
+
+    <section>
+        <h2>Zusammenfassung</h2>
+        <div class="summary-box">
+            <h4>Kernaussage</h4>
+            <p style="margin-bottom: 0;">
+                Die Carcashflow-Plattform verwendet ein intelligentes Routensystem zur Berechnung von Fahrtstrecken
+                und zur Ermittlung passender Mitfahrgelegenheiten. Die monatlichen Kosten für diese Infrastruktur
+                liegen zwischen <strong>€0 und €30</strong>, abhängig vom gewählten Modell.
+            </p>
+        </div>
+    </section>
+
+    <section>
+        <h2>Aktueller Stand</h2>
+        <div class="card warning-card">
+            <h4><span class="badge badge-warning">Entwicklung</span> Demo-Server</h4>
+            <p>
+                Die Anwendung nutzt derzeit den öffentlichen OSRM-Demo-Server. Dieser ist für Entwicklung
+                und Tests geeignet, jedoch <strong>nicht für den Produktivbetrieb zugelassen</strong>.
+            </p>
+        </div>
+    </section>
+
+    <section>
+        <h2>Was ist OSRM?</h2>
+        <p>
+            <strong>OSRM (Open Source Routing Machine)</strong> ist eine quelloffene Software zur Berechnung
+            von Fahrtrouten. Sie verwendet OpenStreetMap-Kartendaten und berechnet:
+        </p>
+        <ul>
+            <li>Kürzeste/schnellste Route zwischen zwei Punkten</li>
+            <li>Fahrzeit und Distanz</li>
+            <li>Wegpunkte entlang der Strecke</li>
+        </ul>
+        <p>
+            <strong>Wichtig:</strong> OSRM selbst ist kostenlos. Die Kosten entstehen durch den Server,
+            auf dem OSRM betrieben wird.
+        </p>
+    </section>
+
+    <section>
+        <h2>Hosting-Optionen</h2>
+
+        <div class="card success-card">
+            <h4><span class="badge badge-success">Empfohlen</span> Option 1: Self-Hosting</h4>
+            <p>Ein eigener Server wird angemietet und OSRM darauf installiert.</p>
+
+            <table>
+                <tr>
+                    <th>Aspekt</th>
+                    <th>Details</th>
+                </tr>
+                <tr>
+                    <td>Anbieter</td>
+                    <td>Hetzner, DigitalOcean, AWS</td>
+                </tr>
+                <tr>
+                    <td>Empfohlene Specs</td>
+                    <td>4 GB RAM, 2 CPU Cores, 50 GB SSD</td>
+                </tr>
+                <tr>
+                    <td>Monatliche Kosten</td>
+                    <td class="price">€10 - €30</td>
+                </tr>
+                <tr>
+                    <td>Kartendaten</td>
+                    <td>Deutschland/DACH (~2-4 GB)</td>
+                </tr>
+            </table>
+
+            <h4>Vorteile:</h4>
+            <ul>
+                <li>Vollständige Kontrolle</li>
+                <li>Keine Anfragelimits</li>
+                <li>DSGVO-konform (Server in Deutschland möglich)</li>
+                <li>Vorhersehbare, fixe Kosten</li>
+            </ul>
+        </div>
+
+        <div class="card highlight-card">
+            <h4>Option 2: Managed Services</h4>
+            <p>Externe Anbieter betreiben die Routing-Infrastruktur.</p>
+
+            <table>
+                <tr>
+                    <th>Anbieter</th>
+                    <th>Kosten</th>
+                    <th>Bemerkung</th>
+                </tr>
+                <tr>
+                    <td>OpenRouteService</td>
+                    <td class="price">Kostenlos*</td>
+                    <td>Bis 2.000 Anfragen/Tag, DSGVO-konform</td>
+                </tr>
+                <tr>
+                    <td>MapBox Directions</td>
+                    <td>~€0,50 / 1.000 Anfragen</td>
+                    <td>US-Anbieter, sehr schnell</td>
+                </tr>
+                <tr>
+                    <td>Google Routes API</td>
+                    <td class="price-high">~€5 / 1.000 Anfragen</td>
+                    <td>Teuer, aber zuverlässig</td>
+                </tr>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Kostenvergleich</h2>
+
+        <table>
+            <tr>
+                <th>Szenario</th>
+                <th>Self-Hosting</th>
+                <th>OpenRouteService</th>
+                <th>MapBox</th>
+            </tr>
+            <tr>
+                <td>1.000 Anfragen/Monat</td>
+                <td class="price">€15 fix</td>
+                <td class="price">€0</td>
+                <td>€0,50</td>
+            </tr>
+            <tr>
+                <td>10.000 Anfragen/Monat</td>
+                <td class="price">€15 fix</td>
+                <td class="price">€0</td>
+                <td>€5</td>
+            </tr>
+            <tr>
+                <td>50.000 Anfragen/Monat</td>
+                <td class="price">€20 fix</td>
+                <td>€30+</td>
+                <td>€25</td>
+            </tr>
+            <tr>
+                <td>100.000+ Anfragen/Monat</td>
+                <td class="price">€30 fix</td>
+                <td class="price-high">Nicht verfügbar</td>
+                <td>€50+</td>
+            </tr>
+        </table>
+
+        <p><strong>Fazit:</strong> Bei wachsender Nutzung ist Self-Hosting langfristig günstiger.</p>
+    </section>
+
+    <section>
+        <h2>Empfehlung</h2>
+
+        <div class="recommendation">
+            <h4>Empfohlener Weg</h4>
+            <table>
+                <tr>
+                    <th>Phase</th>
+                    <th>Lösung</th>
+                    <th>Kosten</th>
+                </tr>
+                <tr>
+                    <td><strong>Phase 1:</strong> MVP / Soft Launch</td>
+                    <td>OpenRouteService (kostenlos)</td>
+                    <td class="price">€0/Monat</td>
+                </tr>
+                <tr>
+                    <td><strong>Phase 2:</strong> Wachstum</td>
+                    <td>Self-Hosting auf Hetzner</td>
+                    <td class="price">€15-20/Monat</td>
+                </tr>
+                <tr>
+                    <td><strong>Phase 3:</strong> Enterprise</td>
+                    <td>Dedizierter Server</td>
+                    <td>€50-100/Monat</td>
+                </tr>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Technischer Ablauf</h2>
+
+        <div class="flow-diagram">
+            Nutzer erstellt Route<br>
+            <span class="arrow">↓</span><br>
+            Frontend sendet Start/Ziel<br>
+            <span class="arrow">↓</span><br>
+            Backend fragt OSRM an<br>
+            <span class="arrow">↓</span><br>
+            OSRM berechnet optimale Strecke<br>
+            <span class="arrow">↓</span><br>
+            Route wird in Datenbank gespeichert<br>
+            <span class="arrow">↓</span><br>
+            Matching-Algorithmus findet passende Mitfahrer
+        </div>
+    </section>
+
+    <section>
+        <h2>Häufige Fragen</h2>
+
+        <div class="card">
+            <h4>Wer stellt die Rechnung?</h4>
+            <ul>
+                <li><strong>Self-Hosting:</strong> Server-Anbieter (z.B. Hetzner) → Monatliche Rechnung</li>
+                <li><strong>Managed Service:</strong> API-Anbieter → Nutzungsbasierte Rechnung</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h4>Kann ich später wechseln?</h4>
+            <p>
+                Ja, die Anwendung ist so gebaut, dass der Routing-Anbieter ausgetauscht werden kann.
+                Kein Datenverlust, da Routen in eigener Datenbank gespeichert werden.
+            </p>
+        </div>
+
+        <div class="card">
+            <h4>Datenschutz (DSGVO)</h4>
+            <ul>
+                <li><strong>Self-Hosting:</strong> Alle Daten bleiben auf eigenem Server - DSGVO-konform</li>
+                <li><strong>OpenRouteService:</strong> Deutsches Unternehmen - DSGVO-konform</li>
+                <li><strong>US-Anbieter:</strong> Datenschutzhinweis in AGB erforderlich</li>
+            </ul>
+        </div>
+    </section>
+
+    <section>
+        <h2>Nächste Schritte</h2>
+        <ol>
+            <li><strong>Entscheidung</strong> für Hosting-Modell treffen</li>
+            <li><strong>Budget</strong> festlegen (€0-30/Monat realistisch)</li>
+            <li><strong>Timeline</strong> für Produktivgang bestimmen</li>
+            <li><strong>Umsetzung</strong> durch Entwicklungsteam</li>
+        </ol>
+    </section>
+
+    <footer>
+        <p>Carcashflow - Routing-Infrastruktur Dokumentation</p>
+        <p>Erstellt: Januar 2026 | Version 1.0</p>
+    </footer>
+</body>
+</html>

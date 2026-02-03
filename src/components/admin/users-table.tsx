@@ -8,16 +8,13 @@ import {
   MoreHorizontal,
   Loader2,
   User,
-  Shield,
   ShieldCheck,
   Ban,
-  Crown,
   Mail,
   ChevronLeft,
   ChevronRight,
   CheckCircle,
   XCircle,
-  FileCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -41,13 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,7 +67,6 @@ export function UsersTable() {
   const [users, setUsers] = useState<UserWithStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [total, setTotal] = useState(0)
   const [offset, setOffset] = useState(0)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -93,7 +82,6 @@ export function UsersTable() {
     try {
       const params = new URLSearchParams()
       if (searchQuery) params.set("search", searchQuery)
-      if (statusFilter !== "all") params.set("status", statusFilter)
       params.set("limit", limit.toString())
       params.set("offset", offset.toString())
 
@@ -112,7 +100,7 @@ export function UsersTable() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, statusFilter, offset])
+  }, [searchQuery, offset])
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -121,10 +109,10 @@ export function UsersTable() {
     return () => clearTimeout(debounce)
   }, [loadUsers])
 
-  // Reset offset when search or filter changes
+  // Reset offset when search changes
   useEffect(() => {
     setOffset(0)
-  }, [searchQuery, statusFilter])
+  }, [searchQuery])
 
   async function handleBanUser(user: UserWithStats, action: "ban" | "unban") {
     setActionLoading(user.id)
@@ -146,7 +134,6 @@ export function UsersTable() {
           : `${getDisplayName(user)} wurde entsperrt`
       )
 
-      // Refresh list
       loadUsers()
     } catch (error) {
       console.error("Error:", error)
@@ -154,64 +141,6 @@ export function UsersTable() {
     } finally {
       setActionLoading(null)
       setBanDialog({ open: false, user: null, action: "ban" })
-    }
-  }
-
-  async function handleUpdateSubscription(user: UserWithStats, tier: string, status: string) {
-    setActionLoading(user.id)
-    try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscription_tier: tier,
-          subscription_status: status,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Update failed")
-      }
-
-      toast.success(`Abonnement aktualisiert`)
-      loadUsers()
-    } catch (error) {
-      console.error("Error:", error)
-      toast.error(error instanceof Error ? error.message : "Aktualisierung fehlgeschlagen")
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  async function handleToggleLifetime(user: UserWithStats) {
-    setActionLoading(user.id)
-    try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          is_lifetime: !user.is_lifetime,
-          subscription_status: !user.is_lifetime ? "active" : user.subscription_status,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Update failed")
-      }
-
-      toast.success(
-        !user.is_lifetime
-          ? `${getDisplayName(user)} hat jetzt Lifetime-Zugang`
-          : `Lifetime-Zugang entfernt`
-      )
-      loadUsers()
-    } catch (error) {
-      console.error("Error:", error)
-      toast.error(error instanceof Error ? error.message : "Aktualisierung fehlgeschlagen")
-    } finally {
-      setActionLoading(null)
     }
   }
 
@@ -229,7 +158,7 @@ export function UsersTable() {
     return user.username[0].toUpperCase()
   }
 
-  function getSubscriptionBadge(user: UserWithStats) {
+  function getStatusBadge(user: UserWithStats) {
     if (user.is_banned) {
       return (
         <Badge variant="destructive" className="gap-1">
@@ -239,34 +168,9 @@ export function UsersTable() {
       )
     }
 
-    if (user.is_lifetime) {
-      return (
-        <Badge variant="default" className="gap-1 bg-yellow-500">
-          <Crown className="h-3 w-3" />
-          Lifetime
-        </Badge>
-      )
-    }
-
-    const tierLabels: Record<string, string> = {
-      trial: "Trial",
-      basic: "Basis",
-      premium: "Premium",
-    }
-
-    const statusColors: Record<string, string> = {
-      active: "bg-offer",
-      trialing: "bg-blue-500",
-      canceled: "bg-amber-500",
-      frozen: "bg-red-500",
-    }
-
     return (
-      <Badge
-        variant="secondary"
-        className={`${statusColors[user.subscription_status] || ""} text-white`}
-      >
-        {tierLabels[user.subscription_tier] || user.subscription_tier}
+      <Badge variant="secondary" className="bg-offer text-white">
+        Aktiv
       </Badge>
     )
   }
@@ -285,7 +189,7 @@ export function UsersTable() {
 
   return (
     <div className="space-y-4">
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -296,18 +200,6 @@ export function UsersTable() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status filtern" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
-            <SelectItem value="active">Aktiv</SelectItem>
-            <SelectItem value="trialing">Testphase</SelectItem>
-            <SelectItem value="frozen">Eingefroren</SelectItem>
-            <SelectItem value="canceled">Gekündigt</SelectItem>
-          </SelectContent>
-        </Select>
         <p className="text-sm text-muted-foreground">
           {total} Benutzer
         </p>
@@ -319,7 +211,7 @@ export function UsersTable() {
           <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="font-semibold mb-2">Keine Benutzer gefunden</h3>
           <p className="text-sm text-muted-foreground">
-            Versuche einen anderen Suchbegriff oder Filter.
+            Versuche einen anderen Suchbegriff.
           </p>
         </div>
       ) : (
@@ -389,32 +281,6 @@ export function UsersTable() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="gap-2"
-                        onClick={() => handleToggleLifetime(user)}
-                      >
-                        <Crown className="h-4 w-4" />
-                        {user.is_lifetime ? "Lifetime entfernen" : "Lifetime gewähren"}
-                      </DropdownMenuItem>
-                      {!user.is_lifetime && (
-                        <>
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => handleUpdateSubscription(user, "premium", "active")}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Auf Premium setzen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => handleUpdateSubscription(user, "basic", "active")}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Auf Basis setzen
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      <DropdownMenuSeparator />
                       {user.is_banned ? (
                         <DropdownMenuItem
                           className="gap-2"
@@ -436,7 +302,7 @@ export function UsersTable() {
                   </DropdownMenu>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  {getSubscriptionBadge(user)}
+                  {getStatusBadge(user)}
                   {user.legal_acceptance ? (
                     <div className="flex items-center gap-1">
                       <ShieldCheck className="h-3.5 w-3.5 text-offer" />
@@ -475,7 +341,7 @@ export function UsersTable() {
                 <TableRow>
                   <TableHead>Benutzer</TableHead>
                   <TableHead>E-Mail</TableHead>
-                  <TableHead>Abonnement</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Datenschutz</TableHead>
                   <TableHead>Registriert</TableHead>
                   <TableHead>Zuletzt aktiv</TableHead>
@@ -508,7 +374,7 @@ export function UsersTable() {
                       </Link>
                     </TableCell>
                     <TableCell className="text-sm">{user.email || "—"}</TableCell>
-                    <TableCell>{getSubscriptionBadge(user)}</TableCell>
+                    <TableCell>{getStatusBadge(user)}</TableCell>
                     <TableCell>
                       {user.legal_acceptance ? (
                         <div className="flex items-center gap-1.5">
@@ -568,32 +434,6 @@ export function UsersTable() {
                               <Mail className="h-4 w-4" />
                               E-Mail senden
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => handleToggleLifetime(user)}
-                          >
-                            <Crown className="h-4 w-4" />
-                            {user.is_lifetime ? "Lifetime entfernen" : "Lifetime gewähren"}
-                          </DropdownMenuItem>
-                          {!user.is_lifetime && (
-                            <>
-                              <DropdownMenuItem
-                                className="gap-2"
-                                onClick={() => handleUpdateSubscription(user, "premium", "active")}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                                Auf Premium setzen
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="gap-2"
-                                onClick={() => handleUpdateSubscription(user, "basic", "active")}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                                Auf Basis setzen
-                              </DropdownMenuItem>
-                            </>
                           )}
                           <DropdownMenuSeparator />
                           {user.is_banned ? (
