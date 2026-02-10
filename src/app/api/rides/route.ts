@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import type { RideInsert, RoutePoint } from "@/types"
 
+// Helper to sanitize search input - prevents SQL injection via LIKE wildcards
+function sanitizeSearchInput(input: string): string {
+  // Limit length to prevent DoS
+  const MAX_LENGTH = 100
+  const trimmed = input.slice(0, MAX_LENGTH)
+
+  // Escape LIKE special characters (%, _, \)
+  return trimmed
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+}
+
 // GET /api/rides - Get rides with optional filters
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -59,12 +72,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Text search in route (PostgreSQL JSON search)
+    // Note: Supabase's .ilike() and .filter() methods handle parameterization
+    // to prevent SQL injection - we just need to sanitize special characters
     if (startLocation) {
-      query = query.ilike("route->0->>address", `%${startLocation}%`)
+      // Escape special LIKE characters and limit length
+      const sanitizedStart = sanitizeSearchInput(startLocation)
+      query = query.ilike("route->0->>address", `%${sanitizedStart}%`)
     }
     if (endLocation) {
-      // Search in last element or any element with type 'end'
-      query = query.or(`route.cs.[{"type":"end","address":"${endLocation}"}]`)
+      // For JSON containment, escape the value properly
+      const sanitizedEnd = sanitizeSearchInput(endLocation)
+      // Use textSearch on the last route element's address
+      query = query.ilike("route->-1->>address", `%${sanitizedEnd}%`)
     }
 
     // Pagination and ordering

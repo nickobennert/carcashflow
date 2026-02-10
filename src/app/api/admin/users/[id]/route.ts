@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-
-// Use service role for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { createAdminClient } from "@/lib/supabase/admin"
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -14,6 +8,7 @@ interface RouteParams {
 
 // Helper to check if user is admin
 async function isAdmin(userId: string): Promise<boolean> {
+  const supabaseAdmin = createAdminClient()
   const { data } = await supabaseAdmin
     .from("super_admins")
     .select("id")
@@ -38,6 +33,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
+    const supabaseAdmin = createAdminClient()
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("*")
@@ -59,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       data: {
-        ...data,
+        ...(data as Record<string, unknown>),
         stats: {
           rides: rideCount || 0,
           messages: messageCount || 0,
@@ -72,7 +68,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PUT /api/admin/users/[id] - Update user (admin only)
+// PUT /api/admin/users/[id] - Update user profile (admin only)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
@@ -88,28 +84,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
-    const { subscription_tier, subscription_status, is_lifetime } = body
+    const { is_banned } = body
 
     const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 
-    if (subscription_tier !== undefined) {
-      updateData.subscription_tier = subscription_tier
+    // Handle ban status
+    if (is_banned !== undefined) {
+      updateData.is_banned = is_banned
     }
 
-    if (subscription_status !== undefined) {
-      updateData.subscription_status = subscription_status
-    }
-
-    if (is_lifetime !== undefined) {
-      updateData.is_lifetime = is_lifetime
-      if (is_lifetime) {
-        updateData.subscription_tier = "lifetime"
-        updateData.subscription_status = "lifetime"
-      }
-    }
-
+    const supabaseAdmin = createAdminClient()
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .update(updateData as never)
@@ -156,12 +142,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
 
-    const status = action === "ban" ? "frozen" : "active"
+    const isBanned = action === "ban"
+    const supabaseAdmin = createAdminClient()
 
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({
-        subscription_status: status,
+        is_banned: isBanned,
         updated_at: new Date().toISOString(),
       } as never)
       .eq("id", id)

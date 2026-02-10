@@ -7,7 +7,6 @@ import {
   Car,
   MessageSquare,
   Flag,
-  Gift,
   Eye,
   Ban,
   Check,
@@ -57,7 +56,6 @@ interface Stats {
   activeRides: number
   totalMessages: number
   pendingReports: number
-  activePromoCodes: number
   newUsersToday: number
   newUsersWeek: number
 }
@@ -68,8 +66,7 @@ interface UserRow {
   email: string | null
   first_name: string | null
   last_name: string | null
-  subscription_tier: string | null
-  subscription_status: string | null
+  is_banned: boolean | null
   created_at: string
   last_seen_at: string | null
 }
@@ -82,17 +79,6 @@ interface ReportRow {
   created_at: string
   reporter: { username: string } | null
   reported_user: { username: string } | null
-}
-
-interface PromoCodeRow {
-  id: string
-  code: string
-  type: string
-  value: number | null
-  max_uses: number | null
-  current_uses: number
-  is_active: boolean
-  valid_until: string | null
 }
 
 // Stat Card Component - Clean Futuristic Design
@@ -227,7 +213,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<UserRow[]>([])
   const [reports, setReports] = useState<ReportRow[]>([])
-  const [promoCodes, setPromoCodes] = useState<PromoCodeRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [userSearch, setUserSearch] = useState("")
@@ -259,7 +244,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
         ridesCount,
         messagesCount,
         reportsCount,
-        promoCount,
         newUsersToday,
         newUsersWeek,
       ] = await Promise.all([
@@ -267,7 +251,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
         supabase.from("rides").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("messages").select("id", { count: "exact", head: true }),
         supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("promo_codes").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
       ])
@@ -277,7 +260,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
         activeRides: ridesCount.count || 0,
         totalMessages: messagesCount.count || 0,
         pendingReports: reportsCount.count || 0,
-        activePromoCodes: promoCount.count || 0,
         newUsersToday: newUsersToday.count || 0,
         newUsersWeek: newUsersWeek.count || 0,
       })
@@ -285,7 +267,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
       // Load users
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, username, email, first_name, last_name, subscription_tier, subscription_status, created_at, last_seen_at")
+        .select("id, username, email, first_name, last_name, is_banned, created_at, last_seen_at")
         .order("created_at", { ascending: false })
         .limit(50)
 
@@ -310,17 +292,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
       if (reportsData) {
         setReports(reportsData as unknown as ReportRow[])
-      }
-
-      // Load promo codes
-      const { data: promoData } = await supabase
-        .from("promo_codes")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20)
-
-      if (promoData) {
-        setPromoCodes(promoData as PromoCodeRow[])
       }
 
       if (refresh) {
@@ -357,29 +328,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
     } catch (error) {
       console.error("Error resolving report:", error)
       toast.error("Fehler beim Bearbeiten des Reports")
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  async function handleTogglePromoCode(codeId: string, isActive: boolean) {
-    setActionLoading(codeId)
-
-    try {
-      const { error } = await supabase
-        .from("promo_codes")
-        .update({ is_active: !isActive } as never)
-        .eq("id", codeId)
-
-      if (error) throw error
-
-      setPromoCodes((prev) =>
-        prev.map((c) => (c.id === codeId ? { ...c, is_active: !isActive } : c))
-      )
-      toast.success(isActive ? "Code deaktiviert" : "Code aktiviert")
-    } catch (error) {
-      console.error("Error toggling promo code:", error)
-      toast.error("Fehler beim Ändern des Codes")
     } finally {
       setActionLoading(null)
     }
@@ -483,17 +431,11 @@ export function AdminTab({ profile }: { profile: Profile }) {
           icon={Users}
           onClick={() => setActiveTab("users")}
         />
-        <QuickActionCard
-          title="Promo Codes"
-          description={`${stats?.activePromoCodes || 0} aktive Codes`}
-          icon={Gift}
-          onClick={() => setActiveTab("promos")}
-        />
       </div>
 
       {/* Admin Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
+        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
           <TabsTrigger value="overview" className="data-[state=active]:bg-background px-2 sm:px-3">
             <Activity className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Übersicht</span>
@@ -510,10 +452,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
                 {stats?.pendingReports}
               </Badge>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="promos" className="data-[state=active]:bg-background px-2 sm:px-3">
-            <Gift className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Promo Codes</span>
           </TabsTrigger>
         </TabsList>
 
@@ -554,9 +492,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant="outline" className="text-xs">
-                        {user.subscription_tier || "trial"}
-                      </Badge>
+                      {user.is_banned ? (
+                        <Badge variant="destructive" className="text-xs">
+                          Gesperrt
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          Aktiv
+                        </Badge>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(user.created_at).toLocaleDateString("de-DE")}
                       </p>
@@ -658,7 +602,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
                     <TableRow>
                       <TableHead>Nutzer</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Plan</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Registriert</TableHead>
                       <TableHead className="text-right">Aktionen</TableHead>
@@ -688,17 +631,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
                           {user.email}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {user.subscription_tier || "trial"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={user.subscription_status === "active" ? "default" : "secondary"}
-                            className="text-xs"
-                          >
-                            {user.subscription_status || "trialing"}
-                          </Badge>
+                          {user.is_banned ? (
+                            <Badge variant="destructive" className="text-xs">
+                              Gesperrt
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              Aktiv
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(user.created_at).toLocaleDateString("de-DE")}
@@ -818,91 +759,6 @@ export function AdminTab({ profile }: { profile: Profile }) {
           </Card>
         </TabsContent>
 
-        {/* Promo Codes Tab */}
-        <TabsContent value="promos">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Promo Codes</CardTitle>
-                  <CardDescription>Aktive und verwendete Promo Codes verwalten</CardDescription>
-                </div>
-                <Button size="sm" disabled>
-                  <Gift className="h-4 w-4 mr-2" />
-                  Neuer Code
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {promoCodes.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <Gift className="h-6 w-6" />
-                  </div>
-                  <p className="font-medium">Keine Promo Codes</p>
-                  <p className="text-sm mt-1">Erstelle deinen ersten Promo Code</p>
-                </div>
-              ) : (
-                <div className="rounded-lg border overflow-x-auto">
-                  <Table className="min-w-[500px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Typ</TableHead>
-                        <TableHead>Verwendungen</TableHead>
-                        <TableHead>Gültig bis</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Aktionen</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {promoCodes.map((code) => (
-                        <TableRow key={code.id}>
-                          <TableCell className="font-mono font-medium">
-                            {code.code}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{code.type}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {code.current_uses}
-                            {code.max_uses && ` / ${code.max_uses}`}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {code.valid_until
-                              ? new Date(code.valid_until).toLocaleDateString("de-DE")
-                              : "Unbegrenzt"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={code.is_active ? "default" : "secondary"}>
-                              {code.is_active ? "Aktiv" : "Inaktiv"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={actionLoading === code.id}
-                              onClick={() => handleTogglePromoCode(code.id, code.is_active)}
-                            >
-                              {actionLoading === code.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : code.is_active ? (
-                                <Ban className="h-4 w-4" />
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* User Detail Dialog */}
@@ -930,16 +786,12 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Plan</p>
-                  <Badge variant="outline">
-                    {selectedUser.subscription_tier || "trial"}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Status</p>
-                  <Badge variant={selectedUser.subscription_status === "active" ? "default" : "secondary"}>
-                    {selectedUser.subscription_status || "trialing"}
-                  </Badge>
+                  {selectedUser.is_banned ? (
+                    <Badge variant="destructive">Gesperrt</Badge>
+                  ) : (
+                    <Badge variant="outline">Aktiv</Badge>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Registriert</p>

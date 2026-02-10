@@ -134,16 +134,25 @@ export function AccountTab({ profile }: AccountTabProps) {
     setIsDeletingAccount(true)
 
     try {
-      // Sign out first
-      await supabase.auth.signOut()
+      // Call the delete account API endpoint (DSGVO Article 17 - Right to Erasure)
+      const response = await fetch("/api/settings/delete-account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ confirmUsername: deleteConfirmation }),
+      })
 
-      // Note: Actual account deletion should be handled by a server-side function
-      // that verifies the request and deletes all user data
-      toast.success("Account-Löschung angefordert. Du wirst weitergeleitet...")
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Fehler beim Löschen des Accounts")
+      }
+
+      toast.success("Account und alle Daten wurden permanent gelöscht.")
       router.push("/")
     } catch (error) {
       console.error("Error deleting account:", error)
-      toast.error("Fehler beim Löschen des Accounts")
+      toast.error(error instanceof Error ? error.message : "Fehler beim Löschen des Accounts")
       setIsDeletingAccount(false)
     }
   }

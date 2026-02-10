@@ -3,7 +3,7 @@
 import { motion } from "motion/react"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { Sparkles, Wrench, Bug, Rocket, Construction } from "lucide-react"
+import { Sparkles, Wrench, Bug, Rocket, PartyPopper } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -15,83 +15,112 @@ interface ChangelogEntry {
   version: string
   title: string
   description: string
-  type: "feature" | "improvement" | "fix" | "announcement" | "wip"
+  type: "feature" | "improvement" | "fix" | "announcement" | "release"
   highlights?: string[]
 }
 
 const changelog: ChangelogEntry[] = [
   {
-    id: "0",
-    date: new Date("2026-01-13"),
-    version: "0.9.0-beta",
-    title: "Beta-Phase gestartet",
+    id: "6",
+    date: new Date("2026-02-10"),
+    version: "1.0.0",
+    title: "Offizieller Launch! 🎉",
     description:
-      "Carcashflow befindet sich aktuell in der geschlossenen Beta-Phase. Wir testen alle Features und sammeln Feedback vor dem offiziellen Launch.",
-    type: "wip",
+      "Fahr mit! ist jetzt komplett kostenlos verfügbar. Keine Abos, keine versteckten Kosten - einfach anmelden und losfahren!",
+    type: "release",
     highlights: [
-      "Interne Tests laufen",
-      "Feedback wird gesammelt",
-      "Launch-Datum wird bekannt gegeben",
+      "Komplett kostenlos - keine Abonnements",
+      "Alle Features für alle Nutzer",
+      "DSGVO-konformer Daten-Export",
+      "Account-Löschung jederzeit möglich",
     ],
   },
   {
-    id: "1",
-    date: new Date("2026-01-13"),
-    version: "0.9.0-beta",
-    title: "Mitfahrbörse & Dashboard",
+    id: "5",
+    date: new Date("2026-02-08"),
+    version: "0.9.5",
+    title: "Route-Benachrichtigungen",
     description:
-      "Das Herzstück der Plattform ist fertig: Erstelle Fahrtangebote oder Gesuche und finde passende Mitfahrer.",
+      "Verpasse keine passende Fahrt mehr! Speichere deine Stammstrecken und werde automatisch benachrichtigt.",
     type: "feature",
     highlights: [
-      "Angebote und Gesuche erstellen",
-      "Filter nach Start, Ziel und Datum",
-      "Detailansicht mit Kontaktmöglichkeit",
-      "Automatische Ablauf-Markierung",
-    ],
-  },
-  {
-    id: "2",
-    date: new Date("2026-01-13"),
-    version: "0.9.0-beta",
-    title: "Nachrichtensystem",
-    description:
-      "Kommuniziere direkt mit anderen Nutzern über das integrierte Nachrichtensystem.",
-    type: "feature",
-    highlights: [
-      "Echtzeit-Nachrichten",
-      "Konversationen pro Fahrt",
-      "Ungelesen-Zähler",
-      "Push-Benachrichtigungen (bald)",
+      "Strecken-Watcher für wiederkehrende Routen",
+      "Benachrichtigung bei passenden Fahrten",
+      "Bis zu 5 Strecken speicherbar",
+      "Einfache Verwaltung in den Einstellungen",
     ],
   },
   {
     id: "4",
-    date: new Date("2026-01-12"),
-    version: "0.9.0-beta",
+    date: new Date("2026-02-05"),
+    version: "0.9.4",
+    title: "Unterwegs-Matching",
+    description:
+      "Finde Fahrten, die auf deinem Weg liegen. Der neue 'Unterwegs'-Filter zeigt dir passende Mitfahrgelegenheiten.",
+    type: "feature",
+    highlights: [
+      "Intelligentes Strecken-Matching",
+      "Match-Qualität wird angezeigt (perfekt, gut, Umweg)",
+      "Funktioniert für Angebote und Gesuche",
+    ],
+  },
+  {
+    id: "3",
+    date: new Date("2026-01-20"),
+    version: "0.9.3",
+    title: "Echtzeit-Nachrichten",
+    description:
+      "Das Nachrichtensystem wurde komplett überarbeitet. Nachrichten kommen jetzt in Echtzeit an.",
+    type: "improvement",
+    highlights: [
+      "Sofortige Nachrichtenübermittlung",
+      "Ungelesen-Zähler im Menü",
+      "Verbesserte Konversationsübersicht",
+    ],
+  },
+  {
+    id: "2",
+    date: new Date("2026-01-15"),
+    version: "0.9.2",
     title: "Profil & Einstellungen",
     description:
       "Personalisiere dein Profil und passe die App nach deinen Wünschen an.",
     type: "feature",
     highlights: [
       "Profilbild hochladen",
+      "Öffentliches Profil unter /u/username",
       "Benachrichtigungs-Einstellungen",
-      "Daten-Export (DSGVO)",
       "Dark/Light Mode",
     ],
   },
   {
-    id: "5",
+    id: "1",
+    date: new Date("2026-01-13"),
+    version: "0.9.0",
+    title: "Mitfahrbörse & Dashboard",
+    description:
+      "Das Herzstück der Plattform: Erstelle Fahrtangebote oder Gesuche und finde passende Mitfahrer.",
+    type: "feature",
+    highlights: [
+      "Angebote und Gesuche erstellen",
+      "Filter nach Start, Ziel und Datum",
+      "Detailansicht mit Kontaktmöglichkeit",
+      "Automatische Ablauf-Markierung nach 7 Tagen",
+    ],
+  },
+  {
+    id: "0",
     date: new Date("2026-01-12"),
-    version: "0.9.0-beta",
+    version: "0.9.0",
     title: "Admin-Bereich",
     description:
       "Administratoren können die Plattform verwalten und moderieren.",
     type: "feature",
     highlights: [
-      "Benutzerübersicht",
+      "Benutzerübersicht mit Suchfunktion",
       "Meldungen bearbeiten",
-      "Promo Codes erstellen",
-      "Statistiken",
+      "Bug-Reports einsehen",
+      "Nutzer sperren/entsperren",
     ],
   },
 ]
@@ -121,11 +150,11 @@ const typeConfig = {
     color: "bg-purple-500/10 text-purple-600 border-purple-500/20",
     dotColor: "bg-purple-500",
   },
-  wip: {
-    icon: Construction,
-    label: "In Arbeit",
-    color: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    dotColor: "bg-amber-500",
+  release: {
+    icon: PartyPopper,
+    label: "Release",
+    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    dotColor: "bg-emerald-500",
   },
 }
 
@@ -144,7 +173,7 @@ export default function ChangelogPage() {
         </Badge>
         <h1 className="text-3xl font-bold tracking-tight">Changelog</h1>
         <p className="text-muted-foreground mt-2">
-          Verfolge die Entwicklung von Carcashflow
+          Verfolge die Entwicklung von Fahr mit!
         </p>
       </div>
 
@@ -175,7 +204,7 @@ export default function ChangelogPage() {
                   className={cn(
                     "absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border-4 border-background",
                     config.dotColor,
-                    isFirst && "ring-4 ring-amber-500/20"
+                    isFirst && "ring-4 ring-emerald-500/20"
                   )}
                 >
                   <Icon className="h-4 w-4 text-white" />
@@ -183,7 +212,7 @@ export default function ChangelogPage() {
 
                 <Card className={cn(
                   "overflow-hidden transition-all hover:shadow-md",
-                  isFirst && "border-amber-500/50 bg-amber-500/5"
+                  isFirst && "border-emerald-500/50 bg-emerald-500/5"
                 )}>
                   <CardContent className="pt-5 pb-5">
                     {/* Meta Row */}
@@ -235,7 +264,7 @@ export default function ChangelogPage() {
         <p className="text-sm text-muted-foreground">
           Hast du Ideen oder Feedback?{" "}
           <a
-            href="mailto:feedback@carcashflow.de"
+            href="mailto:feedback@fahrmit.de"
             className="text-primary hover:underline"
           >
             Schreib uns!

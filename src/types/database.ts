@@ -25,13 +25,7 @@ export type Database = {
           is_public: boolean
           theme_preference: string
           notification_preferences: Json
-          subscription_tier: SubscriptionTier
-          subscription_status: SubscriptionStatus
-          trial_ends_at: string | null
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          current_period_end: string | null
-          is_lifetime: boolean
+          is_banned: boolean
           created_at: string
           updated_at: string
           last_seen_at: string | null
@@ -51,13 +45,7 @@ export type Database = {
           is_public?: boolean
           theme_preference?: string
           notification_preferences?: Json
-          subscription_tier?: SubscriptionTier
-          subscription_status?: SubscriptionStatus
-          trial_ends_at?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          current_period_end?: string | null
-          is_lifetime?: boolean
+          is_banned?: boolean
           created_at?: string
           updated_at?: string
           last_seen_at?: string | null
@@ -77,13 +65,7 @@ export type Database = {
           is_public?: boolean
           theme_preference?: string
           notification_preferences?: Json
-          subscription_tier?: SubscriptionTier
-          subscription_status?: SubscriptionStatus
-          trial_ends_at?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          current_period_end?: string | null
-          is_lifetime?: boolean
+          is_banned?: boolean
           created_at?: string
           updated_at?: string
           last_seen_at?: string | null
@@ -346,8 +328,6 @@ export type Database = {
 }
 
 // Custom Types
-export type SubscriptionTier = "trial" | "basic" | "premium" | "lifetime"
-export type SubscriptionStatus = "trialing" | "active" | "canceled" | "frozen" | "lifetime"
 export type RideType = "offer" | "request"
 export type RideStatus = "active" | "completed" | "cancelled" | "expired"
 export type ReportReason = "spam" | "inappropriate" | "fake" | "harassment" | "other"

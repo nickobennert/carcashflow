@@ -134,9 +134,6 @@ export function ProfileSetupForm({
         last_name: data.last_name || null,
         city: data.city || null,
         bio: data.bio || null,
-        trial_ends_at: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 30 days trial
         updated_at: new Date().toISOString(),
       }
 

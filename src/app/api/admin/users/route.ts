@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-
-// Use service role for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { createAdminClient } from "@/lib/supabase/admin"
 
 // Helper to check if user is admin
 async function isAdmin(userId: string): Promise<boolean> {
+  const supabaseAdmin = createAdminClient()
   const { data } = await supabaseAdmin
     .from("super_admins")
     .select("id")
@@ -39,18 +34,27 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50")
     const offset = parseInt(searchParams.get("offset") || "0")
 
+    const supabaseAdmin = createAdminClient()
     let query = supabaseAdmin
       .from("profiles")
       .select("*", { count: "exact" })
 
-    // Filter by subscription status
-    if (status) {
-      query = query.eq("subscription_status", status)
+    // Filter by ban status
+    if (status === "banned") {
+      query = query.eq("is_banned", true)
+    } else if (status === "active") {
+      query = query.or("is_banned.is.null,is_banned.eq.false")
     }
 
     // Search by name, email, or username
+    // Sanitize search input to prevent LIKE pattern injection
     if (search) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
+      const sanitized = search
+        .slice(0, 100) // Limit length
+        .replace(/\\/g, "\\\\")
+        .replace(/%/g, "\\%")
+        .replace(/_/g, "\\_")
+      query = query.or(`username.ilike.%${sanitized}%,email.ilike.%${sanitized}%,first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%`)
     }
 
     const { data, error, count } = await query
@@ -71,8 +75,10 @@ export async function GET(request: NextRequest) {
       .eq("acceptance_type", "rideshare_terms")
 
     // Create a map for quick lookup
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const acceptancesList = (acceptances || []) as any[]
     const acceptanceMap = new Map<string, { version: string; accepted_at: string; ip_address: string | null }>()
-    for (const acc of acceptances || []) {
+    for (const acc of acceptancesList) {
       acceptanceMap.set(acc.user_id, {
         version: acc.version,
         accepted_at: acc.accepted_at,

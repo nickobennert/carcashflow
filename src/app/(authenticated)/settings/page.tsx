@@ -86,10 +86,8 @@ export default function SettingsPage() {
       try {
         const response = await fetch("/api/admin/check")
         const adminResult = await response.json()
-        console.log("Admin check result:", adminResult)
         setIsAdmin(adminResult.isAdmin === true)
-      } catch (error) {
-        console.error("Admin check error:", error)
+      } catch {
         setIsAdmin(false)
       }
 

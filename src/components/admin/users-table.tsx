@@ -59,7 +59,6 @@ interface LegalAcceptance {
 }
 
 interface UserWithStats extends Profile {
-  is_banned?: boolean
   legal_acceptance?: LegalAcceptance | null
 }
 

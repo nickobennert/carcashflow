@@ -44,9 +44,9 @@ export default function DatenschutzPage() {
             {/* 1. Verantwortlicher */}
             <section id="verantwortlicher" className="space-y-4 scroll-mt-20">
               <h2 className="text-lg font-semibold">1. Verantwortlicher</h2>
-              <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-200">
-                  Bitte ergänzen Sie hier Ihre Angaben:
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
+                <p className="font-medium text-destructive">
+                  ⚠️ WICHTIG: Die folgenden Platzhalter müssen vor dem Launch mit den echten Betreiberdaten ersetzt werden!
                 </p>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -75,7 +75,6 @@ export default function DatenschutzPage() {
                 <li>Inhaltsdaten (z.B. Texteingaben, Routen)</li>
                 <li>Nutzungsdaten (z.B. besuchte Seiten, Zugriffszeiten)</li>
                 <li>Meta-/Kommunikationsdaten (z.B. IP-Adressen)</li>
-                <li>Zahlungsdaten (über Stripe verarbeitet)</li>
               </ul>
 
               <h3 className="text-base font-medium mt-4">Kategorien betroffener Personen</h3>
@@ -89,7 +88,6 @@ export default function DatenschutzPage() {
                 <li>Bereitstellung der Plattform-Funktionen</li>
                 <li>Kontaktaufnahme zwischen Nutzern</li>
                 <li>Sicherheitsmaßnahmen</li>
-                <li>Abrechnung von Abonnements</li>
               </ul>
             </section>
 
@@ -217,23 +215,6 @@ export default function DatenschutzPage() {
                 </a>
               </p>
 
-              <h3 className="text-base font-medium mt-4">Stripe (Zahlungsabwicklung)</h3>
-              <p className="text-sm text-muted-foreground">
-                Für die Abwicklung von Abonnement-Zahlungen nutzen wir Stripe Inc.
-                Zahlungsdaten werden direkt von Stripe verarbeitet und nicht auf unseren Servern gespeichert.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Datenschutzerklärung:{" "}
-                <a
-                  href="https://stripe.com/de/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:no-underline"
-                >
-                  https://stripe.com/de/privacy
-                </a>
-              </p>
-
               <h3 className="text-base font-medium mt-4">OpenStreetMap & OSRM</h3>
               <p className="text-sm text-muted-foreground">
                 Für Kartenansichten und Routenberechnung nutzen wir OpenStreetMap und den
@@ -318,6 +299,11 @@ export default function DatenschutzPage() {
                 Für Fragen zum Datenschutz oder zur Ausübung Ihrer Betroffenenrechte
                 wenden Sie sich bitte an:
               </p>
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
+                <p className="text-destructive">
+                  ⚠️ Platzhalter - bitte ersetzen:
+                </p>
+              </div>
               <p className="text-sm text-muted-foreground">
                 E-Mail: [DATENSCHUTZ-E-MAIL]
               </p>
