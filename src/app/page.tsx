@@ -1,9 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "motion/react"
+import { useTheme } from "next-themes"
 import {
-  Car,
   ArrowRight,
   Users,
   MapPin,
@@ -11,6 +12,9 @@ import {
   MessageSquare,
   CheckCircle2,
   Zap,
+  Car,
+  Bell,
+  Route,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,9 +34,25 @@ export default function Home() {
         className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl"
       >
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center space-x-2">
-            <Car className="h-6 w-6" />
-            <span className="text-lg font-semibold">Carcashflow</span>
+          <Link href="/" className="flex items-center">
+            {/* Dark mode: show light logo */}
+            <Image
+              src="/carcashflow-fahrmit-light.svg"
+              alt="Fahr mit!"
+              width={120}
+              height={28}
+              className="hidden dark:block"
+              priority
+            />
+            {/* Light mode: show dark logo */}
+            <Image
+              src="/carcashflow-fahrmit-dark.svg"
+              alt="Fahr mit!"
+              width={120}
+              height={28}
+              className="block dark:hidden"
+              priority
+            />
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/login">
@@ -80,7 +100,7 @@ export default function Home() {
             variants={staggerItem}
             className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground"
           >
-            Biete Fahrten an, finde Mitfahrgelegenheiten und vernetze dich mit anderen Teilnehmern. Kostenlos für 30 Tage.
+            Biete Fahrten an, finde Mitfahrgelegenheiten und vernetze dich mit anderen Teilnehmern. Komplett kostenlos.
           </motion.p>
 
           {/* CTA */}
@@ -90,7 +110,7 @@ export default function Home() {
           >
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto h-11 px-6">
-                Kostenlos starten
+                Kostenlos registrieren
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -179,34 +199,34 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-3">
             {[
               {
-                icon: MapPin,
-                title: "Routen teilen",
-                description: "Erstelle Angebote oder Gesuche mit Start, Ziel und optionalen Zwischenstopps.",
+                icon: Route,
+                title: "Intelligentes Matching",
+                description: "Finde Fahrten, die auf deinem Weg liegen - auch wenn Start und Ziel nicht exakt übereinstimmen.",
               },
               {
                 icon: MessageSquare,
                 title: "Sicher kommunizieren",
-                description: "Internes Nachrichtensystem. Deine Kontaktdaten bleiben privat.",
+                description: "Internes Nachrichtensystem mit Echtzeit-Updates. Deine Kontaktdaten bleiben privat.",
+              },
+              {
+                icon: Bell,
+                title: "Strecken-Benachrichtigungen",
+                description: "Speichere deine Stammstrecken und werde automatisch bei passenden Fahrten benachrichtigt.",
               },
               {
                 icon: Shield,
-                title: "Verifizierte Nutzer",
-                description: "Nur echte Schulungsteilnehmer haben Zugang zur Plattform.",
-              },
-              {
-                icon: Zap,
-                title: "Schnell starten",
-                description: "In unter 5 Minuten registriert und einsatzbereit.",
+                title: "DSGVO-konform",
+                description: "Deine Daten gehören dir. Export und Löschung jederzeit möglich.",
               },
               {
                 icon: Users,
                 title: "Community",
-                description: "Vernetze dich mit anderen Teilnehmern und spare gemeinsam.",
+                description: "Vernetze dich mit anderen Teilnehmern und spare gemeinsam Sprit und Kosten.",
               },
               {
-                icon: Car,
-                title: "Flexibel planen",
-                description: "Filter nach Datum, Ort und Typ. Finde immer die passende Fahrt.",
+                icon: Zap,
+                title: "Schnell & kostenlos",
+                description: "In unter 5 Minuten registriert. Keine versteckten Kosten, keine Abos.",
               },
             ].map((feature, index) => (
               <div key={index} className="space-y-3">
@@ -242,7 +262,7 @@ export default function Home() {
               {
                 step: "01",
                 title: "Registrieren",
-                description: "Erstelle kostenlos einen Account. Keine Kreditkarte erforderlich.",
+                description: "Erstelle kostenlos einen Account. Keine Kreditkarte, keine versteckten Kosten.",
               },
               {
                 step: "02",
@@ -290,20 +310,24 @@ export default function Home() {
           <div className="space-y-6">
             {[
               {
-                q: "Ist Carcashflow kostenlos?",
-                a: "Die ersten 30 Tage sind komplett kostenlos. Danach kannst du zwischen günstigen Abo-Optionen wählen.",
+                q: "Ist Fahr mit! kostenlos?",
+                a: "Ja, komplett kostenlos. Keine Abos, keine versteckten Kosten, alle Features für alle Nutzer.",
               },
               {
                 q: "Wer kann die Plattform nutzen?",
-                a: "Carcashflow ist exklusiv für Schulungsteilnehmer. Nur verifizierte Nutzer haben Zugang.",
+                a: "Fahr mit! ist für Schulungsteilnehmer gedacht, die gemeinsam Rückfahrten organisieren möchten.",
               },
               {
                 q: "Wie funktioniert die Kontaktaufnahme?",
-                a: "Über unser internes Nachrichtensystem. Deine persönlichen Daten bleiben geschützt.",
+                a: "Über unser internes Nachrichtensystem mit Echtzeit-Updates. Deine persönlichen Daten bleiben geschützt.",
               },
               {
-                q: "Übernimmt Carcashflow Verantwortung für Fahrten?",
-                a: "Nein, wir stellen nur die Plattform zur Kontaktanbahnung bereit. Absprachen erfolgen eigenverantwortlich.",
+                q: "Übernimmt Fahr mit! Verantwortung für Fahrten?",
+                a: "Nein, wir stellen nur die Plattform zur Kontaktanbahnung bereit. Absprachen erfolgen eigenverantwortlich zwischen den Nutzern.",
+              },
+              {
+                q: "Kann ich meine Daten löschen?",
+                a: "Ja, jederzeit. Du kannst alle deine Daten exportieren und deinen Account vollständig löschen - DSGVO-konform.",
               },
             ].map((faq, index) => (
               <div key={index} className="border-b pb-6 last:border-0">
@@ -333,7 +357,7 @@ export default function Home() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto h-11 px-6">
-                Kostenlos starten
+                Jetzt kostenlos starten
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -341,11 +365,11 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Keine Kreditkarte</span>
+              <span>100% kostenlos</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>30 Tage kostenlos</span>
+              <span>Keine Kreditkarte</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -359,10 +383,22 @@ export default function Home() {
       <footer className="border-t py-8">
         <div className="mx-auto max-w-5xl px-6">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center space-x-2">
-              <Car className="h-5 w-5" />
-              <span className="font-medium">Carcashflow</span>
-            </div>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/carcashflow-fahrmit-light.svg"
+                alt="Fahr mit!"
+                width={100}
+                height={24}
+                className="hidden dark:block"
+              />
+              <Image
+                src="/carcashflow-fahrmit-dark.svg"
+                alt="Fahr mit!"
+                width={100}
+                height={24}
+                className="block dark:hidden"
+              />
+            </Link>
 
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link href="/impressum" className="hover:text-foreground transition-colors">
@@ -377,7 +413,7 @@ export default function Home() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Carcashflow
+              © {new Date().getFullYear()} Fahr mit!
             </p>
           </div>
         </div>

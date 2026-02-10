@@ -35,6 +35,26 @@ export async function DELETE(request: NextRequest) {
     // Delete all user data in correct order (respecting foreign keys)
     // Using admin client to bypass RLS for complete deletion
 
+    // 0. Delete avatar from storage if exists
+    const { data: profileData } = await adminClient
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .single()
+
+    const avatarUrl = (profileData as { avatar_url: string | null } | null)?.avatar_url
+    if (avatarUrl) {
+      try {
+        const url = new URL(avatarUrl)
+        const pathMatch = url.pathname.match(/\/avatars\/(.+)$/)
+        if (pathMatch) {
+          await adminClient.storage.from("avatars").remove([`avatars/${pathMatch[1]}`])
+        }
+      } catch {
+        // Ignore storage deletion errors - continue with account deletion
+      }
+    }
+
     // 1. Delete notifications
     await adminClient
       .from("notifications")

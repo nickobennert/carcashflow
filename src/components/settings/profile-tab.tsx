@@ -162,6 +162,17 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
     setIsUploadingAvatar(true)
 
     try {
+      // Extract file path from URL to delete from storage
+      const url = new URL(profile.avatar_url)
+      const pathMatch = url.pathname.match(/\/avatars\/(.+)$/)
+
+      if (pathMatch) {
+        const filePath = `avatars/${pathMatch[1]}`
+        // Delete from storage (ignore errors - file might not exist)
+        await supabase.storage.from("avatars").remove([filePath])
+      }
+
+      // Update profile to remove avatar_url
       const { data: updated, error } = await supabase
         .from("profiles")
         .update({ avatar_url: null } as never)

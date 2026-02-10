@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung | Carcashflow",
-  description: "Datenschutzerklärung und Informationen zur Datenverarbeitung bei Carcashflow",
+  title: "Datenschutzerklärung | Fahr mit!",
+  description: "Datenschutzerklärung und Informationen zur Datenverarbeitung bei Fahr mit!",
 }
 
 export default function DatenschutzPage() {
