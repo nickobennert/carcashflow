@@ -71,23 +71,6 @@ export default function ImpressumPage() {
             <Separator className="my-6" />
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Webflow Development</h2>
-              <p className="text-muted-foreground">
-                Sascha Thiel | ST-UDIO<br />
-                <a
-                  href="https://www.saschathiel.de"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  www.saschathiel.de
-                </a>
-              </p>
-            </section>
-
-            <Separator className="my-6" />
-
-            <section className="space-y-4">
               <h2 className="text-lg font-semibold">Streitschlichtung</h2>
               <p className="text-sm text-muted-foreground">
                 Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
