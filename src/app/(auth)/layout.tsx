@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Car } from "lucide-react"
+import Image from "next/image"
 
 export default function AuthLayout({
   children,
@@ -11,9 +11,25 @@ export default function AuthLayout({
       {/* Simple Header */}
       <header className="border-b">
         <div className="container flex h-14 items-center px-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <Car className="h-6 w-6 text-primary" />
-            <span className="font-bold">Carcashflow</span>
+          <Link href="/" className="flex items-center">
+            {/* Dark mode: show light logo */}
+            <Image
+              src="/carcashflow-fahrmit-light.svg"
+              alt="Fahr mit!"
+              width={120}
+              height={28}
+              className="hidden dark:block"
+              priority
+            />
+            {/* Light mode: show dark logo */}
+            <Image
+              src="/carcashflow-fahrmit-dark.svg"
+              alt="Fahr mit!"
+              width={120}
+              height={28}
+              className="block dark:hidden"
+              priority
+            />
           </Link>
         </div>
       </header>

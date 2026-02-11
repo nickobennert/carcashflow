@@ -40,7 +40,7 @@ export default async function ProfileSetupPage() {
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold tracking-tight">
-          Willkommen bei Carcashflow!
+          Willkommen bei Fahr mit!
         </h1>
         <p className="text-muted-foreground">
           Vervollständige dein Profil, um loszulegen

@@ -12,7 +12,6 @@ import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Form,
   FormControl,
@@ -44,7 +43,6 @@ const profileSetupSchema = z.object({
     .max(50, "Nachname darf maximal 50 Zeichen lang sein")
     .optional(),
   city: z.string().max(100, "Stadt darf maximal 100 Zeichen lang sein").optional(),
-  bio: z.string().max(500, "Bio darf maximal 500 Zeichen lang sein").optional(),
 })
 
 type ProfileSetupFormValues = z.infer<typeof profileSetupSchema>
@@ -84,7 +82,6 @@ export function ProfileSetupForm({
       first_name: existingProfile?.first_name || defaultFirstName,
       last_name: existingProfile?.last_name || "",
       city: existingProfile?.city || "",
-      bio: existingProfile?.bio || "",
     },
   })
 
@@ -124,8 +121,6 @@ export function ProfileSetupForm({
 
     setIsLoading(true)
     try {
-      // Type cast to avoid strict typing issues with Supabase
-      // The actual table structure will be created in Supabase
       const profileData = {
         id: userId,
         email: email,
@@ -133,7 +128,6 @@ export function ProfileSetupForm({
         first_name: data.first_name,
         last_name: data.last_name || null,
         city: data.city || null,
-        bio: data.bio || null,
         updated_at: new Date().toISOString(),
       }
 
@@ -278,29 +272,6 @@ export function ProfileSetupForm({
                       />
                     </FormControl>
                     <FormDescription>Für besseres Routen-Matching</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Über mich</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Erzähle etwas über dich..."
-                        className="resize-none"
-                        rows={3}
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {field.value?.length || 0}/500 Zeichen
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
