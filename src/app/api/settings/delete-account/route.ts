@@ -91,19 +91,13 @@ export async function DELETE(request: NextRequest) {
       .delete()
       .or(`reporter_id.eq.${user.id},reported_user_id.eq.${user.id}`)
 
-    // 7. Delete bug reports
-    await adminClient
-      .from("bug_reports")
-      .delete()
-      .eq("user_id", user.id)
-
-    // 8. Delete legal acceptances
+    // 7. Delete legal acceptances
     await adminClient
       .from("legal_acceptances")
       .delete()
       .eq("user_id", user.id)
 
-    // 9. Delete profile (this must be last due to foreign keys)
+    // 8. Delete profile (this must be last due to foreign keys)
     const { error: profileError } = await adminClient
       .from("profiles")
       .delete()
@@ -117,7 +111,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 10. Delete auth user (using admin API)
+    // 9. Delete auth user (using admin API)
     const { error: authError } = await adminClient.auth.admin.deleteUser(user.id)
 
     if (authError) {

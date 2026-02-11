@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation"
 import { Header } from "./header"
 import { Sidebar } from "./sidebar"
-import { BugReportDrawer } from "@/components/bug-report"
 
 interface AppShellProps {
   children: React.ReactNode
@@ -53,9 +52,6 @@ export function AppShell({
           )}
         </main>
       </div>
-
-      {/* Bug Report Floating Button */}
-      <BugReportDrawer />
     </div>
   )
 }
