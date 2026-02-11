@@ -27,8 +27,7 @@
 ### Backend & Services
 | Service | Verwendung |
 |---------|------------|
-| **Supabase** | PostgreSQL, Auth (Email + Google OAuth), Storage, Realtime |
-| **Stripe** | Subscription Management |
+| **Supabase** | PostgreSQL, Auth (Email), Storage, Realtime |
 | **Vercel** | Hosting & Deployment |
 | **GitHub** | Version Control |
 
@@ -631,9 +630,18 @@ CREATE TABLE legal_acceptances (
 
 ### Login Flow
 1. User navigiert zu `/login`
-2. Email/Password ODER Google OAuth
+2. Email/Password (Google OAuth implementiert aber ausgeblendet)
 3. Callback tauscht Code gegen Session
 4. Redirect zu `/dashboard`
+
+### Google OAuth (Deaktiviert)
+Google OAuth ist vollständig implementiert, aber derzeit ausgeblendet.
+- **Dateien:** `login-form.tsx`, `signup-form.tsx` (auskommentierter Code)
+- **Aktivierung:** Kommentare in den Dateien entfernen
+- **Voraussetzung:** Google OAuth Provider in Supabase Dashboard konfigurieren
+  1. Supabase Dashboard → Authentication → Providers → Google
+  2. Google Cloud Console: OAuth 2.0 Client erstellen
+  3. Redirect URI: `https://[PROJECT_REF].supabase.co/auth/v1/callback`
 
 ### Middleware Protection
 ```typescript

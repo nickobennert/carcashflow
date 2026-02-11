@@ -259,6 +259,13 @@ export function SignupForm() {
             </form>
           </Form>
 
+          {/*
+            GOOGLE AUTH - Ausgeblendet, aber vollständig implementiert.
+            Kann auf Kundenwunsch aktiviert werden.
+            Voraussetzung: Google OAuth in Supabase Dashboard konfigurieren.
+
+            Um zu aktivieren: Kommentar entfernen und isGoogleLoading State behalten.
+
           <div className="relative my-6">
             <Separator />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
@@ -296,6 +303,7 @@ export function SignupForm() {
             )}
             Mit Google registrieren
           </Button>
+          */}
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
