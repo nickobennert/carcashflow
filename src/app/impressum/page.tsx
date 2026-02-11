@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
 export const metadata: Metadata = {
-  title: "Impressum | Carcashflow",
-  description: "Impressum und rechtliche Angaben von Carcashflow",
+  title: "Impressum | Fahr mit!",
+  description: "Impressum und rechtliche Angaben von Fahr mit!",
 }
 
 export default function ImpressumPage() {
@@ -27,17 +27,13 @@ export default function ImpressumPage() {
           </CardHeader>
           <CardContent className="prose prose-zinc dark:prose-invert max-w-none">
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Angaben gemäß § 5 TMG</h2>
-              <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-200">
-                  Bitte ergänzen Sie hier Ihre Angaben:
-                </p>
-              </div>
+              <h2 className="text-lg font-semibold">Angaben gemäß § 5 DDG</h2>
               <p className="text-muted-foreground">
-                [FIRMENNAME / BETREIBER]<br />
-                [STRASSE HAUSNUMMER]<br />
-                [PLZ ORT]<br />
-                Deutschland
+                <strong>NICKO BENNERT CONSULTING LTD</strong><br />
+                Tepeleniou 13<br />
+                TEPELENIOU COURT - 2nd floor<br />
+                8010 Paphos<br />
+                CYPRUS
               </p>
             </section>
 
@@ -46,21 +42,67 @@ export default function ImpressumPage() {
             <section className="space-y-4">
               <h2 className="text-lg font-semibold">Kontakt</h2>
               <p className="text-muted-foreground">
-                E-Mail: [E-MAIL-ADRESSE]<br />
-                Telefon: [TELEFONNUMMER] (optional)
+                E-Mail:{" "}
+                <a href="mailto:nicko-bennert@web.de" className="text-primary hover:underline">
+                  nicko-bennert@web.de
+                </a><br />
+                Telefon: +49 (0) 1511 6837344
               </p>
             </section>
 
             <Separator className="my-6" />
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold">
-                Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
-              </h2>
+              <h2 className="text-lg font-semibold">Vertretungsberechtigte Gesellschafter</h2>
               <p className="text-muted-foreground">
-                [NAME DES VERANTWORTLICHEN]<br />
-                [STRASSE HAUSNUMMER]<br />
-                [PLZ ORT]
+                Nicko Bennert
+              </p>
+            </section>
+
+            <Separator className="my-6" />
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold">Umsatzsteuer-Identifikationsnummer</h2>
+              <p className="text-muted-foreground">
+                CY60227472K
+              </p>
+            </section>
+
+            <Separator className="my-6" />
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold">Webflow Development</h2>
+              <p className="text-muted-foreground">
+                Sascha Thiel | ST-UDIO<br />
+                <a
+                  href="https://www.saschathiel.de"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  www.saschathiel.de
+                </a>
+              </p>
+            </section>
+
+            <Separator className="my-6" />
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold">Streitschlichtung</h2>
+              <p className="text-sm text-muted-foreground">
+                Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
+                <a
+                  href="https://ec.europa.eu/consumers/odr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:no-underline"
+                >
+                  https://ec.europa.eu/consumers/odr/
+                </a>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Unsere E-Mail-Adresse finden Sie oben im Impressum. Wir sind nicht bereit oder verpflichtet,
+                an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
               </p>
             </section>
 
@@ -69,18 +111,19 @@ export default function ImpressumPage() {
             <section className="space-y-4">
               <h2 className="text-lg font-semibold">Haftung für Inhalte</h2>
               <p className="text-sm text-muted-foreground">
-                Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten
-                nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als
-                Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
-                Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige
-                Tätigkeit hinweisen.
+                Die Inhalte unserer Seiten wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit,
+                Vollständigkeit und Aktualität der Inhalte übernehmen wir jedoch keine Gewähr. Als
+                Diensteanbieter sind wir gemäß den allgemeinen Gesetzen für eigene Inhalte auf diesen Seiten
+                verantwortlich. Gemäß den Bestimmungen des Digitalen-Dienste-Gesetzes (DDG) sind wir jedoch
+                nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder
+                aktiv nach Umständen zu suchen, die auf eine rechtswidrige Tätigkeit hinweisen.
+                Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den
+                allgemeinen Gesetzen bleiben davon unberührt.
               </p>
               <p className="text-sm text-muted-foreground">
-                Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den
-                allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch
-                erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei
-                Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend
-                entfernen.
+                Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten
+                Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden
+                wir diese Inhalte umgehend entfernen.
               </p>
             </section>
 
@@ -109,7 +152,7 @@ export default function ImpressumPage() {
               <h2 className="text-lg font-semibold">Urheberrecht</h2>
               <p className="text-sm text-muted-foreground">
                 Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen
-                dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art
+                dem Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art
                 der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen
                 Zustimmung des jeweiligen Autors bzw. Erstellers. Downloads und Kopien dieser Seite sind
                 nur für den privaten, nicht kommerziellen Gebrauch gestattet.
@@ -122,32 +165,11 @@ export default function ImpressumPage() {
                 werden wir derartige Inhalte umgehend entfernen.
               </p>
             </section>
-
-            <Separator className="my-6" />
-
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Streitschlichtung</h2>
-              <p className="text-sm text-muted-foreground">
-                Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-                <a
-                  href="https://ec.europa.eu/consumers/odr/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:no-underline"
-                >
-                  https://ec.europa.eu/consumers/odr/
-                </a>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
-                Verbraucherschlichtungsstelle teilzunehmen.
-              </p>
-            </section>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Stand: Januar 2026
+          Stand: Februar 2026
         </p>
       </div>
     </div>

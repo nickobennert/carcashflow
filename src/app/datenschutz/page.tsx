@@ -44,17 +44,19 @@ export default function DatenschutzPage() {
             {/* 1. Verantwortlicher */}
             <section id="verantwortlicher" className="space-y-4 scroll-mt-20">
               <h2 className="text-lg font-semibold">1. Verantwortlicher</h2>
-              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-                <p className="font-medium text-destructive">
-                  ⚠️ WICHTIG: Die folgenden Platzhalter müssen vor dem Launch mit den echten Betreiberdaten ersetzt werden!
-                </p>
-              </div>
               <p className="text-sm text-muted-foreground">
-                [FIRMENNAME / BETREIBER]<br />
-                [STRASSE HAUSNUMMER]<br />
-                [PLZ ORT]<br />
-                Deutschland<br /><br />
-                E-Mail: [E-MAIL-ADRESSE]
+                <strong>NICKO BENNERT CONSULTING LTD</strong><br />
+                Tepeleniou 13<br />
+                TEPELENIOU COURT - 2nd floor<br />
+                8010 Paphos<br />
+                CYPRUS<br /><br />
+                Vertretungsberechtigter Gesellschafter: Nicko Bennert<br />
+                USt-IdNr.: CY60227472K<br /><br />
+                E-Mail:{" "}
+                <a href="mailto:nicko-bennert@web.de" className="text-primary hover:underline">
+                  nicko-bennert@web.de
+                </a><br />
+                Telefon: +49 (0) 1511 6837344
               </p>
             </section>
 
@@ -215,11 +217,21 @@ export default function DatenschutzPage() {
                 </a>
               </p>
 
-              <h3 className="text-base font-medium mt-4">OpenStreetMap & OSRM</h3>
+              <h3 className="text-base font-medium mt-4">OpenRouteService (Routenberechnung)</h3>
               <p className="text-sm text-muted-foreground">
-                Für Kartenansichten und Routenberechnung nutzen wir OpenStreetMap und den
-                Open Source Routing Machine (OSRM) Dienst. Dabei werden Standortdaten für
-                die Routenberechnung übertragen.
+                Für die Routenberechnung nutzen wir OpenRouteService. Dabei werden Standortdaten
+                (Start- und Zielpunkte) für die Routenberechnung übertragen.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Datenschutzerklärung:{" "}
+                <a
+                  href="https://openrouteservice.org/privacy-policy/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:no-underline"
+                >
+                  https://openrouteservice.org/privacy-policy/
+                </a>
               </p>
             </section>
 
@@ -299,20 +311,21 @@ export default function DatenschutzPage() {
                 Für Fragen zum Datenschutz oder zur Ausübung Ihrer Betroffenenrechte
                 wenden Sie sich bitte an:
               </p>
-              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-                <p className="text-destructive">
-                  ⚠️ Platzhalter - bitte ersetzen:
-                </p>
-              </div>
               <p className="text-sm text-muted-foreground">
-                E-Mail: [DATENSCHUTZ-E-MAIL]
+                <strong>NICKO BENNERT CONSULTING LTD</strong><br />
+                Nicko Bennert<br />
+                E-Mail:{" "}
+                <a href="mailto:nicko-bennert@web.de" className="text-primary hover:underline">
+                  nicko-bennert@web.de
+                </a><br />
+                Telefon: +49 (0) 1511 6837344
               </p>
             </section>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Stand: Januar 2026
+          Stand: Februar 2026
         </p>
       </div>
     </div>
