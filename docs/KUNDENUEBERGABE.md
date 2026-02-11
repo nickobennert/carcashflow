@@ -1,222 +1,163 @@
 # Fahr mit! - Kundenübergabe Dokument
 
-**Datum:** 10. Februar 2026
-**Status:** Produktionsreif
+**Datum:** 11. Februar 2026
+**Status:** ✅ Ready for Beta!
 
 ---
 
-## 1. Aktueller Stand
+## 1. Was ist fertig
 
 Die Anwendung "Fahr mit!" ist vollständig entwickelt und einsatzbereit:
 
-- ✅ Alle Features implementiert
-- ✅ Komplett kostenlos (kein Abo-System)
+- ✅ Alle Features implementiert und getestet
+- ✅ Komplett kostenlos für Nutzer (kein Abo-System)
 - ✅ DSGVO-konform (Daten-Export, Account-Löschung)
+- ✅ Impressum & Datenschutz integriert
+- ✅ Sicherheitscheck durchgeführt
 - ✅ Admin-Bereich für Moderation
 - ✅ Echtzeit-Nachrichten
 - ✅ Intelligentes Route-Matching
-- ✅ Route-Benachrichtigungen
+- ✅ Route-Benachrichtigungen (In-App)
+- ✅ E-Mail-Templates eingerichtet (Registrierung, Login, Passwort-Reset)
+
+**⚠️ Hinweis:** Wir sind keine Datenschutzbeauftragten - empfehlen, einen Profi drüberschauen zu lassen.
 
 ---
 
-## 2. Vor dem Launch: Datenbank bereinigen
+## 2. Was noch gebraucht wird
 
-### Schritt 1: Demo-Daten löschen
+### 2.1 Domain einrichten
 
-Im Supabase Dashboard > SQL Editor das Script ausführen:
-`supabase/scripts/production_cleanup_final.sql`
-
-Das Script:
-- Löscht alle Demo-Daten (Rides, Messages, etc.)
-- Entfernt nicht mehr benötigte Tabellen (promo_codes, subscription_tiers)
-- Entfernt Subscription-Spalten aus profiles
-- Behält super_admins Tabelle
-
-### Schritt 2: Admin-User einrichten
-
-Im Supabase Dashboard > SQL Editor:
-```sql
-INSERT INTO super_admins (user_id, role)
-SELECT id, 'super_admin'
-FROM profiles
-WHERE email = 'admin@ihre-domain.de'
-ON CONFLICT (user_id) DO UPDATE SET role = 'super_admin';
+Eine Subdomain für die App einrichten:
+```
+app.carcashflow.de
 ```
 
----
-
-## 3. Kostenpflichtige Upgrades
-
-### 3.1 Routing-Dienst: OpenRouteService → Google Maps
-
-**Aktueller Stand:** OpenRouteService (ORS) Free Tier
-- 2.000 Requests/Tag kostenlos
-- Ausreichend für kleine bis mittlere Nutzerzahlen
-
-**Option: Google Maps Platform**
-
-| Aspekt | Details |
-|--------|---------|
-| **Dienst** | Directions API + Places API |
-| **Kosten** | $200 Guthaben/Monat kostenlos |
-| **Danach** | ~$5 pro 1.000 Requests |
-| **Vorteile** | Bessere Datenqualität, schneller, zuverlässiger |
-| **Nachteile** | Teurer bei hohem Traffic |
-
-**Geschätzte Kosten bei 100 aktiven Nutzern:**
-- ~500-1.000 Requests/Tag
-- Meist im Free-Tier ($200 Guthaben)
-- Bei Überschreitung: ~$50-100/Monat
-
-**Empfehlung:** Mit ORS starten, bei Problemen auf Google Maps wechseln.
+Die Domain wird dann in Vercel konfiguriert.
 
 ---
 
-### 3.2 Supabase Pro aktivieren
+### 2.2 Vercel Pro aktivieren
 
-**Aktueller Stand:** Supabase Free Tier
+**Kosten:** ~$20/Monat (~€18)
 
-| Limit | Free | Pro |
-|-------|------|-----|
-| Datenbank | 500 MB | 8 GB |
-| Speicher | 1 GB | 100 GB |
-| Bandwidth | 2 GB | 250 GB |
-| Auth Users | Unlimited | Unlimited |
-| Edge Functions | 500K/Monat | 2M/Monat |
+**Warum nötig:**
+- Vercel Hobby ist **nicht für kommerzielle Nutzung** erlaubt
+- Bessere Performance & höhere Limits
 
-**Kosten:** $25/Monat
-
-**Wann upgraden?**
-- Mehr als 500 MB Datenbankgröße
-- Mehr als 1 GB Avatare/Uploads
-- Mehr als 2 GB Traffic/Monat
-- Für besseren Support
-
-**Empfehlung:** Mit Free Tier starten, bei Bedarf upgraden.
+**So geht's:**
+1. vercel.com aufrufen
+2. Zum Projekt navigieren
+3. Settings → Billing → Upgrade to Pro
 
 ---
 
-### 3.3 Vercel Pro aktivieren
+### 2.3 Supabase Pro aktivieren
 
-**Aktueller Stand:** Vercel Hobby (kostenlos)
+**Kosten:** ~$25/Monat (~€23)
 
-| Limit | Hobby | Pro |
-|-------|-------|-----|
-| Bandwidth | 100 GB | 1 TB |
-| Serverless Execution | 100 GB-Hrs | 1.000 GB-Hrs |
-| Team Members | 1 | Unlimited |
-| Commercial Use | ❌ | ✅ |
+**Warum nötig:**
+- Mehr Speicher (8 GB statt 500 MB)
+- Besserer Support
+- Point-in-time Backups
 
-**Kosten:** $20/Monat
-
-**Wichtig:** Vercel Hobby ist **nicht für kommerzielle Nutzung** erlaubt!
-
-**Empfehlung:** Sofort auf Pro wechseln wenn die App kommerziell genutzt wird.
+**So geht's:**
+1. supabase.com aufrufen
+2. Zum Projekt navigieren
+3. Settings → Billing → Upgrade
 
 ---
 
-### 3.4 E-Mail-Benachrichtigungen
+### 2.4 Google Maps API einrichten
 
-**Aktueller Stand:** Keine E-Mail-Benachrichtigungen
+**Kosten:** $200 Guthaben/Monat kostenlos, danach ~$5 pro 1.000 Requests
 
-**Option A: Resend (Empfohlen)**
+**Was benötigt wird:**
+1. Google Cloud Console Account erstellen (cloud.google.com)
+2. Neues Projekt anlegen
+3. Zahlungsmethode hinterlegen (Kreditkarte)
+4. Folgende APIs aktivieren:
+   - Maps JavaScript API
+   - Places API
+   - Directions API
+5. API Key erstellen
+6. **API Key an uns schicken** - wir bauen es ein
 
-| Aspekt | Details |
-|--------|---------|
-| **Free Tier** | 3.000 E-Mails/Monat |
-| **Pro** | $20/Monat für 50.000 E-Mails |
-| **Integration** | Einfache API, React Email Templates |
-| **Domain** | Eigene Domain empfohlen |
-
-**Implementierungsaufwand:** ~4-8 Stunden
-
-**Option B: Supabase Auth E-Mails (bereits aktiv)**
-- Authentifizierungs-E-Mails funktionieren bereits
-- Begrenzt auf Auth-Flows (Signup, Password Reset)
-
-**Option C: Google Workspace / Gmail SMTP**
-
-| Aspekt | Details |
-|--------|---------|
-| **Kosten** | $6/Monat (Google Workspace Starter) |
-| **Limit** | 500 E-Mails/Tag |
-| **Vorteil** | Professionelle @ihre-domain.de E-Mails |
-
-**Empfehlung:** Resend für Transaktions-E-Mails, optional Google Workspace für Support-Kommunikation.
+**Geschätzte Kosten bei 100 aktiven Nutzern:** meist im Free-Tier, maximal ~$50-100/Monat
 
 ---
 
-## 4. Kostenübersicht
+### 2.5 E-Mail-Benachrichtigungen (Optional)
 
-### Minimal-Setup (Launch)
+**Aktueller Stand:**
+- Auth-E-Mails funktionieren bereits (Registrierung, Passwort-Reset)
+- Für E-Mail-Benachrichtigungen bei neuen Nachrichten etc. brauchen wir einen Provider
+
+**Empfehlung: Resend**
+
+**Kosten:** Free Tier (3.000 E-Mails/Monat) oder ~$20/Monat für 50.000 E-Mails
+
+**Was benötigt wird:**
+1. Account bei resend.com erstellen
+2. Domain verifizieren (DNS-Eintrag - wir helfen dabei)
+3. API Key erstellen und uns schicken
+
+---
+
+## 3. Kostenübersicht
+
+### Minimal (Beta-Start)
 
 | Dienst | Kosten/Monat |
 |--------|-------------|
-| Supabase Free | €0 |
-| Vercel Hobby* | €0 |
-| OpenRouteService | €0 |
-| **Gesamt** | **€0** |
+| Vercel Pro | ~€18 |
+| Supabase Pro | ~€23 |
+| Google Maps | €0 (Free Tier) |
+| **Gesamt** | **~€41/Monat** |
 
-*⚠️ Vercel Hobby nur für nicht-kommerzielle Nutzung!
-
-### Empfohlenes Setup (Kommerziell)
+### Mit E-Mail-Benachrichtigungen
 
 | Dienst | Kosten/Monat |
 |--------|-------------|
-| Supabase Free | €0 |
-| Vercel Pro | ~€18 ($20) |
-| OpenRouteService | €0 |
-| Resend Free | €0 |
-| **Gesamt** | **~€18/Monat** |
-
-### Vollausbau (Wachstum)
-
-| Dienst | Kosten/Monat |
-|--------|-------------|
-| Supabase Pro | ~€23 ($25) |
-| Vercel Pro | ~€18 ($20) |
-| Google Maps | ~€45-90 |
-| Resend Pro | ~€18 ($20) |
-| **Gesamt** | **~€100-150/Monat** |
+| Vercel Pro | ~€18 |
+| Supabase Pro | ~€23 |
+| Google Maps | €0-€45 |
+| Resend | €0-€18 |
+| **Gesamt** | **~€41-€104/Monat** |
 
 ---
 
-## 5. Nächste Schritte
+## 4. Checkliste vor Go-Live
 
-### Sofort (vor Launch)
+### Ihr macht:
 
-1. [ ] Production Cleanup Script ausführen
-2. [ ] Admin-User einrichten
-3. [ ] Vercel Pro aktivieren (für kommerziellen Betrieb)
-4. [ ] Domain konfigurieren
-5. [ ] Datenschutzerklärung finalisieren (`/datenschutz`)
+- [ ] Domain einrichten: `app.carcashflow.de`
+- [ ] Vercel Pro aktivieren
+- [ ] Supabase Pro aktivieren
+- [ ] Google Cloud Account erstellen & API Key generieren
+- [ ] (Optional) Resend Account erstellen
 
-### Später (bei Bedarf)
+### Wir machen:
 
-1. [ ] E-Mail-Benachrichtigungen mit Resend implementieren
-2. [ ] Auf Google Maps wechseln (wenn ORS limitiert)
-3. [ ] Supabase Pro (wenn Limits erreicht)
-
----
-
-## 6. Support & Wartung
-
-### Laufende Wartung
-
-- **Supabase:** Automatische Backups (Pro: Point-in-time Recovery)
-- **Vercel:** Zero-Config Deployments bei Git Push
-- **Updates:** Node.js und npm Dependencies regelmäßig aktualisieren
-
-### Bei Problemen
-
-1. **Vercel Logs:** Dashboard > Projekt > Logs
-2. **Supabase Logs:** Dashboard > Logs > Edge Functions / API
-3. **Browser Console:** F12 > Console für Frontend-Fehler
+- [ ] Domain in Vercel konfigurieren
+- [ ] Google Maps API Key einbauen
+- [ ] (Optional) Resend einrichten für E-Mail-Benachrichtigungen
+- [ ] Finale Tests vor Launch
 
 ---
 
-## 7. Technische Dokumentation
+## 5. Support
 
-Weitere Details in:
+Bei Fragen oder Problemen einfach melden!
+
+### Logs prüfen
+
+- **Vercel:** Dashboard → Projekt → Logs
+- **Supabase:** Dashboard → Logs
+
+---
+
+## 6. Technische Dokumentation
+
+Weitere Details für Entwickler:
 - `CLAUDE.md` - Vollständige technische Dokumentation
-- `docs/ROUTING_HOSTING_OPTIONEN.md` - Routing-Infrastruktur Details
