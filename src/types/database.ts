@@ -227,6 +227,59 @@ export type Database = {
           resolved_by?: string | null
         }
       }
+      bug_reports: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          area: string
+          description: string
+          worked_before: string | null
+          expected_behavior: string | null
+          screencast_url: string | null
+          screenshots: string[] | null
+          status: "open" | "in_progress" | "resolved" | "wont_fix"
+          admin_notes: string | null
+          user_agent: string | null
+          created_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          area: string
+          description: string
+          worked_before?: string | null
+          expected_behavior?: string | null
+          screencast_url?: string | null
+          screenshots?: string[] | null
+          status?: "open" | "in_progress" | "resolved" | "wont_fix"
+          admin_notes?: string | null
+          user_agent?: string | null
+          created_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          area?: string
+          description?: string
+          worked_before?: string | null
+          expected_behavior?: string | null
+          screencast_url?: string | null
+          screenshots?: string[] | null
+          status?: "open" | "in_progress" | "resolved" | "wont_fix"
+          admin_notes?: string | null
+          user_agent?: string | null
+          created_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+      }
       notifications: {
         Row: {
           id: string
@@ -379,6 +432,7 @@ export type RideUpdate = Database["public"]["Tables"]["rides"]["Update"]
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"]
 export type Message = Database["public"]["Tables"]["messages"]["Row"]
 export type Report = Database["public"]["Tables"]["reports"]["Row"]
+export type BugReport = Database["public"]["Tables"]["bug_reports"]["Row"]
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"]
 export type LegalAcceptance = Database["public"]["Tables"]["legal_acceptances"]["Row"]
 
@@ -399,24 +453,9 @@ export type MessageWithSender = Message & {
   sender: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
 }
 
-// Bug Report types
-export interface BugReport {
-  id: string
-  user_id: string
-  title: string
-  description: string
-  area: BugReportArea
-  screenshot_url: string | null
-  status: BugReportStatus
-  admin_notes: string | null
-  created_at: string
-  updated_at: string
-  resolved_at: string | null
-  resolved_by: string | null
-}
-
+// Bug Report types (uses Database type, see bug_reports table)
 export interface BugReportWithUser extends BugReport {
-  profiles: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
+  user: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "email">
 }
 
 // ============================================
