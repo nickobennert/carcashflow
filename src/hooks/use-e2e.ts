@@ -224,19 +224,25 @@ export function useConversationE2E({
           return
         }
 
-        // Make sure we're initialized AND registered with server
+        // Make sure we're initialized locally
         const initialized = await service.isInitialized()
         if (!initialized) {
-          const publicKey = await service.initialize()
+          await service.initialize()
+        }
 
-          // Get fingerprint for server registration
+        // Always check if our key is registered on server, and register if not
+        const ownKeyResponse = await fetch(`/api/e2e/keys?user_id=${userId}`)
+        const ownKeyData = await ownKeyResponse.json()
+
+        if (!ownKeyData?.data?.public_key) {
+          // Our key is not on server - register it
+          const publicKey = await service.getPublicKey()
           const keyPair = await getIdentityKeys(userId)
           let fp = "unknown"
           if (keyPair) {
             fp = await generateKeyFingerprint(keyPair.publicKey)
           }
 
-          // Register public key with server
           const registerResponse = await fetch("/api/e2e/keys", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
