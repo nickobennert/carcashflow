@@ -18,7 +18,11 @@ import {
   ArrowUpRight,
   MoreHorizontal,
   RefreshCw,
+  Bug,
+  BookOpen,
+  ExternalLink,
 } from "lucide-react"
+import Link from "next/link"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,6 +60,7 @@ interface Stats {
   activeRides: number
   totalMessages: number
   pendingReports: number
+  openBugReports: number
   newUsersToday: number
   newUsersWeek: number
 }
@@ -255,11 +260,18 @@ export function AdminTab({ profile }: { profile: Profile }) {
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
       ])
 
+      // Load bug reports count
+      const bugReportsCount = await supabase
+        .from("bug_reports")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "open")
+
       setStats({
         totalUsers: usersCount.count || 0,
         activeRides: ridesCount.count || 0,
         totalMessages: messagesCount.count || 0,
         pendingReports: reportsCount.count || 0,
+        openBugReports: bugReportsCount.count || 0,
         newUsersToday: newUsersToday.count || 0,
         newUsersWeek: newUsersWeek.count || 0,
       })
@@ -363,16 +375,28 @@ export function AdminTab({ profile }: { profile: Profile }) {
             Übersicht und Verwaltung deiner Plattform
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => loadAdminData(true)}
-          disabled={isRefreshing}
-          className="w-full sm:w-auto"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-          Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+          >
+            <Link href="/admin/docs" target="_blank">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Docs
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadAdminData(true)}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+            Aktualisieren
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -380,7 +404,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
       >
         <StatCard
           title="Registrierte Nutzer"
@@ -414,6 +438,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
           trendValue={stats?.pendingReports === 0 ? "OK" : "Achtung"}
           accentColor={stats?.pendingReports === 0 ? "emerald" : "rose"}
         />
+        <StatCard
+          title="Bug Reports"
+          value={stats?.openBugReports || 0}
+          subtitle={stats?.openBugReports === 0 ? "Alles OK" : "Offen"}
+          icon={Bug}
+          trend={stats?.openBugReports === 0 ? "neutral" : "up"}
+          trendValue={stats?.openBugReports === 0 ? "OK" : "Neu"}
+          accentColor={stats?.openBugReports === 0 ? "emerald" : "amber"}
+        />
       </motion.div>
 
       {/* Quick Actions */}
@@ -424,6 +457,13 @@ export function AdminTab({ profile }: { profile: Profile }) {
           icon={Flag}
           badge={stats?.pendingReports}
           onClick={() => setActiveTab("reports")}
+        />
+        <QuickActionCard
+          title="Bug Reports"
+          description="Gemeldete Fehler anzeigen"
+          icon={Bug}
+          badge={stats?.openBugReports}
+          onClick={() => window.open("/admin", "_blank")}
         />
         <QuickActionCard
           title="Nutzer verwalten"
