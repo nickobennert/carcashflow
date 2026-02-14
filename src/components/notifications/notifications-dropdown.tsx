@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
@@ -53,6 +54,7 @@ const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export function NotificationsDropdown() {
+  const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -272,6 +274,15 @@ export function NotificationsDropdown() {
                   key={notif.id}
                   notification={notif}
                   onRead={() => markAsRead(notif.id)}
+                  onClick={() => {
+                    // Navigate to ride if this is a ride_match notification
+                    const rideId = notif.data?.ride_id as string | undefined
+                    if (rideId) {
+                      markAsRead(notif.id)
+                      setIsDropdownOpen(false)
+                      router.push(`/rides/${rideId}`)
+                    }
+                  }}
                   compact
                 />
               ))}
@@ -355,6 +366,15 @@ export function NotificationsDropdown() {
                       notification={notif}
                       onRead={() => markAsRead(notif.id)}
                       onDelete={() => deleteNotification(notif.id)}
+                      onClick={() => {
+                        // Navigate to ride if this is a ride_match notification
+                        const rideId = notif.data?.ride_id as string | undefined
+                        if (rideId) {
+                          markAsRead(notif.id)
+                          setIsModalOpen(false)
+                          router.push(`/rides/${rideId}`)
+                        }
+                      }}
                     />
                   </motion.div>
                 ))}
@@ -371,6 +391,7 @@ interface NotificationItemProps {
   notification: Notification
   onRead: () => void
   onDelete?: () => void
+  onClick?: () => void
   compact?: boolean
 }
 
@@ -378,22 +399,29 @@ function NotificationItem({
   notification,
   onRead,
   onDelete,
+  onClick,
   compact,
 }: NotificationItemProps) {
   const Icon = typeIcons[notification.type] || Info
+
+  const handleClick = () => {
+    if (!notification.is_read) {
+      onRead()
+    }
+    // If there's a click handler and this notification has a ride_id, call it
+    if (onClick) {
+      onClick()
+    }
+  }
 
   return (
     <div
       className={cn(
         "flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors group",
         !notification.is_read && "bg-primary/5",
-        compact ? "cursor-pointer" : "rounded-lg border"
+        (compact || onClick) ? "cursor-pointer" : "rounded-lg border"
       )}
-      onClick={() => {
-        if (!notification.is_read) {
-          onRead()
-        }
-      }}
+      onClick={handleClick}
     >
       <div
         className={cn(

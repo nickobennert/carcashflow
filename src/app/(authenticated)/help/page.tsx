@@ -166,12 +166,12 @@ export default function HelpPage() {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <a href="mailto:support@carcashflow.de">
+                <a href="mailto:info@carcashflow.de">
                   E-Mail schreiben
                 </a>
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
-                support@carcashflow.de
+                info@carcashflow.de
               </p>
             </CardContent>
           </Card>

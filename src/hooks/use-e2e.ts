@@ -196,6 +196,7 @@ export function useConversationE2E({
   const [isEstablishing, setIsEstablishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const serviceRef = useRef<E2EService | null>(null)
+  const setupAttemptedRef = useRef(false)
 
   // Get or create service instance
   const getService = useCallback(() => {
@@ -210,6 +211,10 @@ export function useConversationE2E({
     const setup = async () => {
       if (!conversationId || !otherUserId) return
 
+      // Prevent multiple setup attempts for the same conversation
+      if (setupAttemptedRef.current) return
+      setupAttemptedRef.current = true
+
       setIsEstablishing(true)
       setError(null)
 
@@ -219,9 +224,18 @@ export function useConversationE2E({
         // Check if we already have a key for this conversation
         const hasKey = await service.hasKeyForConversation(conversationId)
         if (hasKey) {
-          setIsReady(true)
-          setIsEstablishing(false)
-          return
+          // Verify the key actually works by trying to get it
+          try {
+            const testKey = await service.hasKeyForConversation(conversationId)
+            if (testKey) {
+              setIsReady(true)
+              setIsEstablishing(false)
+              return
+            }
+          } catch {
+            // Key is corrupted, continue to re-establish
+            console.warn("Existing key corrupted, re-establishing...")
+          }
         }
 
         // Make sure we're initialized locally
@@ -231,56 +245,92 @@ export function useConversationE2E({
         }
 
         // Always check if our key is registered on server, and register if not
-        const ownKeyResponse = await fetch(`/api/e2e/keys?user_id=${userId}`)
+        let ownKeyResponse: Response
+        try {
+          ownKeyResponse = await fetch(`/api/e2e/keys?user_id=${userId}`)
+        } catch {
+          console.error("Network error checking own key")
+          setError("Netzwerkfehler")
+          setIsEstablishing(false)
+          return
+        }
+
         const ownKeyData = await ownKeyResponse.json()
 
         if (!ownKeyData?.data?.public_key) {
           // Our key is not on server - register it
           const publicKey = await service.getPublicKey()
+          if (!publicKey) {
+            console.error("No public key available")
+            setError("Schlüssel konnte nicht erstellt werden")
+            setIsEstablishing(false)
+            return
+          }
+
           const keyPair = await getIdentityKeys(userId)
           let fp = "unknown"
           if (keyPair) {
             fp = await generateKeyFingerprint(keyPair.publicKey)
           }
 
-          const registerResponse = await fetch("/api/e2e/keys", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              public_key: publicKey,
-              fingerprint: fp,
-            }),
-          })
+          try {
+            const registerResponse = await fetch("/api/e2e/keys", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                public_key: publicKey,
+                fingerprint: fp,
+              }),
+            })
 
-          if (!registerResponse.ok) {
-            console.error("Failed to register public key with server")
-            // Continue anyway - other user might still have keys
+            if (!registerResponse.ok) {
+              console.error("Failed to register public key with server")
+              // Continue anyway - other user might still have keys
+            }
+          } catch {
+            console.error("Network error registering key")
           }
         }
 
         // Fetch other user's public key
-        const response = await fetch(`/api/e2e/keys?user_id=${otherUserId}`)
+        let response: Response
+        try {
+          response = await fetch(`/api/e2e/keys?user_id=${otherUserId}`)
+        } catch {
+          console.error("Network error fetching other user's key")
+          setError("Netzwerkfehler")
+          setIsEstablishing(false)
+          return
+        }
+
         if (!response.ok) {
-          throw new Error("Failed to fetch other user's public key")
+          console.error("Failed to fetch other user's public key")
+          setError("Schlüsselabruf fehlgeschlagen")
+          setIsEstablishing(false)
+          return
         }
 
         const { data } = await response.json()
         if (!data?.public_key) {
-          // Other user hasn't set up E2E yet - use unencrypted messages
-          console.warn("Other user has not set up E2E encryption")
-          setError("Der andere Nutzer hat E2E noch nicht aktiviert")
+          // Other user hasn't set up E2E yet - this is not an error, just means no E2E
+          console.info("Other user has not set up E2E encryption yet")
+          // Don't set error, just leave isReady as false
           setIsEstablishing(false)
           return
         }
 
         // Establish conversation key
-        await service.establishConversationKey(
-          conversationId,
-          otherUserId,
-          data.public_key
-        )
-
-        setIsReady(true)
+        try {
+          await service.establishConversationKey(
+            conversationId,
+            otherUserId,
+            data.public_key
+          )
+          setIsReady(true)
+        } catch (keyError) {
+          console.error("Failed to establish conversation key:", keyError)
+          setError("Schlüsselaustausch fehlgeschlagen")
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Key exchange failed"
         setError(message)

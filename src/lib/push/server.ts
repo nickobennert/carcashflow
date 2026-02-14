@@ -9,10 +9,18 @@ import webpush from "web-push"
 // Configure web-push with VAPID details
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
-const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@fahr-mit.de"
+const vapidSubject = process.env.VAPID_SUBJECT || "mailto:info@carcashflow.de"
+
+// Track if VAPID is configured
+let vapidConfigured = false
 
 if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
+  try {
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
+    vapidConfigured = true
+  } catch (err) {
+    console.error("[Push] Failed to configure VAPID keys:", err)
+  }
 }
 
 export interface PushSubscriptionData {
@@ -41,8 +49,10 @@ export async function sendPushNotification(
   subscription: PushSubscriptionData,
   payload: PushPayload
 ): Promise<{ success: boolean; error?: string }> {
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.error("[Push] VAPID keys not configured")
+  if (!vapidConfigured) {
+    console.error("[Push] VAPID keys not configured - check environment variables:")
+    console.error("[Push] NEXT_PUBLIC_VAPID_PUBLIC_KEY:", vapidPublicKey ? "set" : "MISSING")
+    console.error("[Push] VAPID_PRIVATE_KEY:", vapidPrivateKey ? "set" : "MISSING")
     return { success: false, error: "VAPID keys not configured" }
   }
 

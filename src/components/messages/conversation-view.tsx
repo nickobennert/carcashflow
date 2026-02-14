@@ -116,21 +116,38 @@ export function ConversationView({
     const decryptAllMessages = async () => {
       // Get messages that might be encrypted
       const toDecrypt = messages
-        .filter((m) => m.is_encrypted || (m.content && m.content.startsWith("{")))
+        .filter((m) => m.is_encrypted || (m.content && m.content.startsWith("{") && m.content.includes("ciphertext")))
         .map((m) => ({ id: m.id, content: m.content }))
 
       if (toDecrypt.length === 0) return
+
+      // Only attempt decryption if E2E is ready
+      if (!e2eReady) {
+        // Set placeholder for encrypted messages when we can't decrypt
+        const placeholders = new Map<string, string>()
+        toDecrypt.forEach((m) => {
+          placeholders.set(m.id, "[Verschlüsselte Nachricht - Schlüssel nicht verfügbar]")
+        })
+        setDecryptedContents(placeholders)
+        return
+      }
 
       try {
         const decrypted = await decryptBatch(toDecrypt)
         setDecryptedContents(decrypted)
       } catch (err) {
         console.error("Failed to decrypt messages:", err)
+        // Set placeholder for all failed messages
+        const placeholders = new Map<string, string>()
+        toDecrypt.forEach((m) => {
+          placeholders.set(m.id, "[Entschlüsselung fehlgeschlagen]")
+        })
+        setDecryptedContents(placeholders)
       }
     }
 
     decryptAllMessages()
-  }, [messages, decryptBatch])
+  }, [messages, decryptBatch, e2eReady])
 
   // Get display content for a message (decrypted if available)
   const getMessageContent = useCallback(

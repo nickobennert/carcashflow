@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2, Lock } from "lucide-react"
+import { Send, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -217,8 +217,6 @@ export function MessageInput({
       >
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
-        ) : e2eReady ? (
-          <Lock className="h-5 w-5" />
         ) : (
           <Send className="h-5 w-5" />
         )}
