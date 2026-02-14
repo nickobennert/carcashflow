@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 
 // GET /api/conversations - Get all conversations for the current user
 // Optimized: Single query with aggregated message data instead of N+1 queries
+// Filters out conversations that the user has hidden
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -15,8 +16,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // First, get the IDs of conversations this user has hidden
+    const { data: hiddenData } = await supabase
+      .from("hidden_conversations")
+      .select("conversation_id")
+      .eq("user_id", user.id)
+
+    const hiddenIds = (hiddenData || []).map((h: { conversation_id: string }) => h.conversation_id)
+
     // Get all conversations with profiles, ride info, and messages in one query
-    const { data: conversations, error } = await supabase
+    let query = supabase
       .from("conversations")
       .select(`
         id,
@@ -40,6 +49,13 @@ export async function GET(request: NextRequest) {
       `)
       .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
       .order("updated_at", { ascending: false })
+
+    // Filter out hidden conversations if there are any
+    if (hiddenIds.length > 0) {
+      query = query.not("id", "in", `(${hiddenIds.join(",")})`)
+    }
+
+    const { data: conversations, error } = await query
 
     if (error) {
       console.error("Error fetching conversations:", error)

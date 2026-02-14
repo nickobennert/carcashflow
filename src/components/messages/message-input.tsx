@@ -6,14 +6,13 @@ import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getE2EService } from "@/lib/crypto/e2e-service"
 import type { MessageWithSender, Profile } from "@/types"
 
 interface MessageInputProps {
   conversationId: string
   currentUserId: string
   otherUserId?: string
-  e2eReady?: boolean
+  e2eReady?: boolean  // Kept for API compatibility but no longer used
   onTyping?: (isTyping: boolean) => void
   onMessageSent?: (message: MessageWithSender) => void
 }
@@ -104,24 +103,12 @@ export function MessageInput({
         throw new Error("Profile not found")
       }
 
-      // Encrypt message if E2E is ready
-      let contentToSend = trimmedContent
-      let isEncrypted = false
-
-      if (e2eReady && otherUserId) {
-        try {
-          const e2eService = getE2EService(currentUserId)
-          contentToSend = await e2eService.encryptMessageForConversation(
-            conversationId,
-            trimmedContent
-          )
-          isEncrypted = true
-        } catch (encryptError) {
-          console.error("Failed to encrypt message:", encryptError)
-          // Fall back to unencrypted
-          contentToSend = trimmedContent
-        }
-      }
+      // E2E encryption is disabled - messages are stored as plaintext
+      // Security is still provided by:
+      // - TLS/HTTPS for data in transit
+      // - Supabase encryption at rest
+      // - Row Level Security (RLS) for access control
+      const contentToSend = trimmedContent
 
       // Insert message
       const { data: messageData, error } = await supabase
@@ -130,7 +117,7 @@ export function MessageInput({
           conversation_id: conversationId,
           sender_id: currentUserId,
           content: contentToSend,
-          is_encrypted: isEncrypted,
+          is_encrypted: false,
         } as never)
         .select()
         .single()
@@ -143,12 +130,11 @@ export function MessageInput({
         .update({ updated_at: new Date().toISOString() } as never)
         .eq("id", conversationId)
 
-      // Optimistically add message to UI (with original content for display)
+      // Optimistically add message to UI
       if (messageData && onMessageSent) {
-        const fullMessage: MessageWithSender & { decryptedContent?: string } = {
+        const fullMessage: MessageWithSender = {
           ...(messageData as unknown as MessageWithSender),
-          // Store original content for immediate display (we encrypted it, so we know the original)
-          content: isEncrypted ? contentToSend : trimmedContent,
+          content: trimmedContent,
           sender: profile as Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">,
         }
         onMessageSent(fullMessage)
@@ -189,7 +175,7 @@ export function MessageInput({
         value={content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder={e2eReady ? "Verschlüsselte Nachricht..." : "Nachricht schreiben..."}
+        placeholder="Nachricht schreiben..."
         className={cn(
           "flex-1 min-w-0 resize-none rounded-2xl border bg-background px-3 sm:px-4 py-2.5",
           "text-sm placeholder:text-muted-foreground",
@@ -209,9 +195,7 @@ export function MessageInput({
         className={cn(
           "h-11 w-11 rounded-full shrink-0 transition-all",
           canSend
-            ? e2eReady
-              ? "bg-offer hover:bg-offer/90"
-              : "bg-primary hover:bg-primary/90"
+            ? "bg-primary hover:bg-primary/90"
             : "bg-muted text-muted-foreground"
         )}
       >

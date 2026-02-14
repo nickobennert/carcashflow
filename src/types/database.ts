@@ -280,6 +280,26 @@ export type Database = {
           resolved_by?: string | null
         }
       }
+      hidden_conversations: {
+        Row: {
+          id: string
+          user_id: string
+          conversation_id: string
+          hidden_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          conversation_id: string
+          hidden_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          conversation_id?: string
+          hidden_at?: string
+        }
+      }
       notifications: {
         Row: {
           id: string

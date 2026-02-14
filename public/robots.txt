@@ -1,0 +1,8 @@
+# Robots.txt for Fahr mit!
+
+User-agent: *
+Allow: /
+
+# Block admin and docs pages from indexing
+Disallow: /admin/
+Disallow: /api/docs/

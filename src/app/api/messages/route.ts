@@ -181,10 +181,19 @@ export async function POST(request: NextRequest) {
       .update({ updated_at: new Date().toISOString() } as never)
       .eq("id", conversation_id)
 
-    // Get the other participant ID for notification
+    // Get the other participant ID
     const otherUserId = conversation.participant_1 === user.id
       ? conversation.participant_2
       : conversation.participant_1
+
+    // Remove hidden status for recipient so they can see the conversation again
+    // Use adminClient to bypass RLS
+    const adminClient = createAdminClient()
+    await adminClient
+      .from("hidden_conversations")
+      .delete()
+      .eq("user_id", otherUserId)
+      .eq("conversation_id", conversation_id)
 
     // Get sender profile for a more descriptive notification title
     const { data: senderProfile } = await supabase
@@ -199,7 +208,6 @@ export async function POST(request: NextRequest) {
     // Create notification for the recipient using admin client (bypasses RLS)
     // The regular server client uses ANON key which can't INSERT into notifications table
     // Note: For encrypted messages, we just show a generic notification (no content preview)
-    const adminClient = createAdminClient()
     const notificationMessage = is_encrypted
       ? "Verschlüsselte Nachricht"
       : content.substring(0, 100) + (content.length > 100 ? "..." : "")

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import Link from "next/link"
-import { ChevronRight, Trash2 } from "lucide-react"
+import { ChevronRight, EyeOff } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -67,8 +67,8 @@ interface ConversationItemProps {
 
 function ConversationItem({ conversation, currentUserId }: ConversationItemProps) {
   const router = useRouter()
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [showHideDialog, setShowHideDialog] = useState(false)
+  const [isHiding, setIsHiding] = useState(false)
 
   // Determine the other participant
   const isParticipant1 = conversation.participant_1 === currentUserId
@@ -105,19 +105,19 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
     ? `${extractCity(conversation.ride.route[0]?.address)} → ${extractCity(conversation.ride.route[conversation.ride.route.length - 1]?.address)}`
     : null
 
-  const handleDelete = async () => {
-    setIsDeleting(true)
+  const handleHide = async () => {
+    setIsHiding(true)
     try {
       const response = await fetch(`/api/conversations/${conversation.id}`, {
         method: "DELETE",
       })
-      if (!response.ok) throw new Error("Failed to delete")
+      if (!response.ok) throw new Error("Failed to hide")
       router.refresh()
     } catch (err) {
-      console.error("Error deleting conversation:", err)
+      console.error("Error hiding conversation:", err)
     } finally {
-      setIsDeleting(false)
-      setShowDeleteDialog(false)
+      setIsHiding(false)
+      setShowHideDialog(false)
     }
   }
 
@@ -204,41 +204,41 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
           <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
         </Link>
 
-        {/* Delete button - visible on hover (desktop) and always on mobile */}
+        {/* Hide button - visible on hover (desktop) and always on mobile */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive"
+          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-muted-foreground/70"
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            setShowDeleteDialog(true)
+            setShowHideDialog(true)
           }}
         >
-          <Trash2 className="h-4 w-4" />
+          <EyeOff className="h-4 w-4" />
         </Button>
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showHideDialog} onOpenChange={setShowHideDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+            <AlertDialogTitle>Chat ausblenden?</AlertDialogTitle>
             <AlertDialogDescription>
-              Die gesamte Konversation mit {displayName} wird unwiderruflich gelöscht.
-              Alle Nachrichten gehen verloren.
+              Der Chat mit {displayName} wird für dich ausgeblendet.
+              Die andere Person kann den Chat weiterhin sehen.
+              Wenn {displayName} dir eine neue Nachricht schickt, erscheint der Chat wieder.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={isHiding}>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
-                handleDelete()
+                handleHide()
               }}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isHiding}
             >
-              {isDeleting ? "Wird gelöscht..." : "Endgültig löschen"}
+              {isHiding ? "Wird ausgeblendet..." : "Ausblenden"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
