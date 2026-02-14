@@ -265,56 +265,31 @@ export function AdminTab({ profile }: { profile: Profile }) {
     }
 
     try {
-      // Calculate date ranges
-      const now = new Date()
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-
-      // Load stats
-      const [
-        usersCount,
-        ridesCount,
-        messagesCount,
-        reportsCount,
-        newUsersToday,
-        newUsersWeek,
-      ] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("rides").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("messages").select("id", { count: "exact", head: true }),
-        supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
-      ])
-
-      // Load bug reports count
-      const bugReportsCount = await supabase
-        .from("bug_reports")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "open")
+      // Fetch stats from API (uses service role key to bypass RLS)
+      const statsResponse = await fetch("/api/admin/stats")
+      if (!statsResponse.ok) {
+        throw new Error("Failed to fetch stats")
+      }
+      const statsData = await statsResponse.json()
 
       setStats({
-        totalUsers: usersCount.count || 0,
-        activeRides: ridesCount.count || 0,
-        totalMessages: messagesCount.count || 0,
-        pendingReports: reportsCount.count || 0,
-        openBugReports: bugReportsCount.count || 0,
-        newUsersToday: newUsersToday.count || 0,
-        newUsersWeek: newUsersWeek.count || 0,
+        totalUsers: statsData.stats.totalUsers || 0,
+        activeRides: statsData.stats.activeRides || 0,
+        totalMessages: statsData.stats.totalMessages || 0,
+        pendingReports: statsData.stats.pendingReports || 0,
+        openBugReports: statsData.stats.openBugReports || 0,
+        newUsersToday: statsData.stats.newUsersToday || 0,
+        newUsersWeek: statsData.stats.newUsersWeek || 0,
       })
 
-      // Load users
-      const { data: usersData } = await supabase
-        .from("profiles")
-        .select("id, username, email, first_name, last_name, is_banned, created_at, last_seen_at")
-        .order("created_at", { ascending: false })
-        .limit(50)
-
-      if (usersData) {
-        setUsers(usersData as UserRow[])
+      // Load users from API
+      const usersResponse = await fetch("/api/admin/users")
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        setUsers(usersData.users || [])
       }
 
-      // Load reports
+      // Load reports (via regular client for now - needs API if issues)
       const { data: reportsData } = await supabase
         .from("reports")
         .select(`
@@ -333,15 +308,11 @@ export function AdminTab({ profile }: { profile: Profile }) {
         setReports(reportsData as unknown as ReportRow[])
       }
 
-      // Load bug reports
-      const { data: bugReportsData } = await supabase
-        .from("bug_reports")
-        .select("id, title, area, description, worked_before, expected_behavior, screenshots, status, created_at")
-        .order("created_at", { ascending: false })
-        .limit(50)
-
-      if (bugReportsData) {
-        setBugReports(bugReportsData as BugReportRow[])
+      // Load bug reports from API
+      const bugReportsResponse = await fetch("/api/admin/bug-reports")
+      if (bugReportsResponse.ok) {
+        const bugReportsData = await bugReportsResponse.json()
+        setBugReports(bugReportsData.bugReports || [])
       }
 
       if (refresh) {
@@ -387,20 +358,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
     setBugActionLoading(bugId)
 
     try {
-      const { error } = await supabase
-        .from("bug_reports")
-        .update({
-          status: newStatus,
-          ...(newStatus === "resolved" || newStatus === "wont_fix"
-            ? {
-                resolved_at: new Date().toISOString(),
-                resolved_by: profile.id,
-              }
-            : {}),
-        } as never)
-        .eq("id", bugId)
+      const response = await fetch("/api/admin/bug-reports", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bugId, status: newStatus }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error("Failed to update bug report")
+      }
 
       setBugReports((prev) =>
         prev.map((b) => (b.id === bugId ? { ...b, status: newStatus } : b))
