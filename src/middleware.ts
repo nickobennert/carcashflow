@@ -11,7 +11,10 @@ const protectedRoutes = [
 ]
 
 // Routes only accessible when NOT authenticated
-const authRoutes = ["/login", "/signup"]
+const authRoutes = ["/login", "/signup", "/forgot-password"]
+
+// Routes that skip the redirect-to-dashboard check (password reset needs auth session)
+const skipAuthRedirect = ["/reset-password"]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -25,6 +28,9 @@ export async function middleware(request: NextRequest) {
   // Check if route is auth route (login/signup)
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
 
+  // Check if route should skip auth redirect (reset-password)
+  const isSkipAuthRedirect = skipAuthRedirect.some((route) => pathname.startsWith(route))
+
   // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !user) {
     const redirectUrl = new URL("/login", request.url)
@@ -33,7 +39,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users from auth routes to dashboard
-  if (isAuthRoute && user) {
+  // (but not for reset-password which needs the recovery session)
+  if (isAuthRoute && user && !isSkipAuthRedirect) {
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
