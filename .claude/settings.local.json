@@ -26,7 +26,8 @@
       "WebFetch(domain:dev.digistore24.com)",
       "WebFetch(domain:help.digistore24.com)",
       "Bash(git status:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx web-push:*)"
     ]
   }
 }

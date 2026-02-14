@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle } from "lucide-react"
+import { Bell, Mail, MessageSquare, Car, Megaphone, Loader2, HelpCircle, Smartphone, CheckCircle, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,12 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { usePushNotifications } from "@/hooks/use-push-notifications"
 import type { Profile } from "@/types"
 
 interface NotificationPreferences {
@@ -33,6 +35,16 @@ interface NotificationsTabProps {
 export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null)
   const supabase = createClient()
+
+  // Push notification hook
+  const {
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    isSubscribed: isPushSubscribed,
+    isLoading: isPushLoading,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush,
+  } = usePushNotifications()
 
   const preferences: NotificationPreferences = {
     email: true,
@@ -118,6 +130,88 @@ export function NotificationsTab({ profile, onUpdate }: NotificationsTabProps) {
               isLoading={isLoading === "push"}
               tooltip="Du siehst Badges und Hinweise wenn du die App nutzt"
             />
+
+            <Separator />
+
+            {/* Push Notifications Section */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <Smartphone className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Label className="text-sm sm:text-base font-medium">Push-Benachrichtigungen</Label>
+                    {!isPushSupported && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        Nicht unterstützt
+                      </Badge>
+                    )}
+                    {isPushSupported && isPushSubscribed && (
+                      <Badge variant="default" className="text-xs shrink-0 bg-offer">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Aktiv
+                      </Badge>
+                    )}
+                    {isPushSupported && !isPushSubscribed && pushPermission === "denied" && (
+                      <Badge variant="destructive" className="text-xs shrink-0">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Blockiert
+                      </Badge>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Erhalte Benachrichtigungen direkt auf dein Gerät, auch wenn die App geschlossen ist
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Benachrichtigungen auf deinem Gerät, auch wenn die App geschlossen ist
+                  </p>
+                  {pushPermission === "denied" && (
+                    <p className="text-xs text-destructive mt-1">
+                      Push-Benachrichtigungen wurden im Browser blockiert. Bitte erlaube sie in den Browser-Einstellungen.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {isPushLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isPushSupported && !isPushSubscribed && pushPermission !== "denied" && (
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      const success = await subscribePush()
+                      if (success) {
+                        toast.success("Push-Benachrichtigungen aktiviert")
+                      } else {
+                        toast.error("Konnte Push-Benachrichtigungen nicht aktivieren")
+                      }
+                    }}
+                    disabled={isPushLoading}
+                  >
+                    Aktivieren
+                  </Button>
+                )}
+                {isPushSupported && isPushSubscribed && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      const success = await unsubscribePush()
+                      if (success) {
+                        toast.success("Push-Benachrichtigungen deaktiviert")
+                      }
+                    }}
+                    disabled={isPushLoading}
+                  >
+                    Deaktivieren
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 

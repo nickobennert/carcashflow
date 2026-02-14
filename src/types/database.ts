@@ -23,6 +23,7 @@ export type Database = {
           training_date: string | null
           theme_preference: string
           notification_preferences: Json
+          push_enabled: boolean
           is_banned: boolean
           created_at: string
           updated_at: string
@@ -41,6 +42,7 @@ export type Database = {
           training_date?: string | null
           theme_preference?: string
           notification_preferences?: Json
+          push_enabled?: boolean
           is_banned?: boolean
           created_at?: string
           updated_at?: string
@@ -59,6 +61,7 @@ export type Database = {
           training_date?: string | null
           theme_preference?: string
           notification_preferences?: Json
+          push_enabled?: boolean
           is_banned?: boolean
           created_at?: string
           updated_at?: string

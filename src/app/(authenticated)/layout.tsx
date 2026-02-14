@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AppShell } from "@/components/layout"
 import { LegalCheckWrapper } from "@/components/legal"
+import { PushNotificationProvider } from "@/components/push"
 import type { Profile } from "@/types"
 
 export default async function AuthenticatedLayout({
@@ -41,7 +42,9 @@ export default async function AuthenticatedLayout({
   return (
     <AppShell user={userData}>
       <LegalCheckWrapper />
-      {children}
+      <PushNotificationProvider showPromptDelay={5000}>
+        {children}
+      </PushNotificationProvider>
     </AppShell>
   )
 }

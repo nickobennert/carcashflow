@@ -1,0 +1,28 @@
+{
+  "name": "Fahr mit!",
+  "short_name": "Fahr mit!",
+  "description": "Mitfahrbörse für Schulungsteilnehmer",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#061D26",
+  "theme_color": "#14768C",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["transportation", "social"],
+  "lang": "de",
+  "dir": "ltr"
+}

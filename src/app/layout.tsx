@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Carcashflow - Mitfahrbörse für Schulungsteilnehmer",
-    template: "%s | Carcashflow",
+    default: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
+    template: "%s | Fahr mit!",
   },
   description:
     "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern. Biete Fahrten an oder finde Mitfahrgelegenheiten.",
@@ -27,19 +27,25 @@ export const metadata: Metadata = {
     "Mitfahrgelegenheit",
     "Rückfahrt",
   ],
-  authors: [{ name: "Carcashflow" }],
-  creator: "Carcashflow",
+  authors: [{ name: "Fahr mit!" }],
+  creator: "Fahr mit!",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Fahr mit!",
+  },
   openGraph: {
     type: "website",
     locale: "de_DE",
-    siteName: "Carcashflow",
-    title: "Carcashflow - Mitfahrbörse für Schulungsteilnehmer",
+    siteName: "Fahr mit!",
+    title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
       "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Carcashflow - Mitfahrbörse für Schulungsteilnehmer",
+    title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
       "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern.",
   },

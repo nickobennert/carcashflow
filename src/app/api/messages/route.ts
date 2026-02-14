@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sendPushToMultiple, type PushSubscriptionData } from "@/lib/push/server"
 
 // Type for conversation
 type ConversationData = { id: string; participant_1: string; participant_2: string }
@@ -198,12 +199,12 @@ export async function POST(request: NextRequest) {
     // Create notification for the recipient using admin client (bypasses RLS)
     // The regular server client uses ANON key which can't INSERT into notifications table
     // Note: For encrypted messages, we just show a generic notification (no content preview)
-    try {
-      const adminClient = createAdminClient()
-      const notificationMessage = is_encrypted
-        ? "Verschlüsselte Nachricht"
-        : content.substring(0, 100) + (content.length > 100 ? "..." : "")
+    const adminClient = createAdminClient()
+    const notificationMessage = is_encrypted
+      ? "Verschlüsselte Nachricht"
+      : content.substring(0, 100) + (content.length > 100 ? "..." : "")
 
+    try {
       const { data: notifData, error: notifError } = await adminClient.from("notifications").insert({
         user_id: otherUserId,
         type: "new_message",
@@ -222,6 +223,53 @@ export async function POST(request: NextRequest) {
       }
     } catch (notifErr) {
       console.error("Notification creation failed:", notifErr)
+    }
+
+    // Send push notification to recipient (if they have push enabled)
+    try {
+      // Check if recipient has push enabled
+      const { data: recipientProfile } = await adminClient
+        .from("profiles")
+        .select("push_enabled")
+        .eq("id", otherUserId)
+        .single()
+
+      const profileWithPush = recipientProfile as { push_enabled: boolean } | null
+      if (profileWithPush?.push_enabled) {
+        // Get all push subscriptions for the recipient
+        const { data: subscriptions } = await adminClient
+          .from("push_subscriptions")
+          .select("endpoint, p256dh, auth")
+          .eq("user_id", otherUserId)
+
+        if (subscriptions && subscriptions.length > 0) {
+          const pushResult = await sendPushToMultiple(
+            subscriptions as PushSubscriptionData[],
+            {
+              title: `${senderName}`,
+              body: is_encrypted ? "Neue verschlüsselte Nachricht" : notificationMessage,
+              tag: `message-${conversation_id}`,
+              data: {
+                url: `/messages/${conversation_id}`,
+                conversationId: conversation_id,
+              },
+            }
+          )
+
+          console.log(`Push sent: ${pushResult.sent} success, ${pushResult.failed} failed`)
+
+          // Clean up expired subscriptions
+          if (pushResult.expired.length > 0) {
+            await adminClient
+              .from("push_subscriptions")
+              .delete()
+              .in("endpoint", pushResult.expired)
+          }
+        }
+      }
+    } catch (pushErr) {
+      // Don't fail the message send if push fails
+      console.error("Push notification failed:", pushErr)
     }
 
     return NextResponse.json({ data: message }, { status: 201 })
