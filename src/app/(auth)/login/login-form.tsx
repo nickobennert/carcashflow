@@ -211,11 +211,17 @@ export function LoginForm() {
           </Button>
           */}
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex flex-col items-center gap-2">
           <p className="text-sm text-muted-foreground">
             Noch kein Konto?{" "}
             <Link href="/signup" className="text-primary hover:underline">
               Jetzt registrieren
+            </Link>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            E-Mail noch nicht bestätigt?{" "}
+            <Link href="/verify-email" className="text-primary hover:underline">
+              Code eingeben
             </Link>
           </p>
         </CardFooter>

@@ -101,9 +101,10 @@ export function SignupForm() {
       }
 
       toast.success("Registrierung erfolgreich!", {
-        description: "Bitte bestätige deine E-Mail-Adresse.",
+        description: "Bitte bestätige deine E-Mail-Adresse mit dem Code.",
       })
-      router.push("/login?message=check-email")
+      // Redirect to verify-email page with email for code entry
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
     } catch {
       toast.error("Ein unerwarteter Fehler ist aufgetreten")
     } finally {
