@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/bug-report - Get all bug reports (admin only)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const adminClient = createAdminClient()
@@ -128,8 +128,12 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    // Parse query params
+    const searchParams = request.nextUrl.searchParams
+    const status = searchParams.get("status")
+
     // Get all bug reports with user info
-    const { data: bugReports, error } = await adminClient
+    let query = adminClient
       .from("bug_reports")
       .select(`
         *,
@@ -138,6 +142,13 @@ export async function GET() {
         )
       `)
       .order("created_at", { ascending: false })
+
+    // Filter by status if provided
+    if (status && status !== "all") {
+      query = query.eq("status", status)
+    }
+
+    const { data: bugReports, error } = await query
 
     if (error) {
       console.error("Error fetching bug reports:", error)

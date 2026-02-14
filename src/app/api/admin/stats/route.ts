@@ -49,6 +49,7 @@ export async function GET() {
       { count: totalMessages },
       { count: totalConversations },
       { count: pendingReports },
+      { count: openBugReports },
       { count: newUsersToday },
       { count: newUsersWeek },
     ] = await Promise.all([
@@ -57,6 +58,7 @@ export async function GET() {
       supabaseAdmin.from("messages").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("conversations").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("bug_reports").select("*", { count: "exact", head: true }).eq("status", "open"),
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayISO),
       supabaseAdmin.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgoISO),
     ])
@@ -94,6 +96,7 @@ export async function GET() {
         totalMessages: totalMessages || 0,
         totalConversations: totalConversations || 0,
         pendingReports: pendingReports || 0,
+        openBugReports: openBugReports || 0,
         newUsersToday: newUsersToday || 0,
         newUsersWeek: newUsersWeek || 0,
       },

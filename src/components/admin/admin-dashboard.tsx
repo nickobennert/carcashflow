@@ -10,6 +10,9 @@ import {
   TrendingUp,
   Shield,
   RefreshCw,
+  Bug,
+  BookOpen,
+  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReportsTable } from "./reports-table"
 import { UsersTable } from "./users-table"
+import { BugReportsTable } from "./bug-reports-table"
+import Link from "next/link"
 import { fadeIn, staggerContainer, staggerItem } from "@/lib/animations"
 
 interface AdminDashboardProps {
@@ -32,6 +37,7 @@ interface Stats {
   totalMessages: number
   totalConversations: number
   pendingReports: number
+  openBugReports: number
   newUsersToday: number
   newUsersWeek: number
 }
@@ -117,6 +123,17 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
           <Button
             variant="outline"
             size="sm"
+            asChild
+          >
+            <Link href="/admin/docs" target="_blank">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Docs
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => loadStats(true)}
             disabled={isRefreshing}
           >
@@ -132,8 +149,8 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
 
       {/* Stats Grid - Row 1: Main Stats */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -143,7 +160,7 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
           >
             <motion.div variants={staggerItem}>
               <StatCard
@@ -176,6 +193,14 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
                 value={stats.pendingReports}
                 icon={Flag}
                 highlight={stats.pendingReports > 0}
+              />
+            </motion.div>
+            <motion.div variants={staggerItem}>
+              <StatCard
+                title="Bug Reports"
+                value={stats.openBugReports}
+                icon={Bug}
+                highlight={stats.openBugReports > 0}
               />
             </motion.div>
           </motion.div>
@@ -252,8 +277,17 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
       ) : null}
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="reports" className="space-y-6">
+      <Tabs defaultValue="bugs" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="bugs" className="gap-2">
+            <Bug className="h-4 w-4" />
+            Bug Reports
+            {stats && stats.openBugReports > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 justify-center">
+                {stats.openBugReports}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="reports" className="gap-2">
             <Flag className="h-4 w-4" />
             Meldungen
@@ -269,12 +303,26 @@ export function AdminDashboard({ role }: AdminDashboardProps) {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="bugs">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bug Reports</CardTitle>
+              <CardDescription>
+                Von Nutzern gemeldete Fehler und Probleme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BugReportsTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="reports">
           <Card>
             <CardHeader>
-              <CardTitle>Meldungen</CardTitle>
+              <CardTitle>Nutzer-Meldungen</CardTitle>
               <CardDescription>
-                Überprüfe und bearbeite eingereichte Meldungen
+                Meldungen über andere Nutzer oder Inhalte
               </CardDescription>
             </CardHeader>
             <CardContent>
