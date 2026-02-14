@@ -286,7 +286,7 @@ export function ConversationView({
               onClick={() => setShowDeleteDialog(true)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Chat ausblenden
+              Chat entfernen
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -294,9 +294,9 @@ export function ConversationView({
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Chat ausblenden?</AlertDialogTitle>
+              <AlertDialogTitle>Chat entfernen?</AlertDialogTitle>
               <AlertDialogDescription>
-                Der Chat mit {displayName} wird für dich ausgeblendet.
+                Der Chat mit {displayName} wird für dich entfernt.
                 Die andere Person kann den Chat weiterhin sehen.
                 Wenn {displayName} dir eine neue Nachricht schickt, erscheint der Chat wieder.
               </AlertDialogDescription>
@@ -306,8 +306,9 @@ export function ConversationView({
               <AlertDialogAction
                 onClick={handleDeleteConversation}
                 disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isDeleting ? "Wird ausgeblendet..." : "Ausblenden"}
+                {isDeleting ? "Wird entfernt..." : "Entfernen"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

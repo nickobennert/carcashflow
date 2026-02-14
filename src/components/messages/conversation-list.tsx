@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import Link from "next/link"
-import { ChevronRight, EyeOff } from "lucide-react"
+import { ChevronRight, Trash2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -42,7 +41,13 @@ interface ConversationListProps {
   currentUserId: string
 }
 
-export function ConversationList({ conversations, currentUserId }: ConversationListProps) {
+export function ConversationList({ conversations: initialConversations, currentUserId }: ConversationListProps) {
+  const [conversations, setConversations] = useState(initialConversations)
+
+  const handleRemove = (conversationId: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+  }
+
   if (conversations.length === 0) {
     return null
   }
@@ -54,6 +59,7 @@ export function ConversationList({ conversations, currentUserId }: ConversationL
           key={conversation.id}
           conversation={conversation}
           currentUserId={currentUserId}
+          onRemove={handleRemove}
         />
       ))}
     </div>
@@ -63,12 +69,12 @@ export function ConversationList({ conversations, currentUserId }: ConversationL
 interface ConversationItemProps {
   conversation: ConversationWithDetails
   currentUserId: string
+  onRemove: (conversationId: string) => void
 }
 
-function ConversationItem({ conversation, currentUserId }: ConversationItemProps) {
-  const router = useRouter()
-  const [showHideDialog, setShowHideDialog] = useState(false)
-  const [isHiding, setIsHiding] = useState(false)
+function ConversationItem({ conversation, currentUserId, onRemove }: ConversationItemProps) {
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
 
   // Determine the other participant
   const isParticipant1 = conversation.participant_1 === currentUserId
@@ -105,19 +111,19 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
     ? `${extractCity(conversation.ride.route[0]?.address)} → ${extractCity(conversation.ride.route[conversation.ride.route.length - 1]?.address)}`
     : null
 
-  const handleHide = async () => {
-    setIsHiding(true)
+  const handleRemove = async () => {
+    setIsRemoving(true)
     try {
       const response = await fetch(`/api/conversations/${conversation.id}`, {
         method: "DELETE",
       })
-      if (!response.ok) throw new Error("Failed to hide")
-      router.refresh()
+      if (!response.ok) throw new Error("Failed to remove")
+      onRemove(conversation.id)
     } catch (err) {
-      console.error("Error hiding conversation:", err)
+      console.error("Error removing conversation:", err)
     } finally {
-      setIsHiding(false)
-      setShowHideDialog(false)
+      setIsRemoving(false)
+      setShowRemoveDialog(false)
     }
   }
 
@@ -204,41 +210,42 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
           <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
         </Link>
 
-        {/* Hide button - visible on hover (desktop) and always on mobile */}
+        {/* Remove button - visible on hover (desktop) and always on mobile */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-muted-foreground/70"
+          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive"
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            setShowHideDialog(true)
+            setShowRemoveDialog(true)
           }}
         >
-          <EyeOff className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 
-      <AlertDialog open={showHideDialog} onOpenChange={setShowHideDialog}>
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Chat ausblenden?</AlertDialogTitle>
+            <AlertDialogTitle>Chat entfernen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Der Chat mit {displayName} wird für dich ausgeblendet.
+              Der Chat mit {displayName} wird für dich entfernt.
               Die andere Person kann den Chat weiterhin sehen.
               Wenn {displayName} dir eine neue Nachricht schickt, erscheint der Chat wieder.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isHiding}>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRemoving}>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
-                handleHide()
+                handleRemove()
               }}
-              disabled={isHiding}
+              disabled={isRemoving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isHiding ? "Wird ausgeblendet..." : "Ausblenden"}
+              {isRemoving ? "Wird entfernt..." : "Entfernen"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
