@@ -115,14 +115,17 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
   const formattedDate = format(departureDate, "EEEE, d. MMMM yyyy", { locale: de })
   const shortDate = format(departureDate, "dd.MM.yyyy")
 
-  // User info
-  const displayName = ride.profiles.first_name
-    ? `${ride.profiles.first_name} ${ride.profiles.last_name || ""}`.trim()
-    : ride.profiles.username
+  // Safe profile access (profile might be null if user was deleted or not created)
+  const profile = ride.profiles || { username: "Unbekannt", first_name: null, last_name: null, avatar_url: null, city: null }
 
-  const initials = ride.profiles.first_name
-    ? `${ride.profiles.first_name[0]}${ride.profiles.last_name?.[0] || ""}`
-    : ride.profiles.username[0].toUpperCase()
+  // User info
+  const displayName = profile.first_name
+    ? `${profile.first_name} ${profile.last_name || ""}`.trim()
+    : profile.username
+
+  const initials = profile.first_name
+    ? `${profile.first_name[0]}${profile.last_name?.[0] || ""}`
+    : (profile.username?.[0] || "U").toUpperCase()
 
   // Map points
   const mapPoints = sortedRoute
@@ -295,7 +298,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
               <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                   <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-background shadow-md shrink-0">
-                    <AvatarImage src={ride.profiles.avatar_url || undefined} />
+                    <AvatarImage src={profile.avatar_url || undefined} />
                     <AvatarFallback className="text-base sm:text-lg font-semibold bg-primary text-primary-foreground">
                       {initials}
                     </AvatarFallback>
@@ -304,9 +307,9 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
                     <p className="font-semibold text-base sm:text-lg truncate">
                       {displayName}
                     </p>
-                    {ride.profiles.city && (
+                    {profile.city && (
                       <p className="text-sm text-muted-foreground">
-                        aus {ride.profiles.city}
+                        aus {profile.city}
                       </p>
                     )}
                   </div>

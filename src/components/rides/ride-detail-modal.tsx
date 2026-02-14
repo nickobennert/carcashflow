@@ -57,14 +57,17 @@ export function RideDetailModal({
   const departureDate = new Date(ride.departure_date)
   const formattedDate = format(departureDate, "EEE, d. MMMM yyyy", { locale: de })
 
-  // User info
-  const displayName = ride.profiles.first_name
-    ? `${ride.profiles.first_name} ${ride.profiles.last_name?.[0] || ""}.`.trim()
-    : ride.profiles.username
+  // Safe profile access (profile might be null if user was deleted or not created)
+  const profile = ride.profiles || { username: "Unbekannt", first_name: null, last_name: null, avatar_url: null, city: null }
 
-  const initials = ride.profiles.first_name
-    ? `${ride.profiles.first_name[0]}${ride.profiles.last_name?.[0] || ""}`
-    : ride.profiles.username[0].toUpperCase()
+  // User info
+  const displayName = profile.first_name
+    ? `${profile.first_name} ${profile.last_name?.[0] || ""}.`.trim()
+    : profile.username
+
+  const initials = profile.first_name
+    ? `${profile.first_name[0]}${profile.last_name?.[0] || ""}`
+    : (profile.username?.[0] || "U").toUpperCase()
 
   // Map points
   const mapPoints = sortedRoute
@@ -198,15 +201,15 @@ export function RideDetailModal({
           {/* User - dezent, kein Link */}
           <div className="flex items-center gap-2.5">
             <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={ride.profiles.avatar_url || undefined} />
+              <AvatarImage src={profile.avatar_url || undefined} />
               <AvatarFallback className="text-xs bg-muted text-muted-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{displayName}</p>
-              {ride.profiles.city && (
-                <p className="text-xs text-muted-foreground">aus {ride.profiles.city}</p>
+              {profile.city && (
+                <p className="text-xs text-muted-foreground">aus {profile.city}</p>
               )}
             </div>
             <User className="h-4 w-4 text-muted-foreground/40 shrink-0" />

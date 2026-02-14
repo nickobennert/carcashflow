@@ -34,10 +34,13 @@ export function RideCard({ ride, currentUserId, matchData, onOpenDetail }: RideC
   const departureDate = new Date(ride.departure_date)
   const formattedDate = format(departureDate, "EEE, d. MMM", { locale: de })
 
+  // Safe profile access (profile might be null if user was deleted or not created)
+  const profile = ride.profiles || { username: "Unbekannt", first_name: null, last_name: null, avatar_url: null, city: null }
+
   // Get initials for avatar fallback
-  const initials = ride.profiles.first_name
-    ? `${ride.profiles.first_name[0]}${ride.profiles.last_name?.[0] || ""}`
-    : ride.profiles.username[0].toUpperCase()
+  const initials = profile.first_name
+    ? `${profile.first_name[0]}${profile.last_name?.[0] || ""}`
+    : (profile.username?.[0] || "U").toUpperCase()
 
   return (
     <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover:bg-muted/30 hover:-translate-y-0.5">
@@ -55,22 +58,22 @@ export function RideCard({ ride, currentUserId, matchData, onOpenDetail }: RideC
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <Link
-              href={`/u/${ride.profiles.username}`}
+              href={`/u/${profile.username}`}
               target="_blank"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar className="h-10 w-10">
-                <AvatarImage src={ride.profiles.avatar_url || undefined} />
+                <AvatarImage src={profile.avatar_url || undefined} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium leading-none hover:underline">
-                  {ride.profiles.first_name} {ride.profiles.last_name?.[0]}.
+                  {profile.first_name || profile.username} {profile.last_name?.[0] ? `${profile.last_name[0]}.` : ""}
                 </p>
-                {ride.profiles.city && (
+                {profile.city && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    aus {ride.profiles.city}
+                    aus {profile.city}
                   </p>
                 )}
               </div>
