@@ -36,32 +36,49 @@ export async function DELETE(
     }
 
     // Delete in order: messages → conversation_keys → notifications → conversation
+    // Use adminClient to bypass RLS policies
+
     // 1. Delete all messages in this conversation
-    await supabase
+    const { error: msgError } = await adminClient
       .from("messages")
       .delete()
       .eq("conversation_id", id)
 
-    // 2. Delete E2E conversation keys (use admin client to bypass RLS)
-    await adminClient
+    if (msgError) {
+      console.error("Error deleting messages:", msgError)
+    }
+
+    // 2. Delete E2E conversation keys
+    const { error: keyError } = await adminClient
       .from("conversation_keys")
       .delete()
       .eq("conversation_id", id)
 
+    if (keyError) {
+      console.error("Error deleting conversation keys:", keyError)
+    }
+
     // 3. Delete related notifications
-    await supabase
+    const { error: notifError } = await adminClient
       .from("notifications")
       .delete()
       .eq("type", "new_message")
       .filter("data->>conversation_id", "eq", id)
 
+    if (notifError) {
+      console.error("Error deleting notifications:", notifError)
+    }
+
     // 4. Delete the conversation itself
-    const { error } = await supabase
+    const { error } = await adminClient
       .from("conversations")
       .delete()
       .eq("id", id)
 
-    if (error) throw error
+    if (error) {
+      console.error("Error deleting conversation:", error)
+      throw error
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
