@@ -17,12 +17,10 @@ export type Database = {
           first_name: string | null
           last_name: string | null
           avatar_url: string | null
-          bio: string | null
           phone: string | null
           city: string | null
           training_location: string | null
           training_date: string | null
-          is_public: boolean
           theme_preference: string
           notification_preferences: Json
           is_banned: boolean
@@ -37,12 +35,10 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           avatar_url?: string | null
-          bio?: string | null
           phone?: string | null
           city?: string | null
           training_location?: string | null
           training_date?: string | null
-          is_public?: boolean
           theme_preference?: string
           notification_preferences?: Json
           is_banned?: boolean
@@ -57,12 +53,10 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           avatar_url?: string | null
-          bio?: string | null
           phone?: string | null
           city?: string | null
           training_location?: string | null
           training_date?: string | null
-          is_public?: boolean
           theme_preference?: string
           notification_preferences?: Json
           is_banned?: boolean
@@ -387,7 +381,7 @@ export type LegalAcceptance = Database["public"]["Tables"]["legal_acceptances"][
 
 // Extended types with relations
 export type RideWithUser = Ride & {
-  profiles: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city" | "bio">
+  profiles: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url" | "city">
 }
 
 export type ConversationWithDetails = Conversation & {

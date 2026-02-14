@@ -77,8 +77,7 @@ export default function RideDetailPage({ params }: RideDetailPageProps) {
             first_name,
             last_name,
             avatar_url,
-            city,
-            bio
+            city
           )
         `
         )

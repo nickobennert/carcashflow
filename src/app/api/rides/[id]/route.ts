@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select(`
         *,
         profiles:user_id (
-          id, username, first_name, last_name, avatar_url, city, bio
+          id, username, first_name, last_name, avatar_url, city
         )
       `)
       .eq("id", id)
@@ -178,7 +178,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .select(`
         *,
         profiles:user_id (
-          id, username, first_name, last_name, avatar_url, city, bio
+          id, username, first_name, last_name, avatar_url, city
         )
       `)
       .single()

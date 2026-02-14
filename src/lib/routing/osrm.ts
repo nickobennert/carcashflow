@@ -81,6 +81,34 @@ interface OSRMWaypoint {
 // OSRM Demo Server (free, no API key needed)
 const OSRM_BASE_URL = "https://router.project-osrm.org"
 
+// Custom error codes for routing issues
+export const ROUTING_ERROR_CODES = {
+  OSRM_OVERLOADED: "ROUTING_SERVICE_OVERLOADED",
+  OSRM_UNAVAILABLE: "ROUTING_SERVICE_UNAVAILABLE",
+  OSRM_RATE_LIMITED: "ROUTING_RATE_LIMITED",
+  OSRM_TIMEOUT: "ROUTING_TIMEOUT",
+  NO_ROUTE_FOUND: "NO_ROUTE_FOUND",
+  INVALID_COORDINATES: "INVALID_COORDINATES",
+} as const
+
+export type RoutingErrorCode = typeof ROUTING_ERROR_CODES[keyof typeof ROUTING_ERROR_CODES]
+
+export class RoutingError extends Error {
+  code: RoutingErrorCode
+  isServerOverloaded: boolean
+
+  constructor(code: RoutingErrorCode, message: string) {
+    super(message)
+    this.name = "RoutingError"
+    this.code = code
+    this.isServerOverloaded = [
+      ROUTING_ERROR_CODES.OSRM_OVERLOADED,
+      ROUTING_ERROR_CODES.OSRM_RATE_LIMITED,
+      ROUTING_ERROR_CODES.OSRM_TIMEOUT,
+    ].includes(code)
+  }
+}
+
 /**
  * Decode a polyline string into coordinates
  * OSRM uses Google's polyline encoding by default
@@ -206,11 +234,25 @@ function getInstruction(step: OSRMStep): string {
 
 /**
  * Calculate route between multiple points using OSRM
+ * @throws {RoutingError} When routing service has issues (check error.code)
  */
 export async function calculateRoute(points: RoutePoint[]): Promise<RouteResult | null> {
   if (points.length < 2) {
     console.error("At least 2 points are required for routing")
-    return null
+    throw new RoutingError(
+      ROUTING_ERROR_CODES.INVALID_COORDINATES,
+      "Mindestens 2 Punkte für die Routenberechnung erforderlich"
+    )
+  }
+
+  // Validate coordinates
+  for (const point of points) {
+    if (!point.lat || !point.lng || isNaN(point.lat) || isNaN(point.lng)) {
+      throw new RoutingError(
+        ROUTING_ERROR_CODES.INVALID_COORDINATES,
+        "Ungültige Koordinaten für die Routenberechnung"
+      )
+    }
   }
 
   // Build coordinates string: lng,lat;lng,lat;...
@@ -221,22 +263,80 @@ export async function calculateRoute(points: RoutePoint[]): Promise<RouteResult 
   const url = `${OSRM_BASE_URL}/route/v1/driving/${coordinates}?overview=full&geometries=polyline&steps=true&annotations=false`
 
   try {
+    // Add timeout for OSRM requests (15 seconds)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     const response = await fetch(url, {
       headers: {
         "Accept": "application/json",
       },
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
+
+    // Handle HTTP errors with specific codes
     if (!response.ok) {
-      console.error("OSRM API error:", response.status, response.statusText)
-      return null
+      const status = response.status
+      console.error("OSRM API error:", status, response.statusText)
+
+      // 429 = Rate Limited
+      if (status === 429) {
+        throw new RoutingError(
+          ROUTING_ERROR_CODES.OSRM_RATE_LIMITED,
+          "Routing-Server ist überlastet (Rate Limit). Bitte versuche es in ein paar Minuten erneut."
+        )
+      }
+
+      // 503 = Service Unavailable (often means overloaded)
+      if (status === 503) {
+        throw new RoutingError(
+          ROUTING_ERROR_CODES.OSRM_OVERLOADED,
+          "Routing-Server ist überlastet. Bitte versuche es später erneut."
+        )
+      }
+
+      // 502 or 504 = Gateway issues (also often overload)
+      if (status === 502 || status === 504) {
+        throw new RoutingError(
+          ROUTING_ERROR_CODES.OSRM_OVERLOADED,
+          "Routing-Server ist momentan nicht erreichbar. Bitte versuche es später erneut."
+        )
+      }
+
+      // 500+ = Server errors
+      if (status >= 500) {
+        throw new RoutingError(
+          ROUTING_ERROR_CODES.OSRM_UNAVAILABLE,
+          "Routing-Server ist momentan nicht verfügbar. Bitte versuche es später erneut."
+        )
+      }
+
+      // Other errors
+      throw new RoutingError(
+        ROUTING_ERROR_CODES.OSRM_UNAVAILABLE,
+        `Routing-Fehler (HTTP ${status})`
+      )
     }
 
     const data: OSRMResponse = await response.json()
 
     if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
       console.error("OSRM routing failed:", data.message || data.code)
-      return null
+
+      // Check for specific OSRM error codes
+      if (data.code === "NoRoute") {
+        throw new RoutingError(
+          ROUTING_ERROR_CODES.NO_ROUTE_FOUND,
+          "Keine Route zwischen diesen Punkten gefunden"
+        )
+      }
+
+      throw new RoutingError(
+        ROUTING_ERROR_CODES.NO_ROUTE_FOUND,
+        data.message || "Routenberechnung fehlgeschlagen"
+      )
     }
 
     const route = data.routes[0]
@@ -275,8 +375,34 @@ export async function calculateRoute(points: RoutePoint[]): Promise<RouteResult 
       })) || [],
     }
   } catch (error) {
+    // Re-throw RoutingErrors
+    if (error instanceof RoutingError) {
+      throw error
+    }
+
+    // Handle abort/timeout
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("OSRM request timed out")
+      throw new RoutingError(
+        ROUTING_ERROR_CODES.OSRM_TIMEOUT,
+        "Routing-Server antwortet nicht (Timeout). Der Server ist möglicherweise überlastet."
+      )
+    }
+
+    // Handle network errors (often indicates server overload or connectivity issues)
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      console.error("Network error during routing:", error)
+      throw new RoutingError(
+        ROUTING_ERROR_CODES.OSRM_UNAVAILABLE,
+        "Verbindung zum Routing-Server fehlgeschlagen. Bitte prüfe deine Internetverbindung."
+      )
+    }
+
     console.error("Failed to calculate route:", error)
-    return null
+    throw new RoutingError(
+      ROUTING_ERROR_CODES.OSRM_UNAVAILABLE,
+      "Unerwarteter Fehler bei der Routenberechnung"
+    )
   }
 }
 

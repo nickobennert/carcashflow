@@ -3,7 +3,8 @@
 import React, { useSyncExternalStore, useEffect, useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
-import { calculateRoute, formatDistance, formatDuration, type RouteResult } from "@/lib/routing"
+import { calculateRoute, formatDistance, formatDuration, type RouteResult, RoutingError, ROUTING_ERROR_CODES } from "@/lib/routing"
+import { toast } from "sonner"
 
 export interface MapPoint {
   id: string
@@ -124,6 +125,25 @@ export function RouteMap({
         console.error("Route calculation failed:", error)
         setRouteData(null)
         onRouteCalculatedRef.current?.(null)
+
+        // Show specific error messages for routing issues
+        if (error instanceof RoutingError) {
+          if (error.isServerOverloaded) {
+            // OSRM server overloaded - show specific message
+            toast.error("Routing-Server überlastet", {
+              description: `${error.message} (Fehlercode: ${error.code})`,
+              duration: 8000,
+            })
+          } else if (error.code === ROUTING_ERROR_CODES.NO_ROUTE_FOUND) {
+            toast.error("Keine Route gefunden", {
+              description: error.message,
+            })
+          } else {
+            toast.error("Routenberechnung fehlgeschlagen", {
+              description: error.message,
+            })
+          }
+        }
       })
       .finally(() => {
         if (!cancelled) {

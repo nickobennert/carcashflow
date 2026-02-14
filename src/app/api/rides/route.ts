@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         profiles:user_id (
-          id, username, first_name, last_name, avatar_url, city, bio
+          id, username, first_name, last_name, avatar_url, city
         )
       `, { count: "exact" })
 
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
         .select(`
           *,
           profiles:user_id (
-            id, username, first_name, last_name, avatar_url, city, bio
+            id, username, first_name, last_name, avatar_url, city
           )
         `)
         .single()
@@ -390,7 +390,7 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         profiles:user_id (
-          id, username, first_name, last_name, avatar_url, city, bio
+          id, username, first_name, last_name, avatar_url, city
         )
       `)
       .single()

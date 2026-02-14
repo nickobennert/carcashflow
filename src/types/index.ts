@@ -29,7 +29,6 @@ export interface ProfileSetupFormData {
   last_name?: string
   city?: string
   training_location?: string
-  bio?: string
 }
 
 export interface RideFormData {
