@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 // DELETE /api/conversations/[id] - Delete a conversation and all its messages
 export async function DELETE(
@@ -7,6 +8,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { id } = await params
 
   const {
@@ -33,21 +35,27 @@ export async function DELETE(
       )
     }
 
-    // Delete in order: messages → notifications → conversation
+    // Delete in order: messages → conversation_keys → notifications → conversation
     // 1. Delete all messages in this conversation
     await supabase
       .from("messages")
       .delete()
       .eq("conversation_id", id)
 
-    // 2. Delete related notifications
+    // 2. Delete E2E conversation keys (use admin client to bypass RLS)
+    await adminClient
+      .from("conversation_keys")
+      .delete()
+      .eq("conversation_id", id)
+
+    // 3. Delete related notifications
     await supabase
       .from("notifications")
       .delete()
       .eq("type", "new_message")
       .filter("data->>conversation_id", "eq", id)
 
-    // 3. Delete the conversation itself
+    // 4. Delete the conversation itself
     const { error } = await supabase
       .from("conversations")
       .delete()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import type { RideUpdate, RoutePoint } from "@/types"
 
 interface RouteParams {
@@ -237,13 +238,20 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .select("id")
       .eq("ride_id", id)
 
-    // 2. Delete messages and conversations linked to this ride
+    // 2. Delete messages, E2E keys, and conversations linked to this ride
     if (conversations && conversations.length > 0) {
       const conversationIds = (conversations as { id: string }[]).map((c) => c.id)
+      const adminClient = createAdminClient()
 
       // Delete all messages in these conversations
       await supabase
         .from("messages")
+        .delete()
+        .in("conversation_id", conversationIds)
+
+      // Delete E2E conversation keys (use admin client to bypass RLS)
+      await adminClient
+        .from("conversation_keys")
         .delete()
         .in("conversation_id", conversationIds)
 
