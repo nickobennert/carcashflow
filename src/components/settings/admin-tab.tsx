@@ -86,6 +86,30 @@ interface ReportRow {
   reported_user: { username: string } | null
 }
 
+interface BugReportRow {
+  id: string
+  title: string
+  area: string
+  description: string
+  worked_before: string | null
+  expected_behavior: string | null
+  screenshots: string[] | null
+  status: string
+  created_at: string
+}
+
+const bugAreaLabels: Record<string, string> = {
+  dashboard: "Mitfahrbörse",
+  messages: "Nachrichten",
+  profile: "Profil",
+  settings: "Einstellungen",
+  "route-search": "Routensuche",
+  "route-creation": "Routenerstellung",
+  map: "Karte",
+  notifications: "Benachrichtigungen",
+  other: "Sonstiges",
+}
+
 // Stat Card Component - Clean Futuristic Design
 function StatCard({
   title,
@@ -218,11 +242,14 @@ export function AdminTab({ profile }: { profile: Profile }) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<UserRow[]>([])
   const [reports, setReports] = useState<ReportRow[]>([])
+  const [bugReports, setBugReports] = useState<BugReportRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [userSearch, setUserSearch] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
+  const [selectedBugReport, setSelectedBugReport] = useState<BugReportRow | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [bugActionLoading, setBugActionLoading] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const supabase = createClient()
 
@@ -306,6 +333,17 @@ export function AdminTab({ profile }: { profile: Profile }) {
         setReports(reportsData as unknown as ReportRow[])
       }
 
+      // Load bug reports
+      const { data: bugReportsData } = await supabase
+        .from("bug_reports")
+        .select("id, title, area, description, worked_before, expected_behavior, screenshots, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50)
+
+      if (bugReportsData) {
+        setBugReports(bugReportsData as BugReportRow[])
+      }
+
       if (refresh) {
         toast.success("Daten aktualisiert")
       }
@@ -342,6 +380,48 @@ export function AdminTab({ profile }: { profile: Profile }) {
       toast.error("Fehler beim Bearbeiten des Reports")
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  async function handleBugStatusChange(bugId: string, newStatus: string) {
+    setBugActionLoading(bugId)
+
+    try {
+      const { error } = await supabase
+        .from("bug_reports")
+        .update({
+          status: newStatus,
+          ...(newStatus === "resolved" || newStatus === "wont_fix"
+            ? {
+                resolved_at: new Date().toISOString(),
+                resolved_by: profile.id,
+              }
+            : {}),
+        } as never)
+        .eq("id", bugId)
+
+      if (error) throw error
+
+      setBugReports((prev) =>
+        prev.map((b) => (b.id === bugId ? { ...b, status: newStatus } : b))
+      )
+
+      // Update stats
+      if (newStatus !== "open" && stats) {
+        setStats({ ...stats, openBugReports: Math.max(0, stats.openBugReports - 1) })
+      }
+
+      const statusLabels: Record<string, string> = {
+        in_progress: "In Bearbeitung",
+        resolved: "Gelöst",
+        wont_fix: "Wird nicht behoben",
+      }
+      toast.success(`Bug Report: ${statusLabels[newStatus] || newStatus}`)
+    } catch (error) {
+      console.error("Error updating bug report:", error)
+      toast.error("Fehler beim Aktualisieren")
+    } finally {
+      setBugActionLoading(null)
     }
   }
 
@@ -463,7 +543,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
           description="Gemeldete Fehler anzeigen"
           icon={Bug}
           badge={stats?.openBugReports}
-          onClick={() => window.open("/admin", "_blank")}
+          onClick={() => setActiveTab("bugs")}
         />
         <QuickActionCard
           title="Nutzer verwalten"
@@ -475,7 +555,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
       {/* Admin Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
           <TabsTrigger value="overview" className="data-[state=active]:bg-background px-2 sm:px-3">
             <Activity className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Übersicht</span>
@@ -490,6 +570,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
             {(stats?.pendingReports || 0) > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 sm:static sm:ml-2 h-4 w-4 sm:h-5 sm:w-auto sm:px-1.5 p-0 flex items-center justify-center text-[10px] sm:text-xs">
                 {stats?.pendingReports}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="bugs" className="data-[state=active]:bg-background px-2 sm:px-3 relative">
+            <Bug className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Bugs</span>
+            {(stats?.openBugReports || 0) > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 sm:static sm:ml-2 h-4 w-4 sm:h-5 sm:w-auto sm:px-1.5 p-0 flex items-center justify-center text-[10px] sm:text-xs">
+                {stats?.openBugReports}
               </Badge>
             )}
           </TabsTrigger>
@@ -799,7 +888,213 @@ export function AdminTab({ profile }: { profile: Profile }) {
           </Card>
         </TabsContent>
 
+        {/* Bug Reports Tab */}
+        <TabsContent value="bugs">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bug Reports</CardTitle>
+              <CardDescription>Von Nutzern gemeldete Fehler und Probleme</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {bugReports.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Bug className="h-6 w-6" />
+                  </div>
+                  <p className="font-medium">Keine Bug Reports</p>
+                  <p className="text-sm mt-1">Es gibt derzeit keine gemeldeten Fehler</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bugReports.map((bug) => (
+                    <div
+                      key={bug.id}
+                      className="flex items-start justify-between p-4 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedBugReport(bug)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <Badge
+                            variant={
+                              bug.status === "open"
+                                ? "destructive"
+                                : bug.status === "in_progress"
+                                ? "secondary"
+                                : "default"
+                            }
+                          >
+                            {bug.status === "open"
+                              ? "Offen"
+                              : bug.status === "in_progress"
+                              ? "In Bearbeitung"
+                              : bug.status === "resolved"
+                              ? "Gelöst"
+                              : "Wird nicht behoben"}
+                          </Badge>
+                          <Badge variant="outline">{bugAreaLabels[bug.area] || bug.area}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(bug.created_at).toLocaleDateString("de-DE")}
+                          </span>
+                        </div>
+                        <p className="font-medium text-sm truncate">{bug.title}</p>
+                        <p className="text-sm text-muted-foreground truncate mt-1">
+                          {bug.description}
+                        </p>
+                      </div>
+                      {bug.status === "open" && (
+                        <div className="flex gap-2 ml-4 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={bugActionLoading === bug.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleBugStatusChange(bug.id, "in_progress")
+                            }}
+                          >
+                            Bearbeiten
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={bugActionLoading === bug.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleBugStatusChange(bug.id, "resolved")
+                            }}
+                          >
+                            {bugActionLoading === bug.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Gelöst
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
+
+      {/* Bug Report Detail Dialog */}
+      <Dialog open={!!selectedBugReport} onOpenChange={() => setSelectedBugReport(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bug className="h-5 w-5" />
+              {selectedBugReport?.title}
+            </DialogTitle>
+            <DialogDescription>
+              Gemeldet am {selectedBugReport && new Date(selectedBugReport.created_at).toLocaleDateString("de-DE")}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedBugReport && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{bugAreaLabels[selectedBugReport.area] || selectedBugReport.area}</Badge>
+                <Badge
+                  variant={
+                    selectedBugReport.status === "open"
+                      ? "destructive"
+                      : selectedBugReport.status === "in_progress"
+                      ? "secondary"
+                      : "default"
+                  }
+                >
+                  {selectedBugReport.status === "open"
+                    ? "Offen"
+                    : selectedBugReport.status === "in_progress"
+                    ? "In Bearbeitung"
+                    : selectedBugReport.status === "resolved"
+                    ? "Gelöst"
+                    : "Wird nicht behoben"}
+                </Badge>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-1">Beschreibung</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted p-3 rounded-md">
+                  {selectedBugReport.description}
+                </p>
+              </div>
+
+              {selectedBugReport.worked_before && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Hat es vorher funktioniert?</p>
+                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    {selectedBugReport.worked_before}
+                  </p>
+                </div>
+              )}
+
+              {selectedBugReport.expected_behavior && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Erwartetes Verhalten</p>
+                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    {selectedBugReport.expected_behavior}
+                  </p>
+                </div>
+              )}
+
+              {selectedBugReport.screenshots && selectedBugReport.screenshots.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Screenshots</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedBugReport.screenshots.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={url}
+                          alt={`Screenshot ${index + 1}`}
+                          className="rounded-md border w-full h-auto hover:opacity-80 transition-opacity"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedBugReport?.status === "open" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleBugStatusChange(selectedBugReport.id, "wont_fix")
+                    setSelectedBugReport(null)
+                  }}
+                >
+                  Wird nicht behoben
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleBugStatusChange(selectedBugReport.id, "resolved")
+                    setSelectedBugReport(null)
+                  }}
+                >
+                  Als gelöst markieren
+                </Button>
+              </>
+            )}
+            <Button variant="outline" onClick={() => setSelectedBugReport(null)}>
+              Schließen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* User Detail Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
