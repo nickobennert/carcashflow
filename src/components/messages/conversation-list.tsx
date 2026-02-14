@@ -21,6 +21,22 @@ import {
 import { cn } from "@/lib/utils"
 import type { ConversationWithDetails } from "@/types"
 
+// Check if content looks like an encrypted message
+function isEncryptedContent(content: string): boolean {
+  if (!content) return false
+  try {
+    const parsed = JSON.parse(content)
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof parsed.ciphertext === "string" &&
+      typeof parsed.iv === "string"
+    )
+  } catch {
+    return false
+  }
+}
+
 interface ConversationListProps {
   conversations: ConversationWithDetails[]
   currentUserId: string
@@ -160,7 +176,9 @@ function ConversationItem({ conversation, currentUserId }: ConversationItemProps
                     {!isLastMessageFromOther && (
                       <span className="text-muted-foreground">Du: </span>
                     )}
-                    {conversation.last_message.content}
+                    {isEncryptedContent(conversation.last_message.content)
+                      ? "🔒 Verschlüsselte Nachricht"
+                      : conversation.last_message.content}
                   </>
                 ) : (
                   <span className="italic">Keine Nachrichten</span>

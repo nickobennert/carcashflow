@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { triggerRouteWatches } from "@/lib/notifications/route-watch-trigger"
 import type { RideInsert, RoutePoint } from "@/types"
 
 // Helper to sanitize search input - prevents SQL injection via LIKE wildcards
@@ -335,7 +336,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Trigger route watches for this new recurring ride (async, don't wait)
-      triggerRouteWatches(parentRideId, routeData, type).catch((err) =>
+      triggerRouteWatches(parentRideId, routeData, type, user.id).catch((err) =>
         console.error("Error triggering route watches:", err)
       )
 
@@ -405,7 +406,8 @@ export async function POST(request: NextRequest) {
     triggerRouteWatches(
       (data as { id: string }).id,
       routeData,
-      type
+      type,
+      user.id
     ).catch((err) => console.error("Error triggering route watches:", err))
 
     return NextResponse.json({ data }, { status: 201 })
@@ -432,23 +434,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
-  }
-}
-
-// Helper function to trigger route watches asynchronously
-async function triggerRouteWatches(
-  rideId: string,
-  route: RoutePoint[],
-  rideType: "offer" | "request"
-) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    await fetch(`${baseUrl}/api/route-watches/trigger`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rideId, route, rideType }),
-    })
-  } catch (error) {
-    console.error("Failed to trigger route watches:", error)
   }
 }
