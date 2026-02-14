@@ -54,24 +54,27 @@ export function useE2E({ userId, autoInitialize = true }: UseE2EOptions): UseE2E
       const service = getService()
       const publicKey = await service.initialize()
 
-      // Get fingerprint for display
+      // Get fingerprint for display AND for the API call
+      let fp = "unknown"
       const keyPair = await getIdentityKeys(userId)
       if (keyPair) {
-        const fp = await generateKeyFingerprint(keyPair.publicKey)
+        fp = await generateKeyFingerprint(keyPair.publicKey)
         setFingerprint(fp)
       }
 
-      // Register public key with server
+      // Register public key with server (use fp directly, not state)
       const response = await fetch("/api/e2e/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           public_key: publicKey,
-          fingerprint: fingerprint || "pending",
+          fingerprint: fp,
         }),
       })
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Failed to register public key:", errorData)
         throw new Error("Failed to register public key with server")
       }
 
@@ -85,7 +88,7 @@ export function useE2E({ userId, autoInitialize = true }: UseE2EOptions): UseE2E
     } finally {
       setIsInitializing(false)
     }
-  }, [userId, getService, isInitializing, isInitialized, fingerprint])
+  }, [userId, getService, isInitializing, isInitialized])
 
   // Auto-initialize on mount
   useEffect(() => {
@@ -221,10 +224,32 @@ export function useConversationE2E({
           return
         }
 
-        // Make sure we're initialized
+        // Make sure we're initialized AND registered with server
         const initialized = await service.isInitialized()
         if (!initialized) {
-          await service.initialize()
+          const publicKey = await service.initialize()
+
+          // Get fingerprint for server registration
+          const keyPair = await getIdentityKeys(userId)
+          let fp = "unknown"
+          if (keyPair) {
+            fp = await generateKeyFingerprint(keyPair.publicKey)
+          }
+
+          // Register public key with server
+          const registerResponse = await fetch("/api/e2e/keys", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              public_key: publicKey,
+              fingerprint: fp,
+            }),
+          })
+
+          if (!registerResponse.ok) {
+            console.error("Failed to register public key with server")
+            // Continue anyway - other user might still have keys
+          }
         }
 
         // Fetch other user's public key
@@ -260,7 +285,7 @@ export function useConversationE2E({
     }
 
     setup()
-  }, [conversationId, otherUserId, getService])
+  }, [conversationId, otherUserId, userId, getService])
 
   // Encrypt message
   const encrypt = useCallback(
