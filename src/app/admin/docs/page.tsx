@@ -224,15 +224,23 @@ export default function DocsPage() {
                   transition={{ delay: 0.2 }}
                   className="prose prose-zinc dark:prose-invert max-w-none
                     prose-headings:scroll-mt-20
-                    prose-h2:text-2xl prose-h2:font-bold prose-h2:border-b prose-h2:pb-2 prose-h2:mb-4
-                    prose-h3:text-xl prose-h3:font-semibold
-                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
-                    prose-pre:bg-zinc-900 prose-pre:border prose-pre:rounded-lg
-                    prose-table:text-sm
-                    prose-th:bg-muted prose-th:p-2
-                    prose-td:p-2 prose-td:border-t
-                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                    prose-blockquote:border-l-primary prose-blockquote:bg-muted/50 prose-blockquote:py-1 prose-blockquote:rounded-r
+                    prose-h2:text-2xl prose-h2:font-bold prose-h2:border-b prose-h2:pb-3 prose-h2:mb-6 prose-h2:mt-12
+                    prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-4
+                    prose-h4:text-lg prose-h4:font-medium prose-h4:mt-6 prose-h4:mb-3
+                    prose-p:text-base prose-p:leading-7 prose-p:mb-4 prose-p:text-muted-foreground
+                    prose-li:text-base prose-li:leading-7 prose-li:text-muted-foreground
+                    prose-strong:text-foreground prose-strong:font-semibold
+                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-code:font-mono
+                    prose-pre:bg-zinc-900 prose-pre:border prose-pre:rounded-xl prose-pre:shadow-lg prose-pre:my-6
+                    prose-table:text-sm prose-table:my-6 prose-table:border prose-table:rounded-lg prose-table:overflow-hidden
+                    prose-th:bg-muted prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-foreground
+                    prose-td:p-3 prose-td:border-t prose-td:text-muted-foreground
+                    prose-tr:hover:bg-muted/50 prose-tr:transition-colors
+                    prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+                    prose-blockquote:border-l-4 prose-blockquote:border-l-primary prose-blockquote:bg-muted/50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-6 prose-blockquote:italic
+                    prose-hr:my-10 prose-hr:border-border
+                    prose-ul:my-4 prose-ul:space-y-2
+                    prose-ol:my-4 prose-ol:space-y-2
                   "
                 >
                   <ReactMarkdown
