@@ -5,6 +5,22 @@ import { createAdminClient } from "@/lib/supabase/admin"
 // Type for conversation
 type ConversationData = { id: string; participant_1: string; participant_2: string }
 
+// Check if content looks like an encrypted message
+function isEncryptedContent(content: string): boolean {
+  try {
+    const parsed = JSON.parse(content)
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof parsed.ciphertext === "string" &&
+      typeof parsed.iv === "string" &&
+      typeof parsed.version === "number"
+    )
+  } catch {
+    return false
+  }
+}
+
 // GET /api/messages?conversation_id=xxx - Get messages for a conversation
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +59,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Get messages with sender info
+    // Get messages with sender info (including is_encrypted flag)
     const { data: messages, error, count } = await supabase
       .from("messages")
       .select(`
@@ -51,6 +67,7 @@ export async function GET(request: NextRequest) {
         conversation_id,
         sender_id,
         content,
+        is_encrypted,
         is_read,
         created_at,
         sender:profiles!messages_sender_id_fkey (
@@ -125,6 +142,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
+    // Determine if message is encrypted
+    const is_encrypted = isEncryptedContent(content)
+
     // Create the message
     const { data: message, error: msgError } = await supabase
       .from("messages")
@@ -132,6 +152,7 @@ export async function POST(request: NextRequest) {
         conversation_id,
         sender_id: user.id,
         content: content.trim(),
+        is_encrypted,
         is_read: false,
       } as never)
       .select(`
@@ -139,6 +160,7 @@ export async function POST(request: NextRequest) {
         conversation_id,
         sender_id,
         content,
+        is_encrypted,
         is_read,
         created_at,
         sender:profiles!messages_sender_id_fkey (
@@ -175,13 +197,18 @@ export async function POST(request: NextRequest) {
 
     // Create notification for the recipient using admin client (bypasses RLS)
     // The regular server client uses ANON key which can't INSERT into notifications table
+    // Note: For encrypted messages, we just show a generic notification (no content preview)
     try {
       const adminClient = createAdminClient()
+      const notificationMessage = is_encrypted
+        ? "Verschlüsselte Nachricht"
+        : content.substring(0, 100) + (content.length > 100 ? "..." : "")
+
       const { data: notifData, error: notifError } = await adminClient.from("notifications").insert({
         user_id: otherUserId,
         type: "new_message",
         title: `Neue Nachricht von ${senderName}`,
-        message: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+        message: notificationMessage,
         data: { conversation_id, sender_id: user.id },
       } as never)
       .select("id")

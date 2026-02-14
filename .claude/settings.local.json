@@ -25,7 +25,8 @@
       "Bash(node:*)",
       "WebFetch(domain:dev.digistore24.com)",
       "WebFetch(domain:help.digistore24.com)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(dir:*)"
     ]
   }
 }

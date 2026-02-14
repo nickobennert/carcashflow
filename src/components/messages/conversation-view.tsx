@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { format, isToday, isYesterday } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2 } from "lucide-react"
+import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2, Lock, ShieldAlert } from "lucide-react"
 import Link from "next/link"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -27,11 +27,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { MessageInput } from "./message-input"
 import { TypingIndicator } from "./typing-indicator"
 import { useNotificationSound } from "@/hooks/use-notification-sound"
+import { useConversationE2E } from "@/hooks/use-e2e"
 import { cn } from "@/lib/utils"
 import type { MessageWithSender, Profile, Ride } from "@/types"
+
+// Extended message type with decrypted content
+interface DecryptedMessage extends MessageWithSender {
+  decryptedContent?: string
+  is_encrypted?: boolean
+}
 
 interface ConversationViewProps {
   conversationId: string
@@ -52,13 +65,27 @@ export function ConversationView({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const presenceChannelRef = useRef<RealtimeChannel | null>(null)
-  const [messages, setMessages] = useState<MessageWithSender[]>(initialMessages)
+  const [messages, setMessages] = useState<DecryptedMessage[]>(initialMessages)
+  const [decryptedContents, setDecryptedContents] = useState<Map<string, string>>(new Map())
   const [isOtherTyping, setIsOtherTyping] = useState(false)
   const [isOtherOnline, setIsOtherOnline] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const supabase = createClient()
   const { playSound } = useNotificationSound()
+
+  // E2E encryption hook
+  const {
+    isReady: e2eReady,
+    isEstablishing: e2eEstablishing,
+    error: e2eError,
+    decrypt,
+    decryptBatch,
+  } = useConversationE2E({
+    userId: currentUserId,
+    conversationId,
+    otherUserId: otherParticipant.id,
+  })
 
   // Format participant name
   const displayName = otherParticipant.first_name
@@ -83,6 +110,42 @@ export function ConversationView({
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
+
+  // Decrypt messages when they change or when E2E becomes ready
+  useEffect(() => {
+    const decryptAllMessages = async () => {
+      // Get messages that might be encrypted
+      const toDecrypt = messages
+        .filter((m) => m.is_encrypted || (m.content && m.content.startsWith("{")))
+        .map((m) => ({ id: m.id, content: m.content }))
+
+      if (toDecrypt.length === 0) return
+
+      try {
+        const decrypted = await decryptBatch(toDecrypt)
+        setDecryptedContents(decrypted)
+      } catch (err) {
+        console.error("Failed to decrypt messages:", err)
+      }
+    }
+
+    decryptAllMessages()
+  }, [messages, decryptBatch])
+
+  // Get display content for a message (decrypted if available)
+  const getMessageContent = useCallback(
+    (message: DecryptedMessage): string => {
+      if (decryptedContents.has(message.id)) {
+        return decryptedContents.get(message.id) || message.content
+      }
+      // Check if it looks like encrypted content
+      if (message.is_encrypted || (message.content.startsWith("{") && message.content.includes("ciphertext"))) {
+        return "[Verschlüsselte Nachricht]"
+      }
+      return message.content
+    },
+    [decryptedContents]
+  )
 
   // Subscribe to new messages via realtime
   useEffect(() => {
@@ -252,7 +315,32 @@ export function ConversationView({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-sm truncate">{displayName}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm truncate">{displayName}</p>
+              {/* E2E Status Indicator */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {e2eReady ? (
+                      <Lock className="h-3.5 w-3.5 text-offer shrink-0" />
+                    ) : e2eError ? (
+                      <ShieldAlert className="h-3.5 w-3.5 text-destructive shrink-0" />
+                    ) : e2eEstablishing ? (
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground animate-pulse shrink-0" />
+                    ) : null}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {e2eReady ? (
+                      "Ende-zu-Ende verschlüsselt"
+                    ) : e2eError ? (
+                      "Verschlüsselung nicht verfügbar"
+                    ) : (
+                      "Verschlüsselung wird eingerichtet..."
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <p className="text-xs text-muted-foreground truncate">
               {isOtherTyping ? (
                 <span className="text-offer font-medium">tippt...</span>
@@ -368,6 +456,7 @@ export function ConversationView({
                     <div key={message.id} className={cn(hasGap && "pt-3")}>
                       <MessageBubble
                         message={message}
+                        displayContent={getMessageContent(message)}
                         isOwn={isOwn}
                         isFirstInGroup={isFirstInGroup}
                         isLastInGroup={isLastInGroup}
@@ -400,6 +489,8 @@ export function ConversationView({
           <MessageInput
             conversationId={conversationId}
             currentUserId={currentUserId}
+            otherUserId={otherParticipant.id}
+            e2eReady={e2eReady}
             onTyping={broadcastTyping}
             onMessageSent={handleMessageSent}
           />
@@ -410,14 +501,16 @@ export function ConversationView({
 }
 
 interface MessageBubbleProps {
-  message: MessageWithSender
+  message: DecryptedMessage
+  displayContent: string
   isOwn: boolean
   isFirstInGroup: boolean
   isLastInGroup: boolean
 }
 
-function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: MessageBubbleProps) {
+function MessageBubble({ message, displayContent, isOwn, isFirstInGroup, isLastInGroup }: MessageBubbleProps) {
   const time = format(new Date(message.created_at), "HH:mm")
+  const isEncrypted = message.is_encrypted || (message.content.startsWith("{") && message.content.includes("ciphertext"))
 
   // Determine border radius based on position in group
   const getBubbleRadius = () => {
@@ -449,7 +542,7 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
         )}
       >
         <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
-          {message.content}
+          {displayContent}
         </p>
         <div
           className={cn(
@@ -457,6 +550,9 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
             isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
           )}
         >
+          {isEncrypted && (
+            <Lock className="h-3 w-3 shrink-0" />
+          )}
           <span className="text-[10px]">{time}</span>
           {isOwn && (
             message.is_read ? (
@@ -471,8 +567,8 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
   )
 }
 
-function groupMessagesByDate(messages: MessageWithSender[]): Record<string, MessageWithSender[]> {
-  const groups: Record<string, MessageWithSender[]> = {}
+function groupMessagesByDate(messages: DecryptedMessage[]): Record<string, DecryptedMessage[]> {
+  const groups: Record<string, DecryptedMessage[]> = {}
 
   for (const message of messages) {
     const msgDate = new Date(message.created_at)

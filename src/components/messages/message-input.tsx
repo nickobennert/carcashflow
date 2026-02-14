@@ -1,16 +1,19 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2 } from "lucide-react"
+import { Send, Loader2, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getE2EService } from "@/lib/crypto/e2e-service"
 import type { MessageWithSender, Profile } from "@/types"
 
 interface MessageInputProps {
   conversationId: string
   currentUserId: string
+  otherUserId?: string
+  e2eReady?: boolean
   onTyping?: (isTyping: boolean) => void
   onMessageSent?: (message: MessageWithSender) => void
 }
@@ -18,6 +21,8 @@ interface MessageInputProps {
 export function MessageInput({
   conversationId,
   currentUserId,
+  otherUserId,
+  e2eReady = false,
   onTyping,
   onMessageSent,
 }: MessageInputProps) {
@@ -99,13 +104,33 @@ export function MessageInput({
         throw new Error("Profile not found")
       }
 
+      // Encrypt message if E2E is ready
+      let contentToSend = trimmedContent
+      let isEncrypted = false
+
+      if (e2eReady && otherUserId) {
+        try {
+          const e2eService = getE2EService(currentUserId)
+          contentToSend = await e2eService.encryptMessageForConversation(
+            conversationId,
+            trimmedContent
+          )
+          isEncrypted = true
+        } catch (encryptError) {
+          console.error("Failed to encrypt message:", encryptError)
+          // Fall back to unencrypted
+          contentToSend = trimmedContent
+        }
+      }
+
       // Insert message
       const { data: messageData, error } = await supabase
         .from("messages")
         .insert({
           conversation_id: conversationId,
           sender_id: currentUserId,
-          content: trimmedContent,
+          content: contentToSend,
+          is_encrypted: isEncrypted,
         } as never)
         .select()
         .single()
@@ -118,10 +143,12 @@ export function MessageInput({
         .update({ updated_at: new Date().toISOString() } as never)
         .eq("id", conversationId)
 
-      // Optimistically add message to UI
+      // Optimistically add message to UI (with original content for display)
       if (messageData && onMessageSent) {
-        const fullMessage: MessageWithSender = {
+        const fullMessage: MessageWithSender & { decryptedContent?: string } = {
           ...(messageData as unknown as MessageWithSender),
+          // Store original content for immediate display (we encrypted it, so we know the original)
+          content: isEncrypted ? contentToSend : trimmedContent,
           sender: profile as Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">,
         }
         onMessageSent(fullMessage)
@@ -162,7 +189,7 @@ export function MessageInput({
         value={content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="Nachricht schreiben..."
+        placeholder={e2eReady ? "Verschlüsselte Nachricht..." : "Nachricht schreiben..."}
         className={cn(
           "flex-1 min-w-0 resize-none rounded-2xl border bg-background px-3 sm:px-4 py-2.5",
           "text-sm placeholder:text-muted-foreground",
@@ -182,12 +209,16 @@ export function MessageInput({
         className={cn(
           "h-11 w-11 rounded-full shrink-0 transition-all",
           canSend
-            ? "bg-primary hover:bg-primary/90"
+            ? e2eReady
+              ? "bg-offer hover:bg-offer/90"
+              : "bg-primary hover:bg-primary/90"
             : "bg-muted text-muted-foreground"
         )}
       >
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
+        ) : e2eReady ? (
+          <Lock className="h-5 w-5" />
         ) : (
           <Send className="h-5 w-5" />
         )}

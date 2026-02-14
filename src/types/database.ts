@@ -415,3 +415,43 @@ export interface BugReport {
 export interface BugReportWithUser extends BugReport {
   profiles: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
 }
+
+// ============================================
+// E2E Encryption Types
+// ============================================
+
+// User's public key stored on server for key exchange
+export interface UserPublicKey {
+  id: string
+  user_id: string
+  public_key: string // Base64 encoded ECDH public key
+  fingerprint: string // SHA-256 fingerprint for verification
+  created_at: string
+  updated_at: string
+}
+
+// Encrypted conversation key (encrypted for each participant)
+export interface ConversationKey {
+  id: string
+  conversation_id: string
+  user_id: string
+  encrypted_key: string // AES key encrypted with user's public key
+  created_at: string
+}
+
+// Message with encryption metadata
+export interface EncryptedMessageRow {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string // JSON: { ciphertext, iv, version }
+  is_encrypted: boolean
+  is_read: boolean
+  created_at: string
+}
+
+// Extended message type for E2E
+export type MessageWithSenderE2E = EncryptedMessageRow & {
+  sender: Pick<Profile, "id" | "username" | "first_name" | "last_name" | "avatar_url">
+  decrypted_content?: string // Client-side decrypted content
+}

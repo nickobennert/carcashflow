@@ -101,11 +101,10 @@ export class RoutingError extends Error {
     super(message)
     this.name = "RoutingError"
     this.code = code
-    this.isServerOverloaded = [
-      ROUTING_ERROR_CODES.OSRM_OVERLOADED,
-      ROUTING_ERROR_CODES.OSRM_RATE_LIMITED,
-      ROUTING_ERROR_CODES.OSRM_TIMEOUT,
-    ].includes(code)
+    this.isServerOverloaded =
+      code === ROUTING_ERROR_CODES.OSRM_OVERLOADED ||
+      code === ROUTING_ERROR_CODES.OSRM_RATE_LIMITED ||
+      code === ROUTING_ERROR_CODES.OSRM_TIMEOUT
   }
 }
 

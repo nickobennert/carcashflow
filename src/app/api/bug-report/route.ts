@@ -13,11 +13,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("username, email, first_name, last_name")
       .eq("id", user.id)
       .single()
+
+    const profile = profileData as { username: string; email: string | null; first_name: string | null; last_name: string | null } | null
 
     // Parse form data
     const formData = await request.formData()
