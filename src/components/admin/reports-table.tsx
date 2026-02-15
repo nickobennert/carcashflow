@@ -241,16 +241,12 @@ export function ReportsTable() {
                     </TableCell>
                     <TableCell>
                       {report.reported_user ? (
-                        <Link
-                          href={`/u/${report.reported_user.username}`}
-                          target="_blank"
-                          className="flex items-center gap-2 hover:underline"
-                        >
+                        <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
                             {getDisplayName(report.reported_user)}
                           </span>
-                        </Link>
+                        </div>
                       ) : report.reported_ride ? (
                         <Link
                           href={`/rides/${report.reported_ride.id}`}

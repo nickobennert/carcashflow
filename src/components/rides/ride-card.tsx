@@ -3,8 +3,6 @@
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { Calendar, Users, Clock, MessageSquare, Pencil } from "lucide-react"
-import Link from "next/link"
-
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -57,18 +55,13 @@ export function RideCard({ ride, currentUserId, matchData, onOpenDetail }: RideC
       )}
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <Link
-              href={`/u/${profile.username}`}
-              target="_blank"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={profile.avatar_url || undefined} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium leading-none hover:underline">
+                <p className="font-medium leading-none">
                   {profile.first_name || profile.username} {profile.last_name?.[0] ? `${profile.last_name[0]}.` : ""}
                 </p>
                 {profile.city && (
@@ -77,7 +70,7 @@ export function RideCard({ ride, currentUserId, matchData, onOpenDetail }: RideC
                   </p>
                 )}
               </div>
-            </Link>
+            </div>
             <Badge
               variant="secondary"
               className={cn(

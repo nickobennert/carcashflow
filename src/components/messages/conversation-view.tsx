@@ -272,9 +272,6 @@ export function ConversationView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/u/${otherParticipant.username}`} target="_blank">Profil anzeigen</Link>
-            </DropdownMenuItem>
             {ride && (
               <DropdownMenuItem asChild>
                 <Link href={`/rides/${ride.id}`}>Route anzeigen</Link>

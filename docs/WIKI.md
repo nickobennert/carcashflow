@@ -14,7 +14,7 @@
 |---------|--------|--------------|
 | Registrierung & Login | **Aktiv** | Email/Passwort via Supabase Auth |
 | Google OAuth | **Deaktiviert** | Code vorhanden, aber auskommentiert |
-| Profil-System | **Aktiv** | Öffentliche Profile unter `/u/[username]` |
+| Profil-System | **Aktiv** | Profil bearbeiten, Avatar, City |
 | Mitfahrbörse (Dashboard) | **Aktiv** | Fahrten erstellen, filtern, ansehen |
 | Multi-Stopp-Routen | **Aktiv** | Start, Zwischenstopps, Ziel mit Geocoding |
 | Route-Matching | **Aktiv** | Automatischer Abgleich passender Fahrten (max. 30km) |
@@ -31,7 +31,6 @@
 | Docs/Wiki | **Aktiv** | Diese Seite unter `/admin/docs` |
 | E2E-Verschlüsselung | **Deaktiviert** | Entfernt - nicht zuverlässig in Web-Apps |
 | Stripe/Subscription | **Nicht aktiv** | Vorbereitet, aber nicht implementiert |
-| Freundschafts-System | **Nicht aktiv** | Geplant, aber noch nicht umgesetzt |
 
 ---
 
@@ -101,7 +100,6 @@ src/
       redirect/               # Post-Login Redirect
     login/
     signup/
-    u/[username]/             # Öffentliches Profil
 
   components/
     ui/                       # shadcn/ui Basis-Komponenten

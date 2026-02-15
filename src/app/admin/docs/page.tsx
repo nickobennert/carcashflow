@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode } from "react"
 import { motion } from "motion/react"
+import Image from "next/image"
 import {
   Book,
   Code,
@@ -253,10 +254,21 @@ export default function DocsPage() {
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="max-w-7xl mx-auto px-6 flex h-14 items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Book className="h-4 w-4" />
-              </div>
-              <span className="font-semibold">Fahr mit! Docs</span>
+              <Image
+                src="/carcashflow-fahrmit-light.svg"
+                alt="Carcashflow"
+                width={120}
+                height={28}
+                className="hidden dark:block"
+              />
+              <Image
+                src="/carcashflow-fahrmit-dark.svg"
+                alt="Carcashflow"
+                width={120}
+                height={28}
+                className="block dark:hidden"
+              />
+              <span className="font-semibold text-muted-foreground">Docs</span>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="text-xs">MVP 1.0</Badge>
@@ -303,7 +315,7 @@ export default function DocsPage() {
                     <span className="text-xs font-medium">Built with AI</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Entwickelt mit Claude (Anthropic). Architektur, DB-Design und Frontend-Code.
+                    Entwickelt mit AI. Architektur, DB-Design und Frontend-Code.
                   </p>
                 </div>
               </div>
@@ -364,7 +376,7 @@ export default function DocsPage() {
                   rows={[
                     ["Registrierung & Login", <StatusBadge key="auth" status="active" />, "Email/Passwort via Supabase Auth"],
                     ["Google OAuth", <StatusBadge key="oauth" status="disabled" />, "Code vorhanden, aber auskommentiert"],
-                    ["Profil-System", <StatusBadge key="profile" status="active" />, <>Öffentliche Profile unter <InlineCode>/u/[username]</InlineCode></>],
+                    ["Profil-System", <StatusBadge key="profile" status="active" />, "Profil bearbeiten, Avatar, City"],
                     ["Mitfahrbörse", <StatusBadge key="rides" status="active" />, "Fahrten erstellen, filtern, suchen"],
                     ["Multi-Stopp-Routen", <StatusBadge key="routes" status="active" />, "Start → Zwischenstopps → Ziel mit Geocoding"],
                     ["Route-Matching", <StatusBadge key="match" status="active" />, "Automatischer Abgleich passender Fahrten"],
@@ -380,7 +392,6 @@ export default function DocsPage() {
                     ["Admin-Panel", <StatusBadge key="admin" status="active" />, "Stats, User-Verwaltung, Bug Reports"],
                     ["E2E-Verschlüsselung", <StatusBadge key="e2e" status="disabled" />, "Entfernt - nicht zuverlässig in Web-Apps"],
                     ["Stripe/Subscription", <StatusBadge key="stripe" status="planned" />, "Vorbereitet, noch nicht implementiert"],
-                    ["Freundschafts-System", <StatusBadge key="friends" status="planned" />, "Geplant, noch nicht umgesetzt"],
                   ]}
                 />
               </Section>
@@ -465,8 +476,6 @@ export default function DocsPage() {
     auth/redirect/            Post-Login Redirect
     login/
     signup/
-    u/[username]/             Öffentliches Profil
-
   components/
     ui/                       shadcn/ui Basis-Komponenten
     layout/                   AppShell, Sidebar, Header, MobileNav
@@ -983,10 +992,7 @@ ORDER BY tag DESC;`}</CodeBlock>
               <Separator className="my-10" />
               <div className="text-center py-8">
                 <p className="text-sm text-muted-foreground">
-                  Fahr mit! — Technische Dokumentation — Februar 2026
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  info@carcashflow.de · Bug Reports in der App unter Hilfe → Fehler melden
+                  © {new Date().getFullYear()} Carcashflow. Alle Rechte vorbehalten.
                 </p>
               </div>
 

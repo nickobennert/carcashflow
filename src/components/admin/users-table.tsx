@@ -16,7 +16,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react"
-import Link from "next/link"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -226,11 +225,7 @@ export function UsersTable() {
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <Link
-                    href={`/u/${user.username}`}
-                    target="_blank"
-                    className="flex items-center gap-3 hover:opacity-80 min-w-0 flex-1"
-                  >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={user.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
@@ -245,7 +240,7 @@ export function UsersTable() {
                         @{user.username}
                       </p>
                     </div>
-                  </Link>
+                  </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -264,12 +259,6 @@ export function UsersTable() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href={`/u/${user.username}`} target="_blank" className="gap-2">
-                          <User className="h-4 w-4" />
-                          Profil anzeigen
-                        </Link>
-                      </DropdownMenuItem>
                       {user.email && (
                         <DropdownMenuItem
                           className="gap-2"
@@ -351,11 +340,7 @@ export function UsersTable() {
                 {users.map((user) => (
                   <TableRow key={user.id} className={user.is_banned ? "opacity-60" : ""}>
                     <TableCell>
-                      <Link
-                        href={`/u/${user.username}`}
-                        target="_blank"
-                        className="flex items-center gap-3 hover:underline"
-                      >
+                      <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={user.avatar_url || undefined} />
                           <AvatarFallback className="text-xs">
@@ -370,7 +355,7 @@ export function UsersTable() {
                             @{user.username}
                           </p>
                         </div>
-                      </Link>
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">{user.email || "—"}</TableCell>
                     <TableCell>{getStatusBadge(user)}</TableCell>
@@ -419,12 +404,6 @@ export function UsersTable() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/u/${user.username}`} target="_blank" className="gap-2">
-                              <User className="h-4 w-4" />
-                              Profil anzeigen
-                            </Link>
-                          </DropdownMenuItem>
                           {user.email && (
                             <DropdownMenuItem
                               className="gap-2"

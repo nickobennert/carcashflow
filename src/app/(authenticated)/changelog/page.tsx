@@ -88,7 +88,6 @@ const changelog: ChangelogEntry[] = [
     type: "feature",
     highlights: [
       "Profilbild hochladen",
-      "Öffentliches Profil unter /u/username",
       "Benachrichtigungs-Einstellungen",
       "Dark/Light Mode",
     ],
