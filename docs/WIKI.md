@@ -1,51 +1,37 @@
-# Fahr mit! - Technische Dokumentation
+# Fahr mit! - Developer Wiki
 
-> **Letzte Aktualisierung:** Februar 2025
-> **Version:** MVP 1.0
-> **Autor:** Entwicklungsteam
-
----
-
-## Inhaltsverzeichnis
-
-1. [Projektübersicht](#1-projektübersicht)
-2. [Tech Stack](#2-tech-stack)
-3. [Projektstruktur](#3-projektstruktur)
-4. [Datenbank-Schema](#4-datenbank-schema)
-5. [Authentifizierung](#5-authentifizierung)
-6. [Nachrichtensystem](#6-nachrichtensystem)
-7. [Fahrten-System (Rides)](#7-fahrten-system-rides)
-8. [Push Notifications](#8-push-notifications)
-9. [Bug Reports](#9-bug-reports)
-10. [Admin-Panel](#10-admin-panel)
-11. [Sicherheit](#11-sicherheit)
-12. [Environment Variables](#12-environment-variables)
-13. [Deployment](#13-deployment)
-14. [Bekannte Einschränkungen](#14-bekannte-einschränkungen)
-15. [SQL-Referenz](#15-sql-referenz)
+> **Version:** MVP 1.0 | **Stand:** Februar 2026 | **Stack:** Next.js 15 + Supabase
 
 ---
 
 ## 1. Projektübersicht
 
-### Was ist Fahr mit!?
+**Fahr mit!** ist eine Mitfahrbörse für Schulungsteilnehmer. Die Plattform verbindet Nutzer, die Fahrten anbieten oder suchen. Es handelt sich ausschließlich um **Kontaktanbahnung** - keine Vermittlung, keine Haftung.
 
-**Fahr mit!** ist eine Mitfahrbörse für Schulungsteilnehmer. Die Plattform dient ausschließlich der **Kontaktanbahnung** - es findet keine Vermittlung, Prüfung oder Haftung durch den Betreiber statt.
+### Feature-Status
 
-### Kernfunktionen
-
-| Funktion | Beschreibung |
-|----------|--------------|
-| **Mitfahrbörse** | User können Fahrten anbieten oder suchen |
-| **Nachrichten** | Internes Messaging-System zur Kontaktaufnahme |
-| **Route-Matching** | Automatische Benachrichtigung bei passenden Fahrten |
-| **Profil-System** | Öffentliche/private Nutzerprofile |
-| **Bug Reports** | Integriertes Fehlermeldesystem |
-
-### Wichtiger Hinweis
-
-Die App zeigt permanent folgenden Hinweis:
-> "Diese Funktion dient ausschließlich der Kontaktanbahnung. Es findet keine Vermittlung oder Haftung statt. Absprachen erfolgen eigenverantwortlich zwischen den Nutzern."
+| Feature | Status | Beschreibung |
+|---------|--------|--------------|
+| Registrierung & Login | **Aktiv** | Email/Passwort via Supabase Auth |
+| Google OAuth | **Deaktiviert** | Code vorhanden, aber auskommentiert |
+| Profil-System | **Aktiv** | Öffentliche Profile unter `/u/[username]` |
+| Mitfahrbörse (Dashboard) | **Aktiv** | Fahrten erstellen, filtern, ansehen |
+| Multi-Stopp-Routen | **Aktiv** | Start, Zwischenstopps, Ziel mit Geocoding |
+| Route-Matching | **Aktiv** | Automatischer Abgleich passender Fahrten (max. 30km) |
+| Wiederkehrende Fahrten | **Aktiv** | Wöchentlich wiederholende Fahrten |
+| Nachrichten-System | **Aktiv** | 1:1 Chat mit Realtime-Updates |
+| Typing-Indicator | **Aktiv** | Zeigt an wenn jemand tippt |
+| Online-Status | **Aktiv** | Grüner Punkt bei Online-Usern |
+| Chat entfernen | **Aktiv** | Soft-Delete pro User (nicht permanent) |
+| Push Notifications | **Aktiv** | Web Push bei neuen Nachrichten |
+| In-App Notifications | **Aktiv** | Glocke mit Unread-Badge |
+| Route-Watches | **Aktiv** | Automatische Benachrichtigung bei passenden neuen Fahrten |
+| Bug Reports | **Aktiv** | User können Fehler mit Screenshots melden |
+| Admin-Panel | **Aktiv** | Statistiken, User-Verwaltung, Bug Reports (in Settings) |
+| Docs/Wiki | **Aktiv** | Diese Seite unter `/admin/docs` |
+| E2E-Verschlüsselung | **Deaktiviert** | Entfernt - nicht zuverlässig in Web-Apps |
+| Stripe/Subscription | **Nicht aktiv** | Vorbereitet, aber nicht implementiert |
+| Freundschafts-System | **Nicht aktiv** | Geplant, aber noch nicht umgesetzt |
 
 ---
 
@@ -53,109 +39,116 @@ Die App zeigt permanent folgenden Hinweis:
 
 ### Frontend
 
-| Technologie | Version | Verwendung |
-|-------------|---------|------------|
-| Next.js | 15+ | App Router Framework |
-| React | 19 | UI Library |
-| TypeScript | Strict | Typisierung |
-| Tailwind CSS | 4 | Styling |
-| shadcn/ui | Latest | UI-Komponenten (Radix-basiert) |
-| Motion | Latest | Animationen |
-| Lucide React | Latest | Icons |
-| next-themes | Latest | Dark/Light Mode |
-| nuqs | Latest | URL State Management |
-| date-fns | Latest | Datums-Formatierung |
-| sonner | Latest | Toast Notifications |
+| Technologie | Verwendung |
+|-------------|------------|
+| **Next.js 15** | App Router, Server Components, Middleware |
+| **React 19** | UI mit Hooks, Client Components |
+| **TypeScript** (strict) | Durchgehende Typisierung |
+| **Tailwind CSS 4** | Utility-first Styling |
+| **shadcn/ui** | UI-Komponenten auf Radix-Basis |
+| **Motion** (motion.dev) | Animationen: Stagger, Hover, Page Transitions |
+| **Lucide React** | Icon-Library |
+| **next-themes** | Dark/Light Mode Toggle |
+| **nuqs** | URL-basiertes State Management (Filter etc.) |
+| **date-fns** | Datums-Formatierung |
+| **sonner** | Toast Notifications |
+| **react-markdown** | Markdown-Rendering (Docs-Seite) |
 
-### Backend & Services
+### Backend
 
 | Service | Verwendung |
 |---------|------------|
-| **Supabase** | PostgreSQL, Auth, Storage, Realtime |
-| **Vercel** | Hosting & Deployment |
-| **GitHub** | Version Control |
-| **OSRM** | Route-Berechnung (öffentliche API) |
+| **Supabase** | PostgreSQL-Datenbank, Auth, Realtime, Storage |
+| **Vercel** | Hosting, CI/CD, Serverless Functions |
+| **GitHub** | Repository, Auto-Deploy bei Push auf `main` |
 
 ### Externe APIs
 
-| API | Endpunkt | Verwendung |
-|-----|----------|------------|
-| Photon/Komoot | `photon.komoot.io` | Geocoding/Adresssuche |
-| OSRM | `router.project-osrm.org` | Routen-Berechnung |
+| API | Endpunkt | Wofür |
+|-----|----------|-------|
+| **Photon** (Komoot) | `photon.komoot.io` | Adresssuche / Geocoding |
+| **OSRM** | `router.project-osrm.org` | Routen-Berechnung und Polylines |
 
 ---
 
 ## 3. Projektstruktur
 
-```
+```text
 src/
-├── app/
-│   ├── (authenticated)/      # Geschützte Seiten (Login erforderlich)
-│   │   ├── dashboard/        # Mitfahrbörse Hauptansicht
-│   │   ├── messages/         # Nachrichtensystem
-│   │   │   └── [id]/         # Einzelne Konversation
-│   │   ├── profile/          # Profil bearbeiten
-│   │   ├── settings/         # Account-Einstellungen
-│   │   ├── help/             # Hilfe & Bug-Report
-│   │   └── changelog/        # App-Updates
-│   │
-│   ├── admin/                # Admin-Panel (SuperAdmin only)
-│   │
-│   ├── api/                  # API-Routen
-│   │   ├── rides/            # Fahrten CRUD + Matching
-│   │   ├── messages/         # Nachrichten
-│   │   ├── conversations/    # Konversationen
-│   │   ├── notifications/    # In-App Notifications
-│   │   ├── push/             # Web Push
-│   │   ├── bug-report/       # Bug-Meldungen
-│   │   ├── settings/         # Profil & Account
-│   │   └── admin/            # Admin-Funktionen
-│   │
-│   ├── auth/
-│   │   ├── callback/         # OAuth Callback
-│   │   └── redirect/         # Post-Auth Handler
-│   │
-│   ├── login/
-│   ├── signup/
-│   └── u/[username]/         # Öffentliche Profilseite
-│
-├── components/
-│   ├── ui/                   # shadcn/ui Komponenten
-│   ├── layout/               # App Shell, Sidebar, Header
-│   ├── rides/                # Ride Cards, Forms, Filters
-│   ├── messages/             # Chat Components
-│   ├── notifications/        # Notification Dropdown
-│   └── help/                 # Bug Report Modal
-│
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts         # Browser Client
-│   │   ├── server.ts         # Server Client
-│   │   └── admin.ts          # Service Role Client
-│   ├── push/
-│   │   └── server.ts         # Web Push Server
-│   ├── animations.ts         # Motion Variants
-│   └── utils.ts              # Hilfsfunktionen
-│
-├── hooks/
-│   ├── use-notification-sound.ts
-│   ├── use-unread-messages.ts
-│   └── ...
-│
-├── types/
-│   └── database.ts           # TypeScript Types für DB
-│
-└── middleware.ts             # Auth Protection
+  app/
+    (authenticated)/          # Alle Seiten die Login brauchen
+      dashboard/              # Mitfahrbörse - Hauptseite
+      messages/               # Chat-Übersicht
+        [id]/                 # Einzelner Chat
+      profile/                # Eigenes Profil bearbeiten
+      settings/               # Einstellungen + Admin-Tab
+      help/                   # Hilfe & Bug melden
+      changelog/              # App-Updates
+    admin/
+      docs/                   # Diese Wiki-Seite
+    api/
+      rides/                  # GET, POST, PATCH, DELETE
+        match/                # Route-Matching Algorithmus
+      messages/               # Nachrichten senden
+      conversations/          # Chat erstellen/laden
+      notifications/          # In-App Benachrichtigungen
+      push/                   # Web Push subscribe/unsubscribe
+      bug-report/             # Bug Reports CRUD
+      settings/               # Profil-Updates, Avatar-Upload
+      admin/                  # Stats, Users, Bug Reports (Service Role)
+    auth/
+      callback/               # Supabase Auth Callback
+      redirect/               # Post-Login Redirect
+    login/
+    signup/
+    u/[username]/             # Öffentliches Profil
+
+  components/
+    ui/                       # shadcn/ui Basis-Komponenten
+    layout/                   # AppShell, Sidebar, Header, MobileNav
+    rides/                    # RideCard, CreateRideForm, Filters
+    messages/                 # ConversationList, ConversationView
+    notifications/            # NotificationDropdown, Badge
+    settings/                 # AdminTab, ProfileForm
+    help/                     # BugReportModal
+
+  lib/
+    supabase/
+      client.ts               # Browser-Client (mit Anon Key)
+      server.ts               # Server-Client (mit Cookies)
+      admin.ts                # Service Role Client (nur API!)
+    push/
+      server.ts               # Web Push senden
+    animations.ts             # Motion Variants (fadeIn, stagger, etc.)
+    utils.ts                  # cn(), formatDate(), etc.
+
+  hooks/
+    use-notification-sound.ts # Sound bei neuer Nachricht
+    use-unread-messages.ts    # Ungelesene Nachrichten zählen
+
+  middleware.ts               # Auth-Check für geschützte Routen
 ```
 
 ---
 
 ## 4. Datenbank-Schema
 
-### Haupttabellen
+### Tabellen-Übersicht
 
-#### `profiles`
-Erweitert `auth.users` mit zusätzlichen Profilinformationen.
+| Tabelle | Zweck | RLS |
+|---------|-------|-----|
+| `profiles` | Nutzerprofile (erweitert `auth.users`) | Ja |
+| `rides` | Mitfahrangebote und -gesuche | Ja |
+| `conversations` | Chat-Verbindungen (2 Teilnehmer) | Ja |
+| `messages` | Chat-Nachrichten | Ja |
+| `hidden_conversations` | Entfernte Chats (Soft-Delete pro User) | Ja |
+| `notifications` | In-App Benachrichtigungen | Ja |
+| `push_subscriptions` | Web Push Endpoints | Ja |
+| `bug_reports` | Fehlermeldungen von Usern | Ja |
+| `route_watches` | Gespeicherte Routen-Alerts | Ja |
+| `super_admins` | Admin-Berechtigungen | Ja |
+
+### profiles
 
 ```sql
 CREATE TABLE profiles (
@@ -179,34 +172,36 @@ CREATE TABLE profiles (
 );
 ```
 
-#### `rides`
-Mitfahrangebote und -gesuche.
+Wird automatisch bei Registrierung erstellt (via Trigger `handle_new_user`). Der Username wird generiert aus Email-Prefix + erste 4 Zeichen der User-ID.
+
+### rides
 
 ```sql
 CREATE TABLE rides (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,                    -- 'offer' oder 'request'
-  route JSONB NOT NULL,                  -- Array von RoutePoints
+  type TEXT NOT NULL,            -- 'offer' oder 'request'
+  route JSONB NOT NULL,          -- Array von RoutePoints (siehe unten)
   departure_date DATE NOT NULL,
   departure_time TIME,
   seats_available INTEGER DEFAULT 1,
   comment TEXT,
-  status TEXT DEFAULT 'active',          -- 'active', 'completed', 'cancelled', 'expired'
+  status TEXT DEFAULT 'active',  -- 'active', 'completed', 'cancelled', 'expired'
   is_recurring BOOLEAN DEFAULT false,
-  recurring_days INTEGER[],
+  recurring_days INTEGER[],      -- z.B. [1,3,5] = Mo,Mi,Fr
   recurring_until DATE,
   parent_ride_id UUID,
-  route_geometry JSONB,                  -- OSRM Polyline
-  route_distance INTEGER,                -- Meter
-  route_duration INTEGER,                -- Sekunden
+  route_geometry JSONB,          -- OSRM Polyline
+  route_distance INTEGER,        -- Meter
+  route_duration INTEGER,        -- Sekunden
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
-  expires_at TIMESTAMPTZ
+  expires_at TIMESTAMPTZ         -- Auto-Expire nach 7 Tagen
 );
 ```
 
-**RoutePoint-Struktur:**
+**Route-Punkte** werden als JSON-Array gespeichert:
+
 ```typescript
 interface RoutePoint {
   type: "start" | "stop" | "end"
@@ -217,10 +212,10 @@ interface RoutePoint {
 }
 ```
 
-#### `conversations`
-Chat-Konversationen zwischen zwei Usern.
+### conversations + messages
 
 ```sql
+-- Jede Conversation hat genau 2 Teilnehmer
 CREATE TABLE conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   participant_1 UUID NOT NULL REFERENCES profiles(id),
@@ -228,29 +223,20 @@ CREATE TABLE conversations (
   ride_id UUID REFERENCES rides(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
-
-  -- Normalisierte Reihenfolge (kleinere UUID zuerst)
-  UNIQUE(participant_1, participant_2)
+  UNIQUE(participant_1, participant_2)  -- Normalisiert: kleinere UUID zuerst
 );
-```
 
-#### `messages`
-Einzelne Nachrichten in Konversationen.
-
-```sql
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES profiles(id),
   content TEXT NOT NULL,
-  is_encrypted BOOLEAN DEFAULT false,    -- Legacy, nicht mehr verwendet
   is_read BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-#### `hidden_conversations`
-Versteckte Chats pro User (Soft-Delete).
+### hidden_conversations (Chat entfernen)
 
 ```sql
 CREATE TABLE hidden_conversations (
@@ -258,63 +244,29 @@ CREATE TABLE hidden_conversations (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   hidden_at TIMESTAMPTZ DEFAULT now(),
-
   UNIQUE(user_id, conversation_id)
 );
 ```
 
-**Verhalten:**
-- Wenn User A einen Chat "löscht", wird nur ein Eintrag in `hidden_conversations` erstellt
-- Der Chat ist für User A nicht mehr sichtbar
-- User B sieht den Chat weiterhin
-- Wenn User B eine neue Nachricht sendet, wird der `hidden_conversations`-Eintrag für User A gelöscht
-- Wenn **beide** User den Chat löschen, wird alles permanent gelöscht
+**So funktioniert "Chat entfernen":**
+1. User A klickt "Entfernen" - Eintrag in `hidden_conversations` wird erstellt
+2. Chat verschwindet nur fuer User A, User B sieht ihn weiterhin
+3. Wenn User B eine neue Nachricht schickt, wird der `hidden_conversations`-Eintrag geloescht und der Chat taucht wieder auf
+4. Wenn **beide** User den Chat entfernen, wird die Conversation samt Nachrichten permanent geloescht
 
-#### `notifications`
-In-App Benachrichtigungen.
-
-```sql
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,                    -- 'new_message', 'ride_match', 'system'
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  data JSONB,                            -- z.B. { ride_id, conversation_id }
-  is_read BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### `push_subscriptions`
-Web Push Subscriptions.
-
-```sql
-CREATE TABLE push_subscriptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  endpoint TEXT NOT NULL UNIQUE,
-  p256dh TEXT NOT NULL,
-  auth TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### `bug_reports`
-Bug-Meldungen von Usern.
+### bug_reports
 
 ```sql
 CREATE TABLE bug_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  area TEXT NOT NULL,                    -- 'dashboard', 'messages', 'profile', etc.
+  area TEXT NOT NULL,           -- 'dashboard', 'messages', 'profile', etc.
   description TEXT NOT NULL,
   worked_before TEXT,
   expected_behavior TEXT,
-  screencast_url TEXT,
-  screenshots TEXT[],                    -- Array von Supabase Storage URLs
-  status TEXT DEFAULT 'open',            -- 'open', 'in_progress', 'resolved', 'wont_fix'
+  screenshots TEXT[],           -- Array von Storage-URLs
+  status TEXT DEFAULT 'open',   -- 'open', 'in_progress', 'resolved', 'wont_fix'
   admin_notes TEXT,
   user_agent TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -323,138 +275,91 @@ CREATE TABLE bug_reports (
 );
 ```
 
-#### `super_admins`
-Admin-Berechtigungen.
-
-```sql
-CREATE TABLE super_admins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'admin',             -- 'super_admin', 'admin', 'moderator'
-  permissions JSONB DEFAULT '{}',
-  added_by UUID REFERENCES profiles(id),
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### `route_watches`
-Gespeicherte Routen für automatische Benachrichtigungen.
+### route_watches
 
 ```sql
 CREATE TABLE route_watches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  type TEXT NOT NULL,                    -- 'location' oder 'route'
-  -- Location-based
+  type TEXT NOT NULL,            -- 'location' oder 'route'
   lat DECIMAL(10, 8),
   lng DECIMAL(11, 8),
-  radius INTEGER,                        -- km
+  radius INTEGER,                -- km
   address TEXT,
-  -- Route-based
   start_lat DECIMAL(10, 8),
   start_lng DECIMAL(11, 8),
   start_address TEXT,
   end_lat DECIMAL(10, 8),
   end_lng DECIMAL(11, 8),
   end_address TEXT,
-  -- Preferences
-  ride_type TEXT DEFAULT 'both',         -- 'offer', 'request', 'both'
+  ride_type TEXT DEFAULT 'both', -- 'offer', 'request', 'both'
   created_at TIMESTAMPTZ DEFAULT now(),
   last_notified_at TIMESTAMPTZ
 );
 ```
 
+User koennen Routen oder Orte speichern und werden automatisch benachrichtigt, wenn neue passende Fahrten erstellt werden.
+
 ---
 
 ## 5. Authentifizierung
 
-### Flow
+**Status: Aktiv** - Email/Passwort Login
 
+### So funktioniert der Flow
+
+```text
+Registrierung:
+  User fuellt Formular aus (Email, Passwort, Vorname)
+  -> Supabase erstellt Auth-User
+  -> Trigger erstellt Profil mit generiertem Username
+  -> User bekommt Bestaetigungs-Email
+  -> Nach Klick auf Link: Redirect zu /dashboard
+
+Login:
+  Email + Passwort eingeben
+  -> Supabase validiert Credentials
+  -> Session Cookie wird gesetzt
+  -> Redirect zu /dashboard
 ```
-SignUp → Email Bestätigung → Login → Profile Setup → Dashboard
-```
 
-### Supabase Auth
+### Middleware
 
-Die App verwendet Supabase Auth mit Email/Password.
+Die Datei `middleware.ts` prueft bei jedem Request:
+- Ist der User eingeloggt? Wenn nicht, Redirect zu `/login`
+- Geschuetzte Routen: `/dashboard`, `/messages`, `/profile`, `/settings`
 
-**Wichtig:** Google OAuth ist implementiert aber derzeit deaktiviert (auskommentiert in `login-form.tsx` und `signup-form.tsx`).
+### Google OAuth
 
-### Middleware Protection
+**Status: Deaktiviert** - Der Code ist vorhanden, aber auskommentiert.
 
-```typescript
-// middleware.ts
-const protectedRoutes = ['/dashboard', '/messages', '/profile', '/settings']
-```
-
-Alle Routen unter `(authenticated)` erfordern einen eingeloggten User.
-
-### Profile-Erstellung
-
-Bei der Registrierung wird automatisch ein Profil erstellt:
-
-```sql
-CREATE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO profiles (id, email, first_name, username)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    NEW.raw_user_meta_data->>'first_name',
-    LOWER(SPLIT_PART(NEW.email, '@', 1)) || '_' || SUBSTRING(NEW.id::text, 1, 4)
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
+So aktivierst du Google OAuth:
+1. Google Cloud Console: OAuth 2.0 Client ID erstellen
+2. Supabase Dashboard > Authentication > Providers > Google aktivieren
+3. Redirect URI eintragen: `https://[PROJECT_REF].supabase.co/auth/v1/callback`
+4. In `login-form.tsx` und `signup-form.tsx` die Google-Buttons einkommentieren
 
 ---
 
 ## 6. Nachrichtensystem
 
-### Architektur
+**Status: Aktiv** - 1:1 Chat mit Realtime
 
-```
-User A                    Server                    User B
-   |                        |                         |
-   |-- Nachricht senden --> |                         |
-   |                        |-- DB Insert ----------> |
-   |                        |-- Realtime Event -----> |
-   |                        |-- Push Notification --> |
-   |                        |-- In-App Notification ->|
-   |                        |                         |
-```
+### So funktioniert es
 
-### Nachrichten senden
+1. User klickt auf einer Fahrt auf "Nachricht senden"
+2. System erstellt oder oeffnet eine Conversation (immer nur 1 pro User-Paar)
+3. Nachrichten werden in Echtzeit ueber Supabase Realtime synchronisiert
+4. Der andere User bekommt eine Push Notification + In-App Notification
 
-**Endpoint:** `POST /api/messages`
+### Realtime-Kanäle
 
+Es gibt 3 Echtzeit-Funktionen:
+
+**Neue Nachrichten** - ueber `postgres_changes`:
 ```typescript
-// Request
-{
-  conversation_id: string,
-  content: string
-}
-
-// Response
-{
-  data: MessageWithSender
-}
-```
-
-### Realtime Updates
-
-Die App verwendet Supabase Realtime für:
-
-1. **Neue Nachrichten** - `postgres_changes` auf `messages` Tabelle
-2. **Typing Indicator** - Broadcast Channel
-3. **Online Status** - Presence Channel
-
-```typescript
-// conversation-view.tsx
-const messageChannel = supabase
+supabase
   .channel(`conversation:${conversationId}`)
   .on("postgres_changes", {
     event: "INSERT",
@@ -465,214 +370,194 @@ const messageChannel = supabase
   .subscribe()
 ```
 
-### Chat ausblenden
+**Typing-Indicator** - ueber Broadcast:
+```typescript
+// Senden: "Ich tippe gerade"
+channel.send({
+  type: "broadcast",
+  event: "typing",
+  payload: { user_id: myUserId }
+})
+```
 
-Wenn ein User einen Chat "löscht":
+**Online-Status** - ueber Presence:
+```typescript
+// Andere User sehen ob du online bist
+channel.track({ user_id: myUserId, online_at: new Date() })
+```
 
-1. Eintrag in `hidden_conversations` wird erstellt
-2. Chat wird für diesen User nicht mehr angezeigt
-3. Wenn der andere User auch löscht → permanente Löschung
-4. Wenn eine neue Nachricht kommt → Chat wird wieder sichtbar
+### E2E-Verschluesselung
 
-### Sicherheit (Keine E2E-Verschlüsselung)
+**Status: Deaktiviert** (seit Februar 2025)
 
-**Wichtig:** E2E-Verschlüsselung wurde deaktiviert (Februar 2025).
+Wurde entfernt weil Web-Apps Krypto-Schluessel nicht zuverlaessig speichern koennen (IndexedDB kann jederzeit vom Browser geloescht werden). Aktuelle Sicherheit:
+- TLS/HTTPS fuer alle Verbindungen
+- Supabase verschluesselt Daten at rest
+- Row Level Security (RLS) beschraenkt Zugriff
+- User sehen nur ihre eigenen Chats
 
-**Warum?**
-- Web-Apps können Schlüssel nicht zuverlässig persistent speichern
-- Browser können IndexedDB jederzeit löschen
-- Kein geräteübergreifender Schlüsselaustausch
-
-**Aktuelle Sicherheit:**
-- ✅ TLS/HTTPS für alle Verbindungen (in transit)
-- ✅ Supabase verschlüsselt Daten at rest
-- ✅ Row Level Security (RLS) beschränkt Zugriff
-- ✅ User können nur ihre eigenen Konversationen sehen
-
-Das ist das gleiche Sicherheitsniveau wie Slack, Discord oder andere Web-Messaging-Apps.
+Das entspricht dem Sicherheitsniveau von Slack, Discord oder Teams.
 
 ---
 
 ## 7. Fahrten-System (Rides)
 
+**Status: Aktiv** - Erstellen, Suchen, Filtern, Matching
+
 ### Fahrten-Typen
 
-| Typ | Bedeutung |
-|-----|-----------|
-| `offer` | User bietet Mitfahrgelegenheit an |
-| `request` | User sucht Mitfahrgelegenheit |
+- **offer** (gruen): User bietet eine Mitfahrgelegenheit an
+- **request** (blau): User sucht eine Mitfahrgelegenheit
 
-### CRUD Endpoints
+### API-Endpoints
 
 | Methode | Endpoint | Beschreibung |
 |---------|----------|--------------|
-| GET | `/api/rides` | Alle aktiven Fahrten |
-| POST | `/api/rides` | Neue Fahrt erstellen |
-| GET | `/api/rides/[id]` | Einzelne Fahrt |
-| PATCH | `/api/rides/[id]` | Fahrt aktualisieren |
-| DELETE | `/api/rides/[id]` | Fahrt löschen |
+| `GET` | `/api/rides` | Alle aktiven Fahrten laden |
+| `POST` | `/api/rides` | Neue Fahrt erstellen |
+| `GET` | `/api/rides/[id]` | Einzelne Fahrt laden |
+| `PATCH` | `/api/rides/[id]` | Fahrt aktualisieren |
+| `DELETE` | `/api/rides/[id]` | Fahrt loeschen |
+| `POST` | `/api/rides/match` | Passende Fahrten finden |
 
 ### Route-Matching
 
-**Endpoint:** `POST /api/rides/match`
+Wenn ein User eine Fahrt erstellt, sucht das System automatisch nach passenden Gegenparts:
 
-```typescript
-// Request
-{
-  startLat: number,
-  startLng: number,
-  endLat: number,
-  endLng: number,
-  type?: "offer" | "request" | "both"
-}
-
-// Response
-{
-  data: RideWithMatchData[]
-}
+```text
+1. Berechne Entfernung vom eigenen Start zu allen anderen Starts
+2. Berechne Entfernung vom eigenen Ziel zu allen anderen Zielen
+3. Filtere: Max 30km Abweichung
+4. Sortiere nach geringster Gesamtabweichung
+5. Benachrichtige User mit Route-Watches
 ```
-
-**Matching-Algorithmus:**
-1. Berechne Entfernung von Start zu allen Ride-Starts
-2. Berechne Entfernung von Ende zu allen Ride-Enden
-3. Filter: Max 30km Abweichung
-4. Sortiere nach Gesamtabweichung
 
 ### Wiederkehrende Fahrten
 
-User können Fahrten als "wiederkehrend" markieren:
+User koennen Fahrten als wiederkehrend markieren:
 
 ```typescript
 {
   is_recurring: true,
-  recurring_days: [1, 3, 5],  // Mo, Mi, Fr (0 = Sonntag)
-  recurring_until: "2025-06-30"
+  recurring_days: [1, 3, 5],    // 0=So, 1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr, 6=Sa
+  recurring_until: "2026-06-30"
 }
 ```
 
+Das System erstellt automatisch einzelne Ride-Eintraege fuer jeden Tag.
+
 ### Auto-Expire
 
-Fahrten laufen automatisch nach 7 Tagen ab (gesteuert durch `expires_at`).
+Einmalige Fahrten laufen nach 7 Tagen automatisch ab (Feld `expires_at`).
 
 ---
 
 ## 8. Push Notifications
 
-### Setup
+**Status: Aktiv** - Web Push bei neuen Nachrichten
 
-Push Notifications verwenden das Web Push Protocol mit VAPID Keys.
+### Voraussetzungen
 
-**Generiere VAPID Keys:**
+VAPID Keys muessen gesetzt sein:
+
 ```bash
+# Keys generieren
 npx web-push generate-vapid-keys
 ```
 
-**Environment Variables:**
 ```env
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_public_key
-VAPID_PRIVATE_KEY=your_private_key
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=dein_public_key
+VAPID_PRIVATE_KEY=dein_private_key
 ```
 
-### Flow
+### So funktioniert es
 
-```
+```text
 1. User aktiviert Push in Einstellungen
 2. Browser fragt um Erlaubnis
-3. Service Worker registriert Subscription
-4. Subscription wird in DB gespeichert
-5. Bei neuer Nachricht → Push wird gesendet
+3. Service Worker (public/sw.js) registriert Push-Subscription
+4. Subscription wird in der Tabelle push_subscriptions gespeichert
+5. Bei neuer Nachricht: Server sendet Push ueber Web Push Protocol
+6. Service Worker zeigt Notification an
 ```
-
-### Endpoints
-
-| Endpoint | Beschreibung |
-|----------|--------------|
-| `POST /api/push/subscribe` | Subscription registrieren |
-| `DELETE /api/push/subscribe` | Subscription entfernen |
-| `POST /api/push/test` | Test-Push senden (Debug) |
-
-### Service Worker
-
-Datei: `public/sw.js`
-
-```javascript
-self.addEventListener('push', (event) => {
-  const data = event.data.json()
-  self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: '/icon-192.png',
-    badge: '/icon-badge.png',
-    tag: data.tag,
-    data: data.data
-  })
-})
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-  const url = event.notification.data?.url || '/'
-  clients.openWindow(url)
-})
-```
-
----
-
-## 9. Bug Reports
-
-### User-Flow
-
-1. User öffnet Hilfe-Seite (`/help`)
-2. Klickt auf "Fehler melden"
-3. Füllt Formular aus (Titel, Bereich, Beschreibung)
-4. Optional: Screenshots hochladen
-5. Bug wird in DB gespeichert
-
-### Admin-Flow
-
-1. Admin öffnet Admin-Panel → Bug Reports
-2. Sieht alle gemeldeten Bugs
-3. Kann Status ändern: `open` → `in_progress` → `resolved` / `wont_fix`
-4. Kann Admin-Notizen hinzufügen
-5. Kann Bug löschen (inkl. Screenshots aus Storage)
 
 ### Endpoints
 
 | Methode | Endpoint | Beschreibung |
 |---------|----------|--------------|
-| POST | `/api/bug-report` | Bug melden (User) |
-| GET | `/api/bug-report` | Alle Bugs (Admin) |
-| GET | `/api/bug-report/[id]` | Einzelner Bug (Admin) |
-| PATCH | `/api/bug-report/[id]` | Status ändern (Admin) |
-| DELETE | `/api/bug-report/[id]` | Bug löschen (Admin) |
+| `POST` | `/api/push/subscribe` | Push-Subscription registrieren |
+| `DELETE` | `/api/push/subscribe` | Push-Subscription entfernen |
+| `POST` | `/api/push/test` | Test-Push senden (nur Debug) |
 
-### Screenshot-Speicherung
+---
 
-Screenshots werden in Supabase Storage gespeichert:
-- Bucket: `uploads`
-- Pfad: `bug-reports/{user_id}/{timestamp}_{index}_{filename}`
+## 9. Bug Reports
+
+**Status: Aktiv**
+
+### User-Flow
+
+1. User oeffnet `/help` und klickt "Fehler melden"
+2. Formular: Titel, Bereich (Dropdown), Beschreibung, Optional: Screenshots
+3. Bug wird in `bug_reports` gespeichert, Screenshots in Supabase Storage
+
+### Admin-Flow
+
+1. Admin oeffnet Einstellungen > Admin-Tab > Bugs
+2. Sieht alle gemeldeten Bugs mit Status-Badge
+3. Kann Status aendern: `open` > `in_progress` > `resolved` / `wont_fix`
+4. Admin-Queries laufen ueber `/api/admin/bug-reports` (Service Role, umgeht RLS)
+
+### Endpoints
+
+| Methode | Endpoint | Wer |
+|---------|----------|-----|
+| `POST` | `/api/bug-report` | User - Bug melden |
+| `GET` | `/api/admin/bug-reports` | Admin - Alle Bugs laden |
+| `PATCH` | `/api/admin/bug-reports` | Admin - Status aendern |
 
 ---
 
 ## 10. Admin-Panel
 
+**Status: Aktiv** - Integriert in Einstellungen (kein separates `/admin`)
+
 ### Zugang
 
-Nur User in der `super_admins` Tabelle haben Zugriff auf `/admin`.
+Nur User die in der Tabelle `super_admins` stehen, sehen den Admin-Tab in den Einstellungen.
+
+### Admin hinzufuegen
+
+```sql
+-- 1. User-ID herausfinden
+SELECT id, email FROM auth.users WHERE email = 'admin@example.com';
+
+-- 2. Als Admin eintragen
+INSERT INTO super_admins (user_id, role)
+VALUES ('die-user-uuid', 'super_admin');
+```
 
 ### Funktionen
 
-| Bereich | Funktionen |
-|---------|------------|
-| **Dashboard** | Statistiken (User, Rides, Messages) |
-| **Users** | User-Liste, Suche, Sperren |
-| **Rides** | Alle Fahrten verwalten |
-| **Bug Reports** | Gemeldete Fehler bearbeiten |
-| **Settings** | App-Einstellungen |
+| Tab | Was |
+|-----|-----|
+| **Uebersicht** | Stats (User, Fahrten, Nachrichten, Reports, Bugs), letzte User |
+| **Nutzer** | User-Liste mit Suche, Details anzeigen |
+| **Reports** | Gemeldete User/Inhalte bearbeiten (loesen/abweisen) |
+| **Bugs** | Bug Reports bearbeiten (offen > in Bearbeitung > geloest) |
 
-### Admin hinzufügen (SQL)
+### Wichtig: Service Role
 
-```sql
-INSERT INTO super_admins (user_id, role)
-VALUES ('user-uuid-here', 'admin');
+Admin-Queries verwenden den Service Role Key um RLS zu umgehen. Der Service Role Client darf **niemals** im Browser-Code verwendet werden:
+
+```typescript
+// NUR in API-Routes verwenden!
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 ```
 
 ---
@@ -681,61 +566,41 @@ VALUES ('user-uuid-here', 'admin');
 
 ### Row Level Security (RLS)
 
-Alle Tabellen haben RLS aktiviert. Beispiel für `messages`:
+Alle Tabellen haben RLS aktiviert. Jeder User kann nur seine eigenen Daten sehen/aendern.
+
+Beispiel fuer `messages`:
 
 ```sql
--- Users können nur Nachrichten in ihren Konversationen sehen
+-- User sehen nur Nachrichten aus eigenen Chats
 CREATE POLICY "Users can view messages in their conversations"
 ON messages FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM conversations
     WHERE conversations.id = messages.conversation_id
-    AND (conversations.participant_1 = auth.uid() OR conversations.participant_2 = auth.uid())
-  )
-);
-
--- Users können nur in ihren Konversationen schreiben
-CREATE POLICY "Users can insert messages in their conversations"
-ON messages FOR INSERT WITH CHECK (
-  sender_id = auth.uid() AND
-  EXISTS (
-    SELECT 1 FROM conversations
-    WHERE conversations.id = messages.conversation_id
-    AND (conversations.participant_1 = auth.uid() OR conversations.participant_2 = auth.uid())
+    AND (participant_1 = auth.uid() OR participant_2 = auth.uid())
   )
 );
 ```
 
-### Admin Client
+### Supabase Clients
 
-Für Server-seitige Operationen, die RLS umgehen müssen, gibt es den Admin Client:
-
-```typescript
-// lib/supabase/admin.ts
-import { createClient } from "@supabase/supabase-js"
-
-export function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!  // ACHTUNG: Nie im Client verwenden!
-  )
-}
-```
-
-**Verwendung:** Nur in API-Routes, nie im Client-Code!
+| Client | Datei | Verwendung | RLS |
+|--------|-------|------------|-----|
+| Browser | `lib/supabase/client.ts` | Client Components | Ja, mit Anon Key |
+| Server | `lib/supabase/server.ts` | Server Components, API Routes | Ja, mit Session |
+| Admin | `lib/supabase/admin.ts` | API Routes fuer Admin-Ops | **Nein**, Service Role |
 
 ### Datenschutz
 
-- Telefonnummern sind privat (nicht öffentlich sichtbar)
-- User können Profil-Sichtbarkeit steuern
-- DSGVO-konformer Datenexport unter Einstellungen
-- Account-Löschung löscht alle Daten
+- Telefonnummern sind privat
+- User koennen Profil-Sichtbarkeit steuern
+- Account-Loeschung loescht alle Daten (CASCADE)
 
 ---
 
 ## 12. Environment Variables
 
-### Erforderlich
+### Pflicht
 
 ```env
 # Supabase
@@ -748,181 +613,59 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=BN...
 VAPID_PRIVATE_KEY=xxx
 
 # App
-NEXT_PUBLIC_APP_URL=https://fahrmit.de
+NEXT_PUBLIC_APP_URL=https://app.carcashflow.de
 ```
 
-### Optional
+### Optional (noch nicht aktiv)
 
 ```env
-# Stripe (falls Subscription aktiviert)
+# Stripe (fuer spaetere Subscription)
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### Vercel Setup
 
-1. Vercel Dashboard → Project → Settings → Environment Variables
-2. Alle Variablen für Production und Preview hinzufügen
-3. `SUPABASE_SERVICE_ROLE_KEY` NUR für Server (nicht `NEXT_PUBLIC_`)
+1. Vercel Dashboard > Project > Settings > Environment Variables
+2. Alle Variablen fuer **Production** und **Preview** eintragen
+3. `SUPABASE_SERVICE_ROLE_KEY` ist **nur serverseitig** (kein `NEXT_PUBLIC_` Prefix!)
 
 ---
 
 ## 13. Deployment
 
-### Vercel Deployment
+### Automatisch via GitHub
+
+Jeder Push auf `main` deployed automatisch zu Vercel.
+
+```text
+git push origin main  -->  Vercel baut und deployed automatisch
+```
+
+### Manuell
 
 ```bash
-# Erste Installation
+# Preview Deployment
 vercel
 
-# Deployment
+# Production Deployment
 vercel --prod
 ```
 
-### GitHub Integration
-
-1. Repository mit Vercel verbinden
-2. Auto-Deploy bei Push auf `main`
-3. Preview Deployments für Pull Requests
-
-### Build-Kommandos
-
-```json
-// package.json
-{
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  }
-}
-```
-
-### Supabase Migrations
-
-Datenbankänderungen sollten als SQL-Migrations dokumentiert werden:
+### Build-Befehle
 
 ```bash
-# Migrations-Ordner
-migrations/
-├── 001_initial_schema.sql
-├── 002_add_push_subscriptions.sql
-├── 003_add_bug_reports.sql
-└── 004_add_hidden_conversations.sql
+npm run dev       # Lokaler Dev-Server
+npm run build     # Production Build
+npm run start     # Production Server starten
+npm run lint      # ESLint pruefen
 ```
 
 ---
 
-## 14. Bekannte Einschränkungen
+## 14. Haeufige Admin-Befehle (SQL)
 
-### E2E-Verschlüsselung deaktiviert
-
-**Status:** Deaktiviert (Februar 2025)
-
-**Grund:** Web-Apps können Krypto-Schlüssel nicht zuverlässig speichern. IndexedDB kann vom Browser jederzeit gelöscht werden.
-
-**Auswirkung:**
-- Alte verschlüsselte Nachrichten zeigen "[Nachricht konnte nicht entschlüsselt werden]"
-- Neue Nachrichten werden als Klartext gespeichert
-
-**Sicherheit:** TLS + Supabase Encryption + RLS bieten weiterhin guten Schutz.
-
-### Google OAuth deaktiviert
-
-**Status:** Implementiert aber ausgeblendet
-
-**Aktivierung:**
-1. Google Cloud Console: OAuth Client erstellen
-2. Supabase Dashboard: Google Provider aktivieren
-3. Code: Kommentare in `login-form.tsx` und `signup-form.tsx` entfernen
-
-### Mobile App
-
-**Status:** Keine native App
-
-Die Web-App ist als PWA optimiert und funktioniert auf Mobilgeräten.
-
----
-
-## 15. SQL-Referenz
-
-### Neue Tabellen erstellen
-
-#### hidden_conversations
-
-```sql
-CREATE TABLE hidden_conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-  hidden_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, conversation_id)
-);
-
-CREATE INDEX idx_hidden_conversations_user ON hidden_conversations(user_id);
-CREATE INDEX idx_hidden_conversations_conversation ON hidden_conversations(conversation_id);
-
-ALTER TABLE hidden_conversations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own hidden conversations"
-  ON hidden_conversations FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can hide conversations they participate in"
-  ON hidden_conversations FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can unhide their own conversations"
-  ON hidden_conversations FOR DELETE
-  USING (auth.uid() = user_id);
-```
-
-#### bug_reports
-
-```sql
-CREATE TABLE bug_reports (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  area TEXT NOT NULL,
-  description TEXT NOT NULL,
-  worked_before TEXT,
-  expected_behavior TEXT,
-  screencast_url TEXT,
-  screenshots TEXT[],
-  status TEXT DEFAULT 'open',
-  admin_notes TEXT,
-  user_agent TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  resolved_at TIMESTAMPTZ,
-  resolved_by UUID REFERENCES profiles(id)
-);
-
-CREATE INDEX idx_bug_reports_user ON bug_reports(user_id);
-CREATE INDEX idx_bug_reports_status ON bug_reports(status);
-
-ALTER TABLE bug_reports ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own bug reports"
-  ON bug_reports FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create bug reports"
-  ON bug_reports FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-```
-
-### Admin hinzufügen
-
-```sql
--- User-ID herausfinden
-SELECT id, email FROM auth.users WHERE email = 'admin@example.com';
-
--- Als Admin hinzufügen
-INSERT INTO super_admins (user_id, role)
-VALUES ('user-uuid', 'super_admin');
-```
+Diese Befehle kannst du direkt im Supabase SQL-Editor ausfuehren:
 
 ### User sperren
 
@@ -930,39 +673,46 @@ VALUES ('user-uuid', 'super_admin');
 UPDATE profiles SET is_banned = true WHERE id = 'user-uuid';
 ```
 
-### Alle Fahrten eines Users löschen
+### User entsperren
+
+```sql
+UPDATE profiles SET is_banned = false WHERE id = 'user-uuid';
+```
+
+### Alle Fahrten eines Users loeschen
 
 ```sql
 DELETE FROM rides WHERE user_id = 'user-uuid';
 ```
 
-### Statistiken abrufen
+### Aktive User der letzten 7 Tage
 
 ```sql
--- Aktive User (letzte 7 Tage)
 SELECT COUNT(*) FROM profiles
 WHERE last_seen_at > NOW() - INTERVAL '7 days';
+```
 
--- Fahrten pro Typ
+### Fahrten nach Typ zaehlen
+
+```sql
 SELECT type, COUNT(*) FROM rides
 WHERE status = 'active'
 GROUP BY type;
+```
 
--- Nachrichten pro Tag (letzte 30 Tage)
-SELECT DATE(created_at) as day, COUNT(*)
+### Nachrichten pro Tag (letzte 30 Tage)
+
+```sql
+SELECT DATE(created_at) as tag, COUNT(*) as anzahl
 FROM messages
 WHERE created_at > NOW() - INTERVAL '30 days'
 GROUP BY DATE(created_at)
-ORDER BY day DESC;
+ORDER BY tag DESC;
 ```
 
 ---
 
-## Kontakt & Support
+## Kontakt
 
 - **Email:** info@carcashflow.de
-- **Bug Reports:** In-App unter Hilfe → Fehler melden
-
----
-
-*Letzte Aktualisierung: Februar 2025*
+- **Bug Reports:** In der App unter Hilfe > Fehler melden

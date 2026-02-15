@@ -70,7 +70,7 @@ export default function DocsPage() {
   }
 
   const tableOfContents = [
-    { id: "1-projektübersicht", label: "Projektübersicht", icon: Book },
+    { id: "1-projektbersicht", label: "Projektübersicht", icon: Book },
     { id: "2-tech-stack", label: "Tech Stack", icon: Code },
     { id: "3-projektstruktur", label: "Projektstruktur", icon: Database },
     { id: "4-datenbank-schema", label: "Datenbank-Schema", icon: Database },
@@ -83,8 +83,7 @@ export default function DocsPage() {
     { id: "11-sicherheit", label: "Sicherheit", icon: Shield },
     { id: "12-environment-variables", label: "Environment Variables", icon: Server },
     { id: "13-deployment", label: "Deployment", icon: Server },
-    { id: "14-bekannte-einschränkungen", label: "Einschränkungen", icon: Book },
-    { id: "15-sql-referenz", label: "SQL-Referenz", icon: Database },
+    { id: "14-haeufige-admin-befehle-sql", label: "SQL-Befehle", icon: Database },
   ]
 
   return (
@@ -315,7 +314,7 @@ export default function DocsPage() {
                 Fahr mit! - Technische Dokumentation
               </p>
               <p className="text-xs text-muted-foreground">
-                Letzte Aktualisierung: Februar 2025
+                Letzte Aktualisierung: Februar 2026
               </p>
             </div>
           </div>

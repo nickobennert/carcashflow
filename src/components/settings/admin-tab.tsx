@@ -907,19 +907,34 @@ export function AdminTab({ profile }: { profile: Profile }) {
                           {bug.description}
                         </p>
                       </div>
-                      {bug.status === "open" && (
+                      {(bug.status === "open" || bug.status === "in_progress") && (
                         <div className="flex gap-2 ml-4 shrink-0">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={bugActionLoading === bug.id}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleBugStatusChange(bug.id, "in_progress")
-                            }}
-                          >
-                            Bearbeiten
-                          </Button>
+                          {bug.status === "open" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={bugActionLoading === bug.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleBugStatusChange(bug.id, "in_progress")
+                              }}
+                            >
+                              Bearbeiten
+                            </Button>
+                          )}
+                          {bug.status === "in_progress" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={bugActionLoading === bug.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleBugStatusChange(bug.id, "wont_fix")
+                              }}
+                            >
+                              Kein Fix
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             disabled={bugActionLoading === bug.id}
@@ -1039,6 +1054,15 @@ export function AdminTab({ profile }: { profile: Profile }) {
                 <Button
                   variant="outline"
                   onClick={() => {
+                    handleBugStatusChange(selectedBugReport.id, "in_progress")
+                    setSelectedBugReport(null)
+                  }}
+                >
+                  In Bearbeitung
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
                     handleBugStatusChange(selectedBugReport.id, "wont_fix")
                     setSelectedBugReport(null)
                   }}
@@ -1051,7 +1075,30 @@ export function AdminTab({ profile }: { profile: Profile }) {
                     setSelectedBugReport(null)
                   }}
                 >
-                  Als gelöst markieren
+                  <Check className="h-4 w-4 mr-1" />
+                  Gelöst
+                </Button>
+              </>
+            )}
+            {selectedBugReport?.status === "in_progress" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleBugStatusChange(selectedBugReport.id, "wont_fix")
+                    setSelectedBugReport(null)
+                  }}
+                >
+                  Wird nicht behoben
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleBugStatusChange(selectedBugReport.id, "resolved")
+                    setSelectedBugReport(null)
+                  }}
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Gelöst
                 </Button>
               </>
             )}
