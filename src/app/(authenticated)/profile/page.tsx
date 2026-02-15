@@ -10,13 +10,13 @@ import {
   Calendar,
   Car,
   Settings,
-  Loader2,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { fadeIn, staggerContainer, staggerItem } from "@/lib/animations"
 import type { Profile } from "@/types"
 
@@ -48,14 +48,16 @@ export default function ProfilePage() {
         return
       }
 
-      const { data: profileData } = await supabase
+      const today = new Date().toISOString().split("T")[0]
+
+      // Start both queries simultaneously, await separately
+      const profileQuery = supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single()
 
-      const today = new Date().toISOString().split("T")[0]
-      const { data: ridesData } = await supabase
+      const ridesQuery = supabase
         .from("rides")
         .select("*")
         .eq("user_id", user.id)
@@ -63,6 +65,10 @@ export default function ProfilePage() {
         .gte("departure_date", today)
         .order("departure_date", { ascending: true })
         .limit(5)
+
+      // Both queries are already in flight, awaiting them "collects" results
+      const { data: profileData } = await profileQuery
+      const { data: ridesData } = await ridesQuery
 
       if (profileData) {
         setProfile(profileData as Profile)
@@ -80,8 +86,53 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="w-full">
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-28" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-36" />
+                </div>
+              </div>
+              <Skeleton className="h-9 w-28 rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="py-4">
+                <Skeleton className="h-8 w-12 mb-1" />
+                <Skeleton className="h-4 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32 mb-1" />
+            <Skeleton className="h-4 w-56" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-12 rounded-full" />
+                  <div>
+                    <Skeleton className="h-4 w-40 mb-1" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                </div>
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     )
   }

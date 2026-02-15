@@ -49,37 +49,38 @@ export default async function MessagesPage() {
 
   const conversationsData = rawConversationsData as unknown as ConversationFromDB[] | null
 
-  // Get last message and unread count for each conversation
-  const conversations: ConversationWithDetails[] = []
+  // Get last message and unread count for each conversation (parallel instead of sequential)
+  let conversations: ConversationWithDetails[] = []
 
   if (conversationsData) {
-    for (const conv of conversationsData) {
-      // Get last message
-      const { data: lastMessageData } = await supabase
-        .from("messages")
-        .select("content, created_at, sender_id")
-        .eq("conversation_id", conv.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
+    conversations = await Promise.all(
+      conversationsData.map(async (conv) => {
+        const [lastMessageResult, unreadResult] = await Promise.all([
+          supabase
+            .from("messages")
+            .select("content, created_at, sender_id")
+            .eq("conversation_id", conv.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single(),
+          supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .eq("conversation_id", conv.id)
+            .eq("is_read", false)
+            .neq("sender_id", user.id),
+        ])
 
-      // Get unread count
-      const { count: unreadCount } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("conversation_id", conv.id)
-        .eq("is_read", false)
-        .neq("sender_id", user.id)
-
-      conversations.push({
-        ...conv,
-        participant_1_profile: conv.participant_1_profile,
-        participant_2_profile: conv.participant_2_profile,
-        ride: conv.ride,
-        last_message: lastMessageData as Pick<Message, "content" | "created_at" | "sender_id"> | null,
-        unread_count: unreadCount || 0,
+        return {
+          ...conv,
+          participant_1_profile: conv.participant_1_profile,
+          participant_2_profile: conv.participant_2_profile,
+          ride: conv.ride,
+          last_message: lastMessageResult.data as Pick<Message, "content" | "created_at" | "sender_id"> | null,
+          unread_count: unreadResult.count || 0,
+        }
       })
-    }
+    )
   }
 
   return (

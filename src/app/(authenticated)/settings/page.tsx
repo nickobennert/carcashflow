@@ -9,12 +9,12 @@ import {
   Bell,
   Shield,
   Crown,
-  Loader2,
   Lock,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { fadeIn } from "@/lib/animations"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ProfileTab } from "@/components/settings/profile-tab"
 import { AccountTab } from "@/components/settings/account-tab"
 import { NotificationsTab } from "@/components/settings/notifications-tab"
@@ -71,26 +71,26 @@ export default function SettingsPage() {
         return
       }
 
-      // Load profile
-      const { data: profileData } = await supabase
+      // Start both queries simultaneously
+      const profileQuery = supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single()
 
+      const adminQuery = fetch("/api/admin/check")
+        .then((r) => r.json())
+        .catch(() => ({ isAdmin: false }))
+
+      // Both are in flight, await collects results
+      const { data: profileData } = await profileQuery
+      const adminResult = await adminQuery
+
       if (profileData) {
         setProfile(profileData as Profile)
       }
 
-      // Check if user is admin via server-side API (bypasses RLS)
-      try {
-        const response = await fetch("/api/admin/check")
-        const adminResult = await response.json()
-        setIsAdmin(adminResult.isAdmin === true)
-      } catch {
-        setIsAdmin(false)
-      }
-
+      setIsAdmin(adminResult.isAdmin === true)
       setIsLoading(false)
     }
 
@@ -113,8 +113,47 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="w-full">
+        <div className="mb-8">
+          <Skeleton className="h-7 w-40 mb-2" />
+          <Skeleton className="h-5 w-72" />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-6">
+          <nav className="sm:w-56 shrink-0">
+            <div className="grid grid-cols-5 sm:grid-cols-1 gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-lg" />
+              ))}
+            </div>
+          </nav>
+          <div className="flex-1 min-w-0 space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              </div>
+              <div>
+                <Skeleton className="h-4 w-14 mb-2" />
+                <Skeleton className="h-24 w-full rounded-md" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-32 rounded-md" />
+          </div>
+        </div>
       </div>
     )
   }

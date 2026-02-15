@@ -71,11 +71,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     query = query.eq("departure_date", params.date)
   }
 
-  // Execute query
-  const { data: ridesData } = await query as { data: RideWithUser[] | null }
+  // Execute rides query and user count in parallel
+  const userCountQuery = user
+    ? supabase
+        .from("rides")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .gte("departure_date", new Date().toISOString().split("T")[0])
+    : null
+
+  const [ridesResult, userCountResult] = await Promise.all([
+    query.then((res) => res as { data: RideWithUser[] | null }),
+    userCountQuery,
+  ])
 
   // Type assertion for the joined data
-  const rides = (ridesData || []) as RideWithUser[]
+  const rides = (ridesResult.data || []) as RideWithUser[]
+  const userRideCount = userCountResult?.count || 0
 
   // Filter by search term if provided (client-side for address search in JSONB)
   const filteredRides = params.search
@@ -106,19 +119,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // Get counts from filtered rides (only active future rides)
   const offerCount = rides.filter((r) => r.type === "offer").length
   const requestCount = rides.filter((r) => r.type === "request").length
-
-  // Get user's active ride count separately (their own rides that are still active and not in the past)
-  let userRideCount = 0
-  if (user) {
-    const { count } = await supabase
-      .from("rides")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .gte("departure_date", new Date().toISOString().split("T")[0])
-
-    userRideCount = count || 0
-  }
 
   return (
     <div className="space-y-6">
