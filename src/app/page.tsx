@@ -100,7 +100,7 @@ export default function Home() {
             variants={staggerItem}
             className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground"
           >
-            Biete Fahrten an, finde Mitfahrgelegenheiten und vernetze dich mit anderen Teilnehmern. Jetzt in der Beta kostenlos testen.
+            Biete Fahrten an, finde Mitfahrgelegenheiten und vernetze dich mit anderen Teilnehmern.
           </motion.p>
 
           {/* CTA */}
@@ -110,7 +110,7 @@ export default function Home() {
           >
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto h-11 px-6">
-                Beta-Zugang sichern
+                Jetzt registrieren
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -226,7 +226,7 @@ export default function Home() {
               {
                 icon: Zap,
                 title: "Schnell & einfach",
-                description: "In unter 5 Minuten registriert. Während der Beta kostenlos und unverbindlich.",
+                description: "In unter 5 Minuten registriert und sofort loslegen.",
               },
             ].map((feature, index) => (
               <div key={index} className="space-y-3">
@@ -262,7 +262,7 @@ export default function Home() {
               {
                 step: "01",
                 title: "Registrieren",
-                description: "Erstelle einen Account — in der Beta-Phase komplett kostenlos und unverbindlich.",
+                description: "Erstelle einen Account und richte dein Profil ein.",
               },
               {
                 step: "02",
@@ -310,10 +310,6 @@ export default function Home() {
           <div className="space-y-6">
             {[
               {
-                q: "Ist Fahr mit! kostenlos?",
-                a: "Während der Beta-Phase ist Fahr mit! komplett kostenlos. Nach der Beta wird die App in ein Abo-Modell übergehen — Beta-Nutzer werden rechtzeitig informiert.",
-              },
-              {
                 q: "Wer kann die Plattform nutzen?",
                 a: "Fahr mit! ist für Schulungsteilnehmer gedacht, die gemeinsam Rückfahrten organisieren möchten.",
               },
@@ -352,12 +348,12 @@ export default function Home() {
             Bereit loszufahren?
           </h2>
           <p className="text-muted-foreground mb-8">
-            Sichere dir jetzt deinen Beta-Zugang und finde deine nächste Mitfahrgelegenheit.
+            Registriere dich jetzt und finde deine nächste Mitfahrgelegenheit.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto h-11 px-6">
-                Jetzt Beta-Zugang sichern
+                Jetzt starten
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -365,11 +361,7 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Beta: 100% kostenlos</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Keine Kreditkarte</span>
+              <span>Schnell registriert</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />

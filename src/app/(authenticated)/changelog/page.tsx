@@ -26,11 +26,11 @@ const changelog: ChangelogEntry[] = [
     version: "1.0.0",
     title: "Offizieller Launch! 🎉",
     description:
-      "Fahr mit! startet in die offene Beta! Alle Features sind während der Beta-Phase kostenlos verfügbar — einfach anmelden und losfahren!",
+      "Fahr mit! ist offiziell gestartet — einfach anmelden und losfahren!",
     type: "release",
     highlights: [
-      "Offene Beta - alle Features kostenlos testen",
-      "Alle Features für alle Beta-Nutzer",
+      "Vollständige Mitfahrbörse mit Angeboten & Gesuchen",
+      "Internes Nachrichtensystem",
       "DSGVO-konformer Daten-Export",
       "Account-Löschung jederzeit möglich",
     ],

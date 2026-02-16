@@ -27,14 +27,6 @@ const faqData = [
     a: "Fahr mit! ist eine Mitfahrbörse speziell für Schulungsteilnehmer. Du kannst Fahrten anbieten oder suchen und dich mit anderen Teilnehmern vernetzen.",
   },
   {
-    q: "Ist Fahr mit! kostenlos?",
-    a: "Fahr mit! befindet sich aktuell in der Beta-Phase und ist in dieser Zeit kostenlos nutzbar. Nach Abschluss der Beta wird die App kostenpflichtig — aktuelle Beta-Nutzer werden rechtzeitig informiert.",
-  },
-  {
-    q: "Was passiert nach der Beta-Phase?",
-    a: "Nach der Beta-Phase wird Fahr mit! in ein Abo-Modell übergehen. Du wirst rechtzeitig über die verfügbaren Pläne und Preise informiert. Beta-Nutzer erhalten dabei besondere Konditionen als Dankeschön für ihr frühes Vertrauen.",
-  },
-  {
     q: "Für wen ist Fahr mit! gedacht?",
     a: "Fahr mit! ist exklusiv für aktive Schulungsteilnehmer, die gemeinsame Rückfahrten organisieren möchten.",
   },
