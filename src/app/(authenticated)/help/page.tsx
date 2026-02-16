@@ -28,7 +28,11 @@ const faqData = [
   },
   {
     q: "Ist Fahr mit! kostenlos?",
-    a: "Ja, Fahr mit! ist komplett kostenlos nutzbar. Es gibt keine versteckten Kosten oder Abo-Modelle.",
+    a: "Fahr mit! befindet sich aktuell in der Beta-Phase und ist in dieser Zeit kostenlos nutzbar. Nach Abschluss der Beta wird die App kostenpflichtig — aktuelle Beta-Nutzer werden rechtzeitig informiert.",
+  },
+  {
+    q: "Was passiert nach der Beta-Phase?",
+    a: "Nach der Beta-Phase wird Fahr mit! in ein Abo-Modell übergehen. Du wirst rechtzeitig über die verfügbaren Pläne und Preise informiert. Beta-Nutzer erhalten dabei besondere Konditionen als Dankeschön für ihr frühes Vertrauen.",
   },
   {
     q: "Für wen ist Fahr mit! gedacht?",
