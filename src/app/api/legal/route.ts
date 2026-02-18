@@ -4,8 +4,9 @@ import { headers } from "next/headers"
 
 const CURRENT_TERMS_VERSION = "1.0"
 
-// GET /api/legal - Check if user has accepted current terms
-export async function GET() {
+// GET /api/legal?type=rideshare_terms - Check if user has accepted current terms
+// Supports optional ?type= param (default: rideshare_terms)
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -17,12 +18,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if user has accepted the current version of rideshare terms
+    const { searchParams } = new URL(request.url)
+    const acceptanceType = searchParams.get("type") || "rideshare_terms"
+
     const { data: acceptanceData, error } = await supabase
       .from("legal_acceptances")
       .select("id, version, accepted_at")
       .eq("user_id", user.id)
-      .eq("acceptance_type", "rideshare_terms")
+      .eq("acceptance_type", acceptanceType)
       .single()
 
     if (error && error.code !== "PGRST116") {

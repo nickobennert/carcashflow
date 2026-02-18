@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { motion } from "motion/react"
-import { Loader2 } from "lucide-react"
+import { ChevronDown, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { createClient } from "@/lib/supabase/client"
@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { fadeIn } from "@/lib/animations"
+import { cn } from "@/lib/utils"
 
 const signupSchema = z
   .object({
@@ -59,6 +60,14 @@ export function SignupForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
+
+  function handleTermsScroll(e: React.UIEvent<HTMLDivElement>) {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollTop + clientHeight >= scrollHeight - 20) {
+      setHasScrolledToBottom(true)
+    }
+  }
 
   const supabase = createClient()
 
@@ -213,6 +222,158 @@ export function SignupForm() {
                   </FormItem>
                 )}
               />
+              {/* Nutzungsvereinbarung - scrollable terms */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Nutzungsvereinbarung</p>
+                <div className="relative">
+                  <div
+                    onScroll={handleTermsScroll}
+                    className="h-[300px] overflow-y-auto rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground space-y-3"
+                  >
+                    <h3 className="font-semibold text-foreground">
+                      Nutzungshinweise für die Mitfahrbörse
+                    </h3>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 1 Zweck der Plattform</h4>
+                    <p>
+                      (1) Die Plattform stellt ausschließlich eine technische Möglichkeit zur
+                      Kontaktanbahnung zwischen Schulungsteilnehmern bereit, die gemeinsame Fahrten
+                      organisieren möchten.
+                    </p>
+                    <p>
+                      (2) Die Plattform vermittelt keine Fahrten, führt keine Beförderung durch und
+                      ist nicht Vertragspartei etwaiger Vereinbarungen zwischen den Nutzern.
+                    </p>
+                    <p>
+                      (3) Sämtliche Absprachen über Fahrten, Routen, Zeitpunkte und Kostenbeteiligung
+                      erfolgen eigenverantwortlich zwischen den beteiligten Nutzern.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 2 Keine gewerbliche Personenbeförderung</h4>
+                    <p>
+                      (1) Die über diese Plattform angebotenen Mitfahrgelegenheiten sind ausschließlich
+                      private Fahrgemeinschaften im Sinne der Kostenteilung. Es handelt sich nicht um
+                      gewerbliche Personenbeförderung im Sinne des Personenbeförderungsgesetzes (PBefG).
+                    </p>
+                    <p>
+                      (2) Fahrer dürfen über diese Plattform nur Fahrten anbieten, die sie ohnehin
+                      durchführen würden. Das gezielte Anbieten von Fahrten ausschließlich zum Zweck
+                      der Personenbeförderung ist nicht gestattet.
+                    </p>
+                    <p>
+                      (3) Eine etwaige Kostenbeteiligung durch Mitfahrer darf die tatsächlich anfallenden
+                      Fahrtkosten (insbesondere Kraftstoff, Maut, Parkgebühren) nicht übersteigen.
+                      Gewinnerzielung ist ausdrücklich untersagt.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 3 Eigenverantwortung der Nutzer</h4>
+                    <p>
+                      (1) Jeder Nutzer handelt in voller Eigenverantwortung. Die Teilnahme an einer
+                      Fahrgemeinschaft erfolgt auf eigenes Risiko.
+                    </p>
+                    <p>
+                      (2) Es obliegt den Nutzern, sich vor Fahrtantritt über die folgenden Punkte
+                      selbst zu vergewissern:
+                    </p>
+                    <p className="pl-4">
+                      a) Der Fahrer verfügt über eine gültige Fahrerlaubnis.<br />
+                      b) Das Fahrzeug ist ordnungsgemäß zugelassen und versichert.<br />
+                      c) Das Fahrzeug befindet sich in einem verkehrssicheren Zustand.<br />
+                      d) Der Fahrer ist fahrtüchtig (kein Alkohol, keine Drogen, keine übermäßige Müdigkeit).
+                    </p>
+                    <p>
+                      (3) Mitfahrer sind eigenverantwortlich dafür, sich anzuschnallen und die
+                      Straßenverkehrsordnung zu beachten.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 4 Haftungsausschluss der Plattform</h4>
+                    <p>
+                      (1) Die Plattform übernimmt keinerlei Haftung für:
+                    </p>
+                    <p className="pl-4">
+                      a) die Richtigkeit, Vollständigkeit oder Aktualität der von Nutzern eingestellten Angaben,<br />
+                      b) die Durchführung, den Verlauf oder das Ergebnis einer über die Plattform angebahnten Fahrt,<br />
+                      c) Schäden, die im Zusammenhang mit einer Fahrgemeinschaft entstehen, gleich welcher Art,<br />
+                      d) das Verhalten der Nutzer untereinander.
+                    </p>
+                    <p>
+                      (2) Insbesondere prüft die Plattform nicht: die Identität der Nutzer, das Vorliegen
+                      einer gültigen Fahrerlaubnis, den Versicherungsschutz des Fahrzeugs oder die
+                      Verkehrssicherheit des Fahrzeugs.
+                    </p>
+                    <p>
+                      (3) Dieser Haftungsausschluss gilt nicht, soweit die Plattform Schäden vorsätzlich
+                      oder grob fahrlässig verursacht oder soweit eine Haftung gesetzlich zwingend
+                      vorgeschrieben ist.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 5 Pflichten der Nutzer</h4>
+                    <p>
+                      (1) Nutzer verpflichten sich, ausschließlich wahrheitsgemäße Angaben zu machen.
+                    </p>
+                    <p>
+                      (2) Nutzer dürfen die Plattform nicht für gewerbliche Personenbeförderung nutzen.
+                    </p>
+                    <p>
+                      (3) Nutzer verpflichten sich, die geltenden Gesetze einzuhalten, insbesondere die
+                      Straßenverkehrsordnung und das Personenbeförderungsgesetz.
+                    </p>
+                    <p>
+                      (4) Bei Verstößen behält sich die Plattform das Recht vor, Nutzer von der Nutzung
+                      auszuschließen.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 6 Kostenbeteiligung</h4>
+                    <p>
+                      (1) Eine Kostenbeteiligung durch Mitfahrer ist zulässig, sofern sie die
+                      tatsächlichen Fahrtkosten nicht übersteigt.
+                    </p>
+                    <p>
+                      (2) Zu den erstattungsfähigen Kosten zählen insbesondere: Kraftstoffkosten,
+                      Mautgebühren, Parkgebühren sowie ein angemessener Anteil für Fahrzeugverschleiß.
+                    </p>
+                    <p>
+                      (3) Die Aufteilung der Kosten ist Sache der beteiligten Nutzer. Die Plattform ist
+                      an der Kostenabwicklung nicht beteiligt und nimmt keine Zahlungen entgegen oder weiter.
+                    </p>
+                    <p>
+                      (4) Es wird empfohlen, die Kostenbeteiligung vor Fahrtantritt zu besprechen und
+                      zu vereinbaren.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 7 Meldung von Verstößen</h4>
+                    <p>
+                      (1) Nutzer können Verstöße gegen diese Nutzungshinweise über die Meldefunktion
+                      der Plattform anzeigen.
+                    </p>
+                    <p>
+                      (2) Die Plattform behält sich vor, gemeldete Inhalte zu prüfen und gegebenenfalls
+                      zu entfernen.
+                    </p>
+
+                    <h4 className="font-medium text-foreground mt-3">§ 8 Änderungen</h4>
+                    <p>
+                      (1) Die Plattform behält sich vor, diese Nutzungshinweise jederzeit zu ändern.
+                    </p>
+                    <p>
+                      (2) Änderungen werden den Nutzern in geeigneter Weise mitgeteilt. Die fortgesetzte
+                      Nutzung der Plattform gilt als Zustimmung zu den geänderten Bedingungen.
+                    </p>
+                  </div>
+
+                  {/* Scroll indicator */}
+                  {!hasScrolledToBottom && (
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-muted/80 to-transparent rounded-b-lg pointer-events-none flex items-end justify-center pb-2">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 animate-pulse">
+                        <ChevronDown className="h-3 w-3" />
+                        Bitte scrolle bis zum Ende
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Accept terms checkbox */}
               <FormField
                 control={form.control}
                 name="acceptTerms"
@@ -222,28 +383,31 @@ export function SignupForm() {
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading || isGoogleLoading}
+                        disabled={!hasScrolledToBottom || isLoading || isGoogleLoading}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-normal">
-                        Ich akzeptiere die{" "}
-                        <Link
-                          href="/agb"
-                          className="text-primary hover:underline"
-                          target="_blank"
-                        >
+                      <FormLabel className={cn(
+                        "text-sm font-normal",
+                        !hasScrolledToBottom && "text-muted-foreground"
+                      )}>
+                        Ich habe die Nutzungsvereinbarung gelesen und akzeptiere diese
+                      </FormLabel>
+                      {!hasScrolledToBottom && (
+                        <p className="text-xs text-muted-foreground">
+                          Bitte lies die Nutzungsvereinbarung bis zum Ende
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Es gelten unsere{" "}
+                        <Link href="/agb" className="text-primary hover:underline" target="_blank">
                           AGB
                         </Link>{" "}
                         und{" "}
-                        <Link
-                          href="/datenschutz"
-                          className="text-primary hover:underline"
-                          target="_blank"
-                        >
+                        <Link href="/datenschutz" className="text-primary hover:underline" target="_blank">
                           Datenschutzerklärung
                         </Link>
-                      </FormLabel>
+                      </p>
                       <FormMessage />
                     </div>
                   </FormItem>
