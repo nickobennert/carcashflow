@@ -79,27 +79,53 @@ export async function POST(request: NextRequest) {
     // Use admin client to bypass RLS for legal acceptance writes
     const adminSupabase = createAdminClient()
 
-    // Upsert the acceptance
-    const { data, error } = await adminSupabase
+    // Check if acceptance already exists
+    const { data: existingData } = await adminSupabase
       .from("legal_acceptances")
-      .upsert(
-        {
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("acceptance_type", acceptance_type)
+      .single()
+
+    const existing = existingData as { id: string } | null
+
+    let data
+    let error
+
+    if (existing) {
+      // Update existing acceptance
+      const result = await adminSupabase
+        .from("legal_acceptances")
+        .update({
+          version: CURRENT_TERMS_VERSION,
+          accepted_at: new Date().toISOString(),
+          ip_address: ipAddress,
+        } as never)
+        .eq("id", existing.id)
+        .select()
+        .single()
+      data = result.data
+      error = result.error
+    } else {
+      // Insert new acceptance
+      const result = await adminSupabase
+        .from("legal_acceptances")
+        .insert({
           user_id: user.id,
           acceptance_type,
           version: CURRENT_TERMS_VERSION,
           accepted_at: new Date().toISOString(),
           ip_address: ipAddress,
-        } as never,
-        {
-          onConflict: "user_id,acceptance_type",
-        }
-      )
-      .select()
-      .single()
+        } as never)
+        .select()
+        .single()
+      data = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error("Error saving legal acceptance:", error, { acceptance_type, user_id: user.id })
-      return NextResponse.json({ error: "Failed to save acceptance" }, { status: 500 })
+      return NextResponse.json({ error: "Failed to save acceptance", details: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
