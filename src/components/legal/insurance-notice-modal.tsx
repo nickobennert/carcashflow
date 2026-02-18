@@ -42,14 +42,17 @@ export function InsuranceNoticeModal({ open, onAccepted }: InsuranceNoticeModalP
       })
 
       if (!response.ok) {
-        throw new Error("Failed to save acceptance")
+        const errorData = await response.json().catch(() => ({}))
+        console.error("API error:", response.status, errorData)
+        throw new Error(errorData.details || errorData.error || "Failed to save acceptance")
       }
 
       toast.success("Versicherungshinweis bestätigt")
       onAccepted()
     } catch (error) {
       console.error("Error accepting insurance notice:", error)
-      toast.error("Fehler beim Speichern. Bitte versuche es erneut.")
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler"
+      toast.error("Fehler beim Speichern", { description: message })
     } finally {
       setIsSubmitting(false)
     }
