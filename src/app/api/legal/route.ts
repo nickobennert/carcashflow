@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { headers } from "next/headers"
 
 const CURRENT_TERMS_VERSION = "1.0"
@@ -64,13 +65,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { acceptance_type = "rideshare_terms" } = body
 
+    // Validate acceptance type
+    const validTypes = ["rideshare_terms", "privacy_policy", "terms_of_service", "disclaimer_banner", "insurance_notice"]
+    if (!validTypes.includes(acceptance_type)) {
+      return NextResponse.json({ error: "Invalid acceptance type" }, { status: 400 })
+    }
+
     // Get client IP (best effort)
     const headersList = await headers()
     const forwardedFor = headersList.get("x-forwarded-for")
     const ipAddress = forwardedFor?.split(",")[0].trim() || "unknown"
 
+    // Use admin client to bypass RLS for legal acceptance writes
+    const adminSupabase = createAdminClient()
+
     // Upsert the acceptance
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from("legal_acceptances")
       .upsert(
         {
@@ -88,7 +98,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error("Error saving legal acceptance:", error)
+      console.error("Error saving legal acceptance:", error, { acceptance_type, user_id: user.id })
       return NextResponse.json({ error: "Failed to save acceptance" }, { status: 500 })
     }
 

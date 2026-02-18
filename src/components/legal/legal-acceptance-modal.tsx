@@ -86,6 +86,7 @@ export function LegalAcceptanceModal({ onAccepted }: LegalAcceptanceModalProps) 
         <Dialog open={isOpen} onOpenChange={() => {}}>
           <DialogContent
             className="max-w-lg"
+            showCloseButton={false}
             onPointerDownOutside={(e) => e.preventDefault()}
             onEscapeKeyDown={(e) => e.preventDefault()}
           >
