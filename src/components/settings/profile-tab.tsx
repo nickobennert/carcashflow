@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Camera, Loader2, X } from "lucide-react"
+import { Calendar, Camera, GraduationCap, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -32,6 +32,8 @@ const profileSchema = z.object({
     .regex(/^[a-z0-9_]+$/, "Nur Kleinbuchstaben, Zahlen und Unterstriche"),
   city: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
+  training_location: z.string().max(200).optional(),
+  training_date: z.string().optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
@@ -55,6 +57,8 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
       username: profile.username || "",
       city: profile.city || "",
       phone: profile.phone || "",
+      training_location: profile.training_location || "",
+      training_date: profile.training_date || "",
     },
   })
 
@@ -74,6 +78,8 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
           username: data.username,
           city: data.city || null,
           phone: data.phone || null,
+          training_location: data.training_location || null,
+          training_date: data.training_date || null,
           updated_at: new Date().toISOString(),
         } as never)
         .eq("id", profile.id)
@@ -347,6 +353,49 @@ export function ProfileTab({ profile, onUpdate }: ProfileTabProps) {
                       <FormControl>
                         <Input placeholder="+49 123 456789" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Training Info */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="training_location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        Schulungsort
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="z.B. München" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Ort deiner Schulung
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="training_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Schulungsdatum
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Startdatum deiner Schulung
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

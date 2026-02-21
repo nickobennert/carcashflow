@@ -48,11 +48,11 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute && user) {
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, first_name")
+      .select("username, first_name, last_seen_at")
       .eq("id", user.id)
       .single()
 
-    const profile = data as { username: string; first_name: string | null } | null
+    const profile = data as { username: string; first_name: string | null; last_seen_at: string | null } | null
 
     // If no profile, redirect to profile setup
     if ((error || !profile) && !pathname.startsWith("/profile/setup")) {
@@ -62,6 +62,21 @@ export async function middleware(request: NextRequest) {
     // If profile is incomplete (no first_name), redirect to setup
     if (profile && !profile.first_name && !pathname.startsWith("/profile/setup")) {
       return NextResponse.redirect(new URL("/profile/setup", request.url))
+    }
+
+    // Update last_seen_at (throttled: max once per 5 minutes)
+    if (profile) {
+      const lastSeen = profile.last_seen_at ? new Date(profile.last_seen_at).getTime() : 0
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+
+      if (lastSeen < fiveMinutesAgo) {
+        // Fire-and-forget: don't await to avoid slowing down the request
+        supabase
+          .from("profiles")
+          .update({ last_seen_at: new Date().toISOString() } as never)
+          .eq("id", user.id)
+          .then()
+      }
     }
   }
 

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { de } from "date-fns/locale"
 import Link from "next/link"
-import { ChevronRight, Trash2 } from "lucide-react"
+import { ChevronRight, Search, Trash2, X } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { ConversationWithDetails } from "@/types"
 
@@ -43,6 +44,7 @@ interface ConversationListProps {
 
 export function ConversationList({ conversations: initialConversations, currentUserId }: ConversationListProps) {
   const [conversations, setConversations] = useState(initialConversations)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const handleRemove = (conversationId: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== conversationId))
@@ -52,16 +54,62 @@ export function ConversationList({ conversations: initialConversations, currentU
     return null
   }
 
+  // Filter conversations by search query (name, username, last message, route)
+  const filteredConversations = searchQuery.trim()
+    ? conversations.filter((conv) => {
+        const query = searchQuery.toLowerCase()
+        const isP1 = conv.participant_1 === currentUserId
+        const other = isP1 ? conv.participant_2_profile : conv.participant_1_profile
+
+        const name = `${other.first_name || ""} ${other.last_name || ""}`.toLowerCase()
+        const username = (other.username || "").toLowerCase()
+        const lastMsg = (conv.last_message?.content || "").toLowerCase()
+        const route = conv.ride?.route?.map((r: { address?: string }) => r.address || "").join(" ").toLowerCase() || ""
+
+        return name.includes(query) || username.includes(query) || lastMsg.includes(query) || route.includes(query)
+      })
+    : conversations
+
   return (
-    <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-      {conversations.map((conversation) => (
-        <ConversationItem
-          key={conversation.id}
-          conversation={conversation}
-          currentUserId={currentUserId}
-          onRemove={handleRemove}
-        />
-      ))}
+    <div className="space-y-3">
+      {/* Search bar */}
+      {conversations.length > 2 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Chats durchsuchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Conversation list */}
+      <div className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+        {filteredConversations.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            Keine Chats gefunden für &quot;{searchQuery}&quot;
+          </div>
+        ) : (
+          filteredConversations.map((conversation) => (
+            <ConversationItem
+              key={conversation.id}
+              conversation={conversation}
+              currentUserId={currentUserId}
+              onRemove={handleRemove}
+            />
+          ))
+        )}
+      </div>
     </div>
   )
 }
