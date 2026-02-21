@@ -21,6 +21,7 @@ import {
   Bug,
   BookOpen,
   ExternalLink,
+  ScrollText,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -96,6 +97,26 @@ interface BugReportRow {
   screenshots: string[] | null
   status: string
   created_at: string
+}
+
+interface AuditEntry {
+  id: string
+  action: string
+  target_type: string
+  target_id: string
+  details: Record<string, unknown>
+  created_at: string
+  admin: { id: string; username: string; first_name: string | null } | null
+}
+
+const auditActionLabels: Record<string, string> = {
+  user_banned: "Nutzer gesperrt",
+  user_unbanned: "Nutzer entsperrt",
+  report_resolved: "Report gelöst",
+  report_dismissed: "Report abgewiesen",
+  bug_status_changed: "Bug-Status geändert",
+  ride_deleted: "Fahrt gelöscht",
+  user_updated: "Nutzer aktualisiert",
 }
 
 const bugAreaLabels: Record<string, string> = {
@@ -243,6 +264,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
   const [users, setUsers] = useState<UserRow[]>([])
   const [reports, setReports] = useState<ReportRow[]>([])
   const [bugReports, setBugReports] = useState<BugReportRow[]>([])
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [userSearch, setUserSearch] = useState("")
@@ -250,6 +272,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
   const [selectedBugReport, setSelectedBugReport] = useState<BugReportRow | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [bugActionLoading, setBugActionLoading] = useState<string | null>(null)
+  const [banLoading, setBanLoading] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const supabase = createClient()
 
@@ -313,6 +336,13 @@ export function AdminTab({ profile }: { profile: Profile }) {
       if (bugReportsResponse.ok) {
         const bugReportsData = await bugReportsResponse.json()
         setBugReports(bugReportsData.bugReports || [])
+      }
+
+      // Load audit log
+      const auditResponse = await fetch("/api/admin/audit-log?limit=30")
+      if (auditResponse.ok) {
+        const auditData = await auditResponse.json()
+        setAuditEntries(auditData.entries || [])
       }
 
       if (refresh) {
@@ -388,6 +418,42 @@ export function AdminTab({ profile }: { profile: Profile }) {
       toast.error("Fehler beim Aktualisieren")
     } finally {
       setBugActionLoading(null)
+    }
+  }
+
+  async function handleToggleBan(userId: string, currentlyBanned: boolean) {
+    setBanLoading(userId)
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: currentlyBanned ? "unban" : "ban" }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Fehler beim Aktualisieren")
+      }
+
+      // Update local state
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, is_banned: !currentlyBanned } : u
+        )
+      )
+
+      // Update selected user if open
+      if (selectedUser?.id === userId) {
+        setSelectedUser({ ...selectedUser, is_banned: !currentlyBanned })
+      }
+
+      toast.success(currentlyBanned ? "Nutzer entsperrt" : "Nutzer gesperrt")
+    } catch (error) {
+      console.error("Error toggling ban:", error)
+      toast.error(error instanceof Error ? error.message : "Fehler beim Aktualisieren")
+    } finally {
+      setBanLoading(null)
     }
   }
 
@@ -521,7 +587,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
 
       {/* Admin Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-4 sm:inline-flex">
+        <TabsList className="bg-muted/50 w-full sm:w-auto grid grid-cols-5 sm:inline-flex">
           <TabsTrigger value="overview" className="data-[state=active]:bg-background px-2 sm:px-3">
             <Activity className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Übersicht</span>
@@ -547,6 +613,10 @@ export function AdminTab({ profile }: { profile: Profile }) {
                 {stats?.openBugReports}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="data-[state=active]:bg-background px-2 sm:px-3">
+            <ScrollText className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Log</span>
           </TabsTrigger>
         </TabsList>
 
@@ -751,6 +821,22 @@ export function AdminTab({ profile }: { profile: Profile }) {
                                 <Eye className="h-4 w-4 mr-2" />
                                 Details anzeigen
                               </DropdownMenuItem>
+                              {user.id !== profile.id && (
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleBan(user.id, !!user.is_banned)}
+                                  disabled={banLoading === user.id}
+                                  className={user.is_banned ? "text-offer" : "text-destructive"}
+                                >
+                                  {banLoading === user.id ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : user.is_banned ? (
+                                    <Check className="h-4 w-4 mr-2" />
+                                  ) : (
+                                    <Ban className="h-4 w-4 mr-2" />
+                                  )}
+                                  {user.is_banned ? "Entsperren" : "Sperren"}
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -962,6 +1048,66 @@ export function AdminTab({ profile }: { profile: Profile }) {
           </Card>
         </TabsContent>
 
+        {/* Audit Log Tab */}
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle>Aktivitätsprotokoll</CardTitle>
+              <CardDescription>Letzte Admin-Aktionen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {auditEntries.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <ScrollText className="h-6 w-6" />
+                  </div>
+                  <p className="font-medium">Noch keine Einträge</p>
+                  <p className="text-sm mt-1">Admin-Aktionen werden hier protokolliert</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {auditEntries.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-start gap-3 p-3 rounded-lg border text-sm"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-xs font-medium">
+                          {entry.admin?.first_name?.[0] || entry.admin?.username?.[0]?.toUpperCase() || "?"}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">
+                            {entry.admin?.first_name || entry.admin?.username || "Admin"}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {auditActionLabels[entry.action] || entry.action}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {entry.target_type}: {entry.target_id.substring(0, 8)}...
+                          {entry.details && Object.keys(entry.details).length > 0 && (
+                            <> &middot; {JSON.stringify(entry.details)}</>
+                          )}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {new Date(entry.created_at).toLocaleString("de-DE", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
 
       {/* Bug Report Detail Dialog */}
@@ -1158,7 +1304,23 @@ export function AdminTab({ profile }: { profile: Profile }) {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedUser && selectedUser.id !== profile.id && (
+              <Button
+                variant={selectedUser.is_banned ? "default" : "destructive"}
+                onClick={() => handleToggleBan(selectedUser.id, !!selectedUser.is_banned)}
+                disabled={banLoading === selectedUser.id}
+              >
+                {banLoading === selectedUser.id ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : selectedUser.is_banned ? (
+                  <Check className="h-4 w-4 mr-2" />
+                ) : (
+                  <Ban className="h-4 w-4 mr-2" />
+                )}
+                {selectedUser.is_banned ? "Nutzer entsperren" : "Nutzer sperren"}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setSelectedUser(null)}>
               Schließen
             </Button>

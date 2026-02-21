@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { format, isToday, isYesterday } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2 } from "lucide-react"
+import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2, FileText, Download } from "lucide-react"
 import Link from "next/link"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -433,6 +433,11 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
     }
   }
 
+  const hasAttachment = !!(message as MessageWithSender & { attachment_url?: string }).attachment_url
+  const attachmentUrl = (message as MessageWithSender & { attachment_url?: string }).attachment_url
+  const attachmentType = (message as MessageWithSender & { attachment_type?: string }).attachment_type
+  const attachmentName = (message as MessageWithSender & { attachment_name?: string }).attachment_name
+
   return (
     <div className={cn(
       "flex",
@@ -440,20 +445,66 @@ function MessageBubble({ message, isOwn, isFirstInGroup, isLastInGroup }: Messag
     )}>
       <div
         className={cn(
-          "max-w-[80%] sm:max-w-[65%] px-3 sm:px-3.5 py-2",
+          "max-w-[80%] sm:max-w-[65%]",
           getBubbleRadius(),
           isOwn
             ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            : "bg-muted",
+          hasAttachment && attachmentType === "image" ? "overflow-hidden" : "px-3 sm:px-3.5 py-2"
         )}
       >
-        <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
-          {message.content}
-        </p>
+        {/* Image attachment */}
+        {hasAttachment && attachmentType === "image" && attachmentUrl && (
+          <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="block">
+            <img
+              src={attachmentUrl}
+              alt={attachmentName || "Bild"}
+              className="max-w-full rounded-t-inherit max-h-[300px] object-cover w-full"
+              loading="lazy"
+            />
+          </a>
+        )}
+
+        {/* File attachment */}
+        {hasAttachment && attachmentType === "file" && attachmentUrl && (
+          <a
+            href={attachmentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-lg mb-1",
+              isOwn ? "bg-primary-foreground/10 hover:bg-primary-foreground/20" : "bg-background/50 hover:bg-background/80",
+              "transition-colors"
+            )}
+          >
+            <div className={cn(
+              "h-10 w-10 rounded flex items-center justify-center shrink-0",
+              isOwn ? "bg-primary-foreground/20" : "bg-muted-foreground/10"
+            )}>
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{attachmentName || "Datei"}</p>
+            </div>
+            <Download className="h-4 w-4 shrink-0 opacity-70" />
+          </a>
+        )}
+
+        {/* Text content (with padding for image messages) */}
+        {message.content && (
+          <div className={hasAttachment && attachmentType === "image" ? "px-3 sm:px-3.5 pt-1.5 pb-2" : ""}>
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
+              {message.content}
+            </p>
+          </div>
+        )}
+
+        {/* Timestamp */}
         <div
           className={cn(
             "flex items-center gap-1 justify-end mt-1",
-            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+            isOwn ? "text-primary-foreground/70" : "text-muted-foreground",
+            hasAttachment && attachmentType === "image" && !message.content ? "px-3 sm:px-3.5 pb-2" : ""
           )}
         >
           <span className="text-[10px]">{time}</span>

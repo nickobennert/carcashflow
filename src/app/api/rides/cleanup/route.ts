@@ -1,47 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
-// POST /api/rides/cleanup - Clean up expired rides
-// This endpoint can be called by:
-// - Vercel Cron (configured in vercel.json)
-// - Manual trigger from admin dashboard
-// - External cron service
-export async function POST(request: NextRequest) {
+// Shared cleanup logic
+async function performCleanup(isAuthorized: boolean) {
+  if (!isAuthorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    // Verify authorization (cron secret or admin user)
-    const authHeader = request.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    let isAuthorized = false
-
-    // Check cron secret
-    if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-      isAuthorized = true
-    }
-
-    // Check if admin user
-    if (!isAuthorized) {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: admin } = await supabase
-          .from("super_admins")
-          .select("id")
-          .eq("user_id", user.id)
-          .single()
-
-        if (admin) {
-          isAuthorized = true
-        }
-      }
-    }
-
-    if (!isAuthorized) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const supabase = await createClient()
+    // Use admin client to bypass RLS for cleanup operations
+    const supabase = createAdminClient()
     const now = new Date()
     const today = now.toISOString().split("T")[0]
 
@@ -87,9 +56,9 @@ export async function POST(request: NextRequest) {
         .delete()
         .in("conversation_id", conversationIds)
 
-      // 4. Delete conversation participants
+      // 4. Delete hidden_conversations entries
       await supabase
-        .from("conversation_participants")
+        .from("hidden_conversations")
         .delete()
         .in("conversation_id", conversationIds)
 
@@ -128,7 +97,6 @@ export async function POST(request: NextRequest) {
 
     if (deleteError) throw deleteError
 
-    // 7. Log the cleanup
     console.log(
       `[Ride Cleanup] Deleted ${rideIds.length} expired rides, ` +
       `${deletedConversations} conversations, ${deletedMessages} messages`
@@ -148,4 +116,47 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// Verify if request is authorized (cron secret or admin user)
+async function checkAuthorization(request: NextRequest): Promise<boolean> {
+  const authHeader = request.headers.get("authorization")
+  const cronSecret = process.env.CRON_SECRET
+
+  // Check cron secret
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    return true
+  }
+
+  // Check if admin user
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      const { data: admin } = await supabase
+        .from("super_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (admin) return true
+    }
+  } catch {
+    // Auth check failed, not authorized
+  }
+
+  return false
+}
+
+// GET /api/rides/cleanup - Called by Vercel Cron
+export async function GET(request: NextRequest) {
+  const isAuthorized = await checkAuthorization(request)
+  return performCleanup(isAuthorized)
+}
+
+// POST /api/rides/cleanup - Manual trigger from admin dashboard
+export async function POST(request: NextRequest) {
+  const isAuthorized = await checkAuthorization(request)
+  return performCleanup(isAuthorized)
 }

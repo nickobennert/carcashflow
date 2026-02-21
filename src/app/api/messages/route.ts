@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Get messages with sender info (including is_encrypted flag)
+    // Get messages with sender info (including is_encrypted flag and attachments)
     const { data: messages, error, count } = await supabase
       .from("messages")
       .select(`
@@ -70,6 +70,9 @@ export async function GET(request: NextRequest) {
         content,
         is_encrypted,
         is_read,
+        attachment_url,
+        attachment_type,
+        attachment_name,
         created_at,
         sender:profiles!messages_sender_id_fkey (
           id, username, first_name, last_name, avatar_url
@@ -113,17 +116,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { conversation_id, content } = body
+    const { conversation_id, content, attachment_url, attachment_type, attachment_name } = body
 
     if (!conversation_id) {
       return NextResponse.json({ error: "conversation_id is required" }, { status: 400 })
     }
 
-    if (!content || content.trim().length === 0) {
+    // Content is required unless there's an attachment
+    const hasAttachment = !!attachment_url
+    if ((!content || content.trim().length === 0) && !hasAttachment) {
       return NextResponse.json({ error: "Message content is required" }, { status: 400 })
     }
 
-    if (content.length > 2000) {
+    if (content && content.length > 2000) {
       return NextResponse.json({ error: "Message too long (max 2000 characters)" }, { status: 400 })
     }
 
@@ -146,16 +151,27 @@ export async function POST(request: NextRequest) {
     // Determine if message is encrypted
     const is_encrypted = isEncryptedContent(content)
 
+    // Build insert data
+    const messageContent = content ? content.trim() : ""
+    const insertData: Record<string, unknown> = {
+      conversation_id,
+      sender_id: user.id,
+      content: messageContent,
+      is_encrypted,
+      is_read: false,
+    }
+
+    // Add attachment fields if present
+    if (attachment_url) {
+      insertData.attachment_url = attachment_url
+      insertData.attachment_type = attachment_type || "file"
+      insertData.attachment_name = attachment_name || "Datei"
+    }
+
     // Create the message
     const { data: message, error: msgError } = await supabase
       .from("messages")
-      .insert({
-        conversation_id,
-        sender_id: user.id,
-        content: content.trim(),
-        is_encrypted,
-        is_read: false,
-      } as never)
+      .insert(insertData as never)
       .select(`
         id,
         conversation_id,
@@ -163,6 +179,9 @@ export async function POST(request: NextRequest) {
         content,
         is_encrypted,
         is_read,
+        attachment_url,
+        attachment_type,
+        attachment_name,
         created_at,
         sender:profiles!messages_sender_id_fkey (
           id, username, first_name, last_name, avatar_url
@@ -208,9 +227,11 @@ export async function POST(request: NextRequest) {
     // Create notification for the recipient using admin client (bypasses RLS)
     // The regular server client uses ANON key which can't INSERT into notifications table
     // Note: For encrypted messages, we just show a generic notification (no content preview)
-    const notificationMessage = is_encrypted
-      ? "Verschlüsselte Nachricht"
-      : content.substring(0, 100) + (content.length > 100 ? "..." : "")
+    const notificationMessage = hasAttachment && !messageContent
+      ? (attachment_type === "image" ? "📷 Bild" : "📎 Datei")
+      : is_encrypted
+        ? "Verschlüsselte Nachricht"
+        : messageContent.substring(0, 100) + (messageContent.length > 100 ? "..." : "")
 
     try {
       const { data: notifData, error: notifError } = await adminClient.from("notifications").insert({
@@ -255,7 +276,7 @@ export async function POST(request: NextRequest) {
             subscriptions as PushSubscriptionData[],
             {
               title: `${senderName}`,
-              body: is_encrypted ? "Neue verschlüsselte Nachricht" : notificationMessage,
+              body: is_encrypted ? "Neue verschlüsselte Nachricht" : (notificationMessage || "Neue Nachricht"),
               tag: `message-${conversation_id}`,
               data: {
                 url: `/messages/${conversation_id}`,

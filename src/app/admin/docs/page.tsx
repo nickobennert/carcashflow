@@ -391,7 +391,7 @@ export default function DocsPage() {
                     ["Bug Reports", <StatusBadge key="bugs" status="active" />, "Fehlermeldung mit Screenshots"],
                     ["Admin-Panel", <StatusBadge key="admin" status="active" />, "Stats, User-Verwaltung, Bug Reports"],
                     ["E2E-Verschlüsselung", <StatusBadge key="e2e" status="disabled" />, "Entfernt - nicht zuverlässig in Web-Apps"],
-                    ["Stripe/Subscription", <StatusBadge key="stripe" status="planned" />, "Vorbereitet, noch nicht implementiert"],
+                    ["Bezahlsystem", <StatusBadge key="payment" status="planned" />, "Für spätere Phase geplant (Anbieter noch offen)"],
                   ]}
                 />
               </Section>
@@ -926,11 +926,6 @@ VAPID_PRIVATE_KEY=xxx
 
 # App
 NEXT_PUBLIC_APP_URL=https://app.carcashflow.de`}</CodeBlock>
-
-                <SubTitle>Optional (noch nicht aktiv)</SubTitle>
-                <CodeBlock language="env" title=".env (Optional)">{`# Stripe (für spätere Subscription)
-STRIPE_SECRET_KEY=sk_...
-STRIPE_WEBHOOK_SECRET=whsec_...`}</CodeBlock>
 
                 <Callout type="info">
                   <strong>Vercel Setup:</strong> Alle Variablen im Vercel Dashboard unter Project → Settings → Environment Variables für Production und Preview eintragen.

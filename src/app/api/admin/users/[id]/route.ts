@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { logAuditEvent } from "@/lib/audit"
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -170,6 +171,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         : "Dein Account wurde wieder entsperrt.",
       data: {},
     } as never)
+
+    // Audit log
+    logAuditEvent({
+      admin_id: user.id,
+      action: isBanned ? "user_banned" : "user_unbanned",
+      target_type: "user",
+      target_id: id,
+    })
 
     return NextResponse.json({ data, action })
   } catch (error) {

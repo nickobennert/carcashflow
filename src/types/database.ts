@@ -167,6 +167,10 @@ export type Database = {
           sender_id: string
           content: string
           is_read: boolean
+          is_encrypted: boolean
+          attachment_url: string | null
+          attachment_type: string | null
+          attachment_name: string | null
           created_at: string
         }
         Insert: {
@@ -175,6 +179,10 @@ export type Database = {
           sender_id: string
           content: string
           is_read?: boolean
+          is_encrypted?: boolean
+          attachment_url?: string | null
+          attachment_type?: string | null
+          attachment_name?: string | null
           created_at?: string
         }
         Update: {
@@ -183,6 +191,10 @@ export type Database = {
           sender_id?: string
           content?: string
           is_read?: boolean
+          is_encrypted?: boolean
+          attachment_url?: string | null
+          attachment_type?: string | null
+          attachment_name?: string | null
           created_at?: string
         }
       }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { logAuditEvent } from "@/lib/audit"
 
 // Use service role for admin operations
 const supabaseAdmin = createClient(
@@ -107,6 +108,15 @@ export async function PATCH(request: Request) {
       console.error("Error updating bug report:", error)
       return NextResponse.json({ error: "Failed to update bug report" }, { status: 500 })
     }
+
+    // Audit log
+    logAuditEvent({
+      admin_id: user.id,
+      action: "bug_status_changed",
+      target_type: "bug_report",
+      target_id: id,
+      details: { new_status: status, admin_notes: admin_notes || null },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

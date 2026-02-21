@@ -81,6 +81,41 @@ interface OSRMWaypoint {
 // OSRM Demo Server (free, no API key needed)
 const OSRM_BASE_URL = "https://router.project-osrm.org"
 
+// Retry configuration
+const MAX_RETRIES = 1
+const RETRY_DELAY_MS = 2000 // 2 seconds before retry
+
+// Simple in-memory route cache (client-side, cleared on page reload)
+const routeCache = new Map<string, { result: RouteResult; timestamp: number }>()
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
+
+function getCacheKey(points: RoutePoint[]): string {
+  return points.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join("|")
+}
+
+function getCachedRoute(key: string): RouteResult | null {
+  const cached = routeCache.get(key)
+  if (!cached) return null
+
+  // Check TTL
+  if (Date.now() - cached.timestamp > CACHE_TTL_MS) {
+    routeCache.delete(key)
+    return null
+  }
+
+  return cached.result
+}
+
+function setCachedRoute(key: string, result: RouteResult): void {
+  // Limit cache size to 50 entries
+  if (routeCache.size >= 50) {
+    const oldestKey = routeCache.keys().next().value
+    if (oldestKey) routeCache.delete(oldestKey)
+  }
+
+  routeCache.set(key, { result, timestamp: Date.now() })
+}
+
 // Custom error codes for routing issues
 export const ROUTING_ERROR_CODES = {
   OSRM_OVERLOADED: "ROUTING_SERVICE_OVERLOADED",
@@ -233,6 +268,7 @@ function getInstruction(step: OSRMStep): string {
 
 /**
  * Calculate route between multiple points using OSRM
+ * Includes retry logic (1 retry on timeout/overload) and in-memory caching.
  * @throws {RoutingError} When routing service has issues (check error.code)
  */
 export async function calculateRoute(points: RoutePoint[]): Promise<RouteResult | null> {
@@ -253,6 +289,44 @@ export async function calculateRoute(points: RoutePoint[]): Promise<RouteResult 
       )
     }
   }
+
+  // Check cache first
+  const cacheKey = getCacheKey(points)
+  const cached = getCachedRoute(cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  // Attempt with retry
+  let lastError: RoutingError | null = null
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await fetchRoute(points)
+      if (result) {
+        setCachedRoute(cacheKey, result)
+      }
+      return result
+    } catch (error) {
+      if (error instanceof RoutingError && error.isServerOverloaded && attempt < MAX_RETRIES) {
+        // Wait before retry (exponential backoff)
+        const delay = RETRY_DELAY_MS * (attempt + 1)
+        console.log(`[OSRM] Retry ${attempt + 1}/${MAX_RETRIES} after ${delay}ms (${error.code})`)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        lastError = error
+        continue
+      }
+      throw error
+    }
+  }
+
+  // Should not reach here, but just in case
+  throw lastError || new RoutingError(ROUTING_ERROR_CODES.OSRM_UNAVAILABLE, "Routing fehlgeschlagen")
+}
+
+/**
+ * Internal: Fetch route from OSRM (single attempt, no retry)
+ */
+async function fetchRoute(points: RoutePoint[]): Promise<RouteResult | null> {
 
   // Build coordinates string: lng,lat;lng,lat;...
   const coordinates = points

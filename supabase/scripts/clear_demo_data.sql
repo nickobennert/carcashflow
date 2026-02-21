@@ -43,21 +43,7 @@ SELECT 'Bug Reports gelöscht: ' || COUNT(*) FROM bug_reports;
 DELETE FROM legal_acceptances;
 SELECT 'Legal Acceptances gelöscht: ' || COUNT(*) FROM legal_acceptances;
 
--- 9. Code Redemptions (falls vorhanden)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'code_redemptions') THEN
-        DELETE FROM code_redemptions;
-    END IF;
-END $$;
-
--- 10. Promo Codes (falls vorhanden)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'promo_codes') THEN
-        DELETE FROM promo_codes;
-    END IF;
-END $$;
+-- 9. (Promo Codes / Code Redemptions wurden entfernt - Tabellen existieren nicht mehr)
 
 COMMIT;
 

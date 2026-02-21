@@ -46,24 +46,7 @@ BEGIN
     END IF;
 END $$;
 
--- 1.10 Code Redemptions löschen (falls vorhanden)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'code_redemptions') THEN
-        TRUNCATE TABLE code_redemptions CASCADE;
-    END IF;
-END $$;
-
--- =====================================================
--- TEIL 2: NICHT MEHR BENÖTIGTE TABELLEN LÖSCHEN
--- =====================================================
-
--- 2.1 Promo Codes System entfernen (Subscription wurde deaktiviert)
-DROP TABLE IF EXISTS code_redemptions CASCADE;
-DROP TABLE IF EXISTS promo_codes CASCADE;
-
--- 2.2 Subscription Tiers Referenz-Tabelle entfernen
-DROP TABLE IF EXISTS subscription_tiers CASCADE;
+-- (Promo Codes, Code Redemptions, Subscription Tiers - bereits entfernt)
 
 -- =====================================================
 -- TEIL 3: SUBSCRIPTION-SPALTEN AUS PROFILES ENTFERNEN
