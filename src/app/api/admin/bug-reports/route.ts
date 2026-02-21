@@ -124,3 +124,88 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+// DELETE /api/admin/bug-reports - Delete a bug report and its screenshots
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (!(await isAdmin(user.id))) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+
+    const { id } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing bug report id" }, { status: 400 })
+    }
+
+    // First, get the bug report to find screenshots
+    const { data: bugReport, error: fetchError } = await supabaseAdmin
+      .from("bug_reports")
+      .select("id, title, screenshots")
+      .eq("id", id)
+      .single()
+
+    if (fetchError || !bugReport) {
+      return NextResponse.json({ error: "Bug report not found" }, { status: 404 })
+    }
+
+    // Delete screenshots from Storage if present
+    const report = bugReport as { id: string; title: string; screenshots: string[] | null }
+    if (report.screenshots && report.screenshots.length > 0) {
+      try {
+        const filePaths = report.screenshots
+          .map((url: string) => {
+            // URL format: .../storage/v1/object/public/bug-screenshots/userId/timestamp.ext
+            const parts = url.split("/bug-screenshots/")
+            return parts[1] // returns "userId/timestamp.ext"
+          })
+          .filter(Boolean) as string[]
+
+        if (filePaths.length > 0) {
+          const { error: storageError } = await supabaseAdmin.storage
+            .from("bug-screenshots")
+            .remove(filePaths)
+
+          if (storageError) {
+            console.error("Error deleting bug screenshots:", storageError)
+          }
+        }
+      } catch (err) {
+        // Don't block deletion if storage cleanup fails
+        console.error("Error cleaning up bug screenshots:", err)
+      }
+    }
+
+    // Delete the bug report from DB
+    const { error: deleteError } = await supabaseAdmin
+      .from("bug_reports")
+      .delete()
+      .eq("id", id)
+
+    if (deleteError) {
+      console.error("Error deleting bug report:", deleteError)
+      return NextResponse.json({ error: "Failed to delete bug report" }, { status: 500 })
+    }
+
+    // Audit log
+    logAuditEvent({
+      admin_id: user.id,
+      action: "bug_report_deleted",
+      target_type: "bug_report",
+      target_id: id,
+      details: { title: report.title },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error in bug reports DELETE:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

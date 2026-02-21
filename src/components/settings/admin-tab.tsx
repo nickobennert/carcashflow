@@ -22,6 +22,7 @@ import {
   BookOpen,
   ExternalLink,
   ScrollText,
+  Trash2,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -115,6 +116,7 @@ const auditActionLabels: Record<string, string> = {
   report_resolved: "Report gelöst",
   report_dismissed: "Report abgewiesen",
   bug_status_changed: "Bug-Status geändert",
+  bug_report_deleted: "Bug Report gelöscht",
   ride_deleted: "Fahrt gelöscht",
   user_updated: "Nutzer aktualisiert",
 }
@@ -309,7 +311,7 @@ export function AdminTab({ profile }: { profile: Profile }) {
       const usersResponse = await fetch("/api/admin/users")
       if (usersResponse.ok) {
         const usersData = await usersResponse.json()
-        setUsers(usersData.users || [])
+        setUsers(usersData.data || [])
       }
 
       // Load reports (via regular client for now - needs API if issues)
@@ -416,6 +418,40 @@ export function AdminTab({ profile }: { profile: Profile }) {
     } catch (error) {
       console.error("Error updating bug report:", error)
       toast.error("Fehler beim Aktualisieren")
+    } finally {
+      setBugActionLoading(null)
+    }
+  }
+
+  async function handleDeleteBugReport(bugId: string) {
+    setBugActionLoading(bugId)
+
+    try {
+      const response = await fetch("/api/admin/bug-reports", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bugId }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete bug report")
+      }
+
+      setBugReports((prev) => prev.filter((b) => b.id !== bugId))
+
+      // Update stats
+      if (stats) {
+        const deletedBug = bugReports.find((b) => b.id === bugId)
+        if (deletedBug && (deletedBug.status === "open" || deletedBug.status === "in_progress")) {
+          setStats({ ...stats, openBugReports: Math.max(0, stats.openBugReports - 1) })
+        }
+      }
+
+      setSelectedBugReport(null)
+      toast.success("Bug Report gelöscht")
+    } catch (error) {
+      console.error("Error deleting bug report:", error)
+      toast.error("Fehler beim Löschen")
     } finally {
       setBugActionLoading(null)
     }
@@ -1195,6 +1231,22 @@ export function AdminTab({ profile }: { profile: Profile }) {
             </div>
           )}
           <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedBugReport && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="sm:mr-auto"
+                disabled={bugActionLoading === selectedBugReport.id}
+                onClick={() => handleDeleteBugReport(selectedBugReport.id)}
+              >
+                {bugActionLoading === selectedBugReport.id ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-1" />
+                )}
+                Löschen
+              </Button>
+            )}
             {selectedBugReport?.status === "open" && (
               <>
                 <Button

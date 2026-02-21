@@ -6,6 +6,7 @@ export type AuditAction =
   | "report_resolved"
   | "report_dismissed"
   | "bug_status_changed"
+  | "bug_report_deleted"
   | "ride_deleted"
   | "user_updated"
 
