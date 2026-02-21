@@ -60,12 +60,7 @@ WHERE id NOT IN (SELECT user_id FROM super_admins);
 -- SCHRITT 3: NICHT MEHR BENÖTIGTE TABELLEN LÖSCHEN
 -- =====================================================
 
--- 3.1 Promo Codes System entfernen
-DROP TABLE IF EXISTS code_redemptions CASCADE;
-DROP TABLE IF EXISTS promo_codes CASCADE;
-
--- 3.2 Subscription Tiers Tabelle entfernen
-DROP TABLE IF EXISTS subscription_tiers CASCADE;
+-- 3.1 Promo Codes, Subscription Tiers (bereits entfernt - Tabellen existieren nicht mehr)
 
 -- 3.3 Connections Tabelle (falls nicht verwendet)
 -- DROP TABLE IF EXISTS connections CASCADE;

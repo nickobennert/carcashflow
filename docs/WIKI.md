@@ -30,7 +30,7 @@
 | Admin-Panel | **Aktiv** | Statistiken, User-Verwaltung, Bug Reports (in Settings) |
 | Docs/Wiki | **Aktiv** | Diese Seite unter `/admin/docs` |
 | E2E-Verschlüsselung | **Deaktiviert** | Entfernt - nicht zuverlässig in Web-Apps |
-| Stripe/Subscription | **Nicht aktiv** | Vorbereitet, aber nicht implementiert |
+| Bezahlsystem | **Geplant** | Für spätere Phase geplant (Anbieter noch offen) |
 
 ---
 
@@ -612,14 +612,6 @@ VAPID_PRIVATE_KEY=xxx
 
 # App
 NEXT_PUBLIC_APP_URL=https://app.carcashflow.de
-```
-
-### Optional (noch nicht aktiv)
-
-```env
-# Stripe (fuer spaetere Subscription)
-STRIPE_SECRET_KEY=sk_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### Vercel Setup
