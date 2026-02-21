@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { format, isToday, isYesterday } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2, FileText, Download } from "lucide-react"
+import { ArrowLeft, MoreVertical, Check, CheckCheck, Trash2, FileText, Download, Flag } from "lucide-react"
 import Link from "next/link"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { MessageInput } from "./message-input"
 import { TypingIndicator } from "./typing-indicator"
+import { ReportDialog } from "@/components/reports/report-dialog"
 import { useNotificationSound } from "@/hooks/use-notification-sound"
 import { cn } from "@/lib/utils"
 import type { MessageWithSender, Profile, Ride } from "@/types"
@@ -277,6 +278,17 @@ export function ConversationView({
                 <Link href={`/rides/${ride.id}`}>Route anzeigen</Link>
               </DropdownMenuItem>
             )}
+            <ReportDialog
+              targetType="user"
+              targetId={otherParticipant.id}
+              targetName={displayName}
+              trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Flag className="h-4 w-4 mr-2" />
+                  Nutzer melden
+                </DropdownMenuItem>
+              }
+            />
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"

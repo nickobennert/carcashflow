@@ -11,6 +11,7 @@ import {
   ThumbsUp,
   CircleDot,
   User,
+  Flag,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { ContactButton } from "@/components/rides/contact-button"
+import { ReportDialog } from "@/components/reports/report-dialog"
 import { RouteMap } from "@/components/map"
 import { cn } from "@/lib/utils"
 import type { RideWithUser, MatchData, RoutePoint } from "@/types"
@@ -217,11 +219,26 @@ export function RideDetailModal({
 
           {/* Action */}
           {!isOwnRide && (
-            <ContactButton
-              otherUserId={ride.user_id}
-              rideId={ride.id}
-              isOffer={isOffer}
-            />
+            <div className="space-y-2">
+              <ContactButton
+                otherUserId={ride.user_id}
+                rideId={ride.id}
+                isOffer={isOffer}
+              />
+              <div className="flex justify-center">
+                <ReportDialog
+                  targetType="ride"
+                  targetId={ride.id}
+                  targetName={`${extractCity(startPoint?.address)} → ${extractCity(endPoint?.address)}`}
+                  trigger={
+                    <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors">
+                      <Flag className="h-3 w-3" />
+                      Route melden
+                    </button>
+                  }
+                />
+              </div>
+            </div>
           )}
           {isOwnRide && (
             <p className="text-sm text-muted-foreground text-center py-1">
