@@ -4,7 +4,41 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 // Helper function to permanently delete a conversation and all related data
 async function permanentlyDeleteConversation(adminClient: ReturnType<typeof createAdminClient>, conversationId: string) {
-  // Delete in order: messages → conversation_keys → notifications → hidden_conversations → conversation
+  // Delete in order: attachments (storage) → messages → conversation_keys → notifications → hidden_conversations → conversation
+
+  // 0. Delete attachment files from Supabase Storage
+  try {
+    // First, get all messages with attachments for this conversation
+    const { data: messagesWithAttachments } = await adminClient
+      .from("messages")
+      .select("attachment_url")
+      .eq("conversation_id", conversationId)
+      .not("attachment_url", "is", null)
+
+    if (messagesWithAttachments && messagesWithAttachments.length > 0) {
+      // Extract storage paths from the public URLs
+      const filePaths = (messagesWithAttachments as { attachment_url: string }[])
+        .map((m) => {
+          // URL format: .../storage/v1/object/public/message-attachments/conversationId/userId-timestamp.ext
+          const urlParts = m.attachment_url.split("/message-attachments/")
+          return urlParts[1] // returns "conversationId/userId-timestamp.ext"
+        })
+        .filter(Boolean) as string[]
+
+      if (filePaths.length > 0) {
+        const { error: storageError } = await adminClient.storage
+          .from("message-attachments")
+          .remove(filePaths)
+
+        if (storageError) {
+          console.error("Error deleting attachment files:", storageError)
+        }
+      }
+    }
+  } catch (err) {
+    // Don't block deletion if storage cleanup fails
+    console.error("Error cleaning up attachments:", err)
+  }
 
   // 1. Delete all messages in this conversation
   const { error: msgError } = await adminClient
