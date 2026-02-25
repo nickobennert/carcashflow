@@ -59,6 +59,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
+        type: "image/jpeg",
       },
     ],
   },
@@ -67,7 +68,14 @@ export const metadata: Metadata = {
     title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
       "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern.",
-    images: ["/og-image.jpg"],
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
+      },
+    ],
   },
   robots: {
     index: true,
