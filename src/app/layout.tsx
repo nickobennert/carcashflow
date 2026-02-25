@@ -14,6 +14,12 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ??
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : "http://localhost:3000")
+  ),
   title: {
     default: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     template: "%s | Fahr mit!",
@@ -30,6 +36,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Fahr mit!" }],
   creator: "Fahr mit!",
   manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/icon-512.png", sizes: "512x512", type: "image/png" }],
+    apple: [{ url: "/icon-512.png", sizes: "512x512", type: "image/png" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -42,12 +52,21 @@ export const metadata: Metadata = {
     title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
       "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
       "Organisiere Rückfahrten effizient mit anderen Schulungsteilnehmern.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
