@@ -48,6 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "de_DE",
+    url: "https://app.carcashflow.de/",
     siteName: "Fahr mit!",
     title: "Fahr mit! - Mitfahrbörse für Schulungsteilnehmer",
     description:
