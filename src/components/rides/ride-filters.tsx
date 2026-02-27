@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { CalendarIcon, X, Search, MapPin, Navigation, Route } from "lucide-react"
+import { CalendarIcon, X, Search, MapPin, Navigation, Route, HelpCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -362,11 +362,33 @@ export function RideFilters({ className }: RideFiltersProps) {
               <Route className="h-3.5 w-3.5" />
               Strecke
             </Button>
-            <span className="text-xs text-muted-foreground ml-2">
+            <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">
               {nearbySearchMode === "location"
                 ? "Zeige Fahrten die durch einen Ort führen"
                 : "Zeige Fahrten auf deiner Strecke"}
             </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 text-sm" align="end" side="bottom">
+                <div className="space-y-2">
+                  <p className="font-medium">So funktioniert &quot;Unterwegs&quot;</p>
+                  <div className="space-y-1.5 text-muted-foreground">
+                    <p>
+                      <span className="font-medium text-foreground">Ort:</span>{" "}
+                      Gib einen Ort ein und finde alle Fahrten, die in der Nähe starten oder ankommen.
+                    </p>
+                    <p>
+                      <span className="font-medium text-foreground">Strecke:</span>{" "}
+                      Gib Start und Ziel ein und finde Fahrten, die zu deiner Route passen.
+                    </p>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Single Location Mode */}
