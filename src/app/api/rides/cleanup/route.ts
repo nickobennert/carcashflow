@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { permanentlyDeleteConversation } from "@/lib/conversations/cleanup"
 
 // Shared cleanup logic
 async function performCleanup(isAuthorized: boolean) {
@@ -10,12 +11,12 @@ async function performCleanup(isAuthorized: boolean) {
 
   try {
     // Use admin client to bypass RLS for cleanup operations
-    const supabase = createAdminClient()
+    const adminClient = createAdminClient()
     const now = new Date()
     const today = now.toISOString().split("T")[0]
 
     // 1. Find all expired rides (departure_date is in the past)
-    const { data: expiredRides, error: findError } = await supabase
+    const { data: expiredRides, error: findError } = await adminClient
       .from("rides")
       .select("id, user_id, departure_date")
       .eq("status", "active")
@@ -32,10 +33,9 @@ async function performCleanup(isAuthorized: boolean) {
 
     const rideIds = (expiredRides as { id: string; user_id: string; departure_date: string }[]).map((r) => r.id)
     let deletedConversations = 0
-    let deletedMessages = 0
 
     // 2. Find conversations linked to these rides
-    const { data: conversations } = await supabase
+    const { data: conversations } = await adminClient
       .from("conversations")
       .select("id")
       .in("ride_id", rideIds)
@@ -43,54 +43,25 @@ async function performCleanup(isAuthorized: boolean) {
     if (conversations && conversations.length > 0) {
       const conversationIds = (conversations as { id: string }[]).map((c) => c.id)
 
-      // 3. Count then delete messages in these conversations
-      const { count: msgCount } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .in("conversation_id", conversationIds)
-
-      deletedMessages = msgCount || 0
-
-      await supabase
-        .from("messages")
-        .delete()
-        .in("conversation_id", conversationIds)
-
-      // 4. Delete hidden_conversations entries
-      await supabase
-        .from("hidden_conversations")
-        .delete()
-        .in("conversation_id", conversationIds)
-
-      // 5. Delete notifications related to these conversations
+      // 3. Delete each conversation fully (attachments, messages, keys, notifications, etc.)
       for (const convId of conversationIds) {
-        await supabase
-          .from("notifications")
-          .delete()
-          .eq("type", "new_message")
-          .filter("data->>conversation_id", "eq", convId)
+        await permanentlyDeleteConversation(adminClient, convId)
       }
-
-      // 6. Delete the conversations
-      await supabase
-        .from("conversations")
-        .delete()
-        .in("id", conversationIds)
 
       deletedConversations = conversationIds.length
     }
 
-    // 7. Delete ride-match notifications for expired rides
+    // 4. Delete ride-match notifications for expired rides
     for (const rideId of rideIds) {
-      await supabase
+      await adminClient
         .from("notifications")
         .delete()
         .eq("type", "ride_match")
         .filter("data->>ride_id", "eq", rideId)
     }
 
-    // 8. Delete the expired rides (DSGVO: complete data removal)
-    const { error: deleteError } = await supabase
+    // 5. Delete the expired rides (DSGVO: complete data removal)
+    const { error: deleteError } = await adminClient
       .from("rides")
       .delete()
       .in("id", rideIds)
@@ -99,14 +70,13 @@ async function performCleanup(isAuthorized: boolean) {
 
     console.log(
       `[Ride Cleanup] Deleted ${rideIds.length} expired rides, ` +
-      `${deletedConversations} conversations, ${deletedMessages} messages`
+      `${deletedConversations} conversations (incl. attachments & keys)`
     )
 
     return NextResponse.json({
       message: "Cleanup completed successfully",
       deleted_rides: rideIds.length,
       deleted_conversations: deletedConversations,
-      deleted_messages: deletedMessages,
       ride_ids: rideIds,
     })
   } catch (error) {

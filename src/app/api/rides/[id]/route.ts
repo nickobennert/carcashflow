@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { permanentlyDeleteConversation } from "@/lib/conversations/cleanup"
 import type { RideUpdate, RoutePoint } from "@/types"
 
 interface RouteParams {
@@ -238,38 +239,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .select("id")
       .eq("ride_id", id)
 
-    // 2. Delete messages, E2E keys, and conversations linked to this ride
+    // 2. Delete each conversation fully (attachments, messages, keys, notifications, etc.)
     if (conversations && conversations.length > 0) {
-      const conversationIds = (conversations as { id: string }[]).map((c) => c.id)
       const adminClient = createAdminClient()
 
-      // Delete all messages in these conversations
-      await supabase
-        .from("messages")
-        .delete()
-        .in("conversation_id", conversationIds)
-
-      // Delete E2E conversation keys (use admin client to bypass RLS)
-      await adminClient
-        .from("conversation_keys")
-        .delete()
-        .in("conversation_id", conversationIds)
-
-      // Delete notifications related to these conversations
-      // We use a raw filter since data is JSONB
-      for (const convId of conversationIds) {
-        await supabase
-          .from("notifications")
-          .delete()
-          .eq("type", "new_message")
-          .filter("data->>conversation_id", "eq", convId)
+      for (const conv of conversations as { id: string }[]) {
+        await permanentlyDeleteConversation(adminClient, conv.id)
       }
-
-      // Delete the conversations themselves
-      await supabase
-        .from("conversations")
-        .delete()
-        .in("id", conversationIds)
     }
 
     // 3. Delete the ride itself (hard delete)
