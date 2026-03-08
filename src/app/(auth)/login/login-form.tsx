@@ -59,6 +59,13 @@ export function LoginForm() {
       })
 
       if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          toast.error("E-Mail noch nicht bestätigt", {
+            description: "Bitte bestätige zuerst deine E-Mail-Adresse.",
+          })
+          router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
+          return
+        }
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Ungültige Anmeldedaten", {
             description: "E-Mail oder Passwort ist falsch.",

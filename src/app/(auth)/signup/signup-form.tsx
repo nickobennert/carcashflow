@@ -85,7 +85,7 @@ export function SignupForm() {
   async function onSubmit(data: SignupFormValues) {
     setIsLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -106,6 +106,15 @@ export function SignupForm() {
             description: error.message,
           })
         }
+        return
+      }
+
+      // Supabase returns a fake user with empty identities when the email is already registered
+      // (security measure to prevent email enumeration — no error is thrown)
+      if (signUpData?.user?.identities?.length === 0) {
+        toast.error("Diese E-Mail ist bereits registriert", {
+          description: "Bitte melde dich an oder nutze 'Passwort vergessen'.",
+        })
         return
       }
 
