@@ -408,11 +408,7 @@ export function SignupForm() {
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-1">
-                        Es gelten unsere{" "}
-                        <Link href="/agb" className="text-primary hover:underline" target="_blank">
-                          AGB
-                        </Link>{" "}
-                        und{" "}
+                        Es gilt unsere{" "}
                         <Link href="/datenschutz" className="text-primary hover:underline" target="_blank">
                           Datenschutzerklärung
                         </Link>

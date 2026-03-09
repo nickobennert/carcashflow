@@ -48,9 +48,6 @@ export default function AuthLayout({
           <Link href="/datenschutz" className="hover:underline">
             Datenschutz
           </Link>
-          <Link href="/agb" className="hover:underline">
-            AGB
-          </Link>
         </div>
       </footer>
     </div>
