@@ -6,6 +6,31 @@ import { sendPushToMultiple, type PushSubscriptionData } from "@/lib/push/server
 // Type for conversation
 type ConversationData = { id: string; participant_1: string; participant_2: string }
 
+// Detect phone numbers in message content
+function containsPhoneNumber(text: string): boolean {
+  const normalized = text.replace(/[\s\-./()]/g, "")
+
+  const patterns = [
+    /(?:\+49|0049)?01[567]\d{7,10}/,
+    /(?:\+49|0049)?0[2-9]\d{6,12}/,
+    /\+\d{8,15}/,
+    /\d{8,15}/,
+  ]
+
+  for (const pattern of patterns) {
+    if (pattern.test(normalized)) {
+      const digitGroups = text.match(/\d[\d\s\-./()]{5,}\d/g)
+      if (digitGroups) return true
+    }
+  }
+
+  const numberWords = /\b(null|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun)\b/gi
+  const matches = text.match(numberWords)
+  if (matches && matches.length >= 6) return true
+
+  return false
+}
+
 // Check if content looks like an encrypted message
 function isEncryptedContent(content: string): boolean {
   try {
@@ -146,6 +171,14 @@ export async function POST(request: NextRequest) {
     const conversation = convData2 as ConversationData
     if (conversation.participant_1 !== user.id && conversation.participant_2 !== user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    // Check for phone numbers (server-side validation)
+    if (content && containsPhoneNumber(content)) {
+      return NextResponse.json(
+        { error: "Telefonnummern sind im Chat nicht erlaubt" },
+        { status: 400 }
+      )
     }
 
     // Determine if message is encrypted

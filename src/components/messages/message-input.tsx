@@ -147,11 +147,52 @@ export function MessageInput({
     return response.json()
   }
 
+  // Detect phone numbers (German mobile, landline, international formats)
+  function containsPhoneNumber(text: string): boolean {
+    // Remove common obfuscation: spaces, dashes, dots, slashes, parentheses
+    const normalized = text.replace(/[\s\-./()]/g, "")
+
+    const patterns = [
+      // German mobile: 015x, 016x, 017x (with or without +49/0049)
+      /(?:\+49|0049)?01[567]\d{7,10}/,
+      // German landline: 0xx(x)-xxxxxxx (with or without +49/0049)
+      /(?:\+49|0049)?0[2-9]\d{6,12}/,
+      // International: +xx followed by digits
+      /\+\d{8,15}/,
+      // Plain digit sequences that look like phone numbers (8+ digits)
+      /\d{8,15}/,
+    ]
+
+    // Check normalized text
+    for (const pattern of patterns) {
+      if (pattern.test(normalized)) {
+        // Extra check: the original text must contain at least 6 consecutive or grouped digits
+        const digitGroups = text.match(/\d[\d\s\-./()]{5,}\d/g)
+        if (digitGroups) return true
+      }
+    }
+
+    // Also check for written-out obfuscation like "null eins sieben drei..."
+    const numberWords = /\b(null|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun)\b/gi
+    const matches = text.match(numberWords)
+    if (matches && matches.length >= 6) return true
+
+    return false
+  }
+
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
 
     const trimmedContent = content.trim()
     if ((!trimmedContent && !attachment) || isLoading) return
+
+    // Check for phone numbers
+    if (trimmedContent && containsPhoneNumber(trimmedContent)) {
+      toast.error("Telefonnummer erkannt", {
+        description: "Es sieht so aus, als ob du versuchst, eine Telefonnummer weiterzuleiten. Zu deinem eigenen Schutz ist dies leider nicht erlaubt.",
+      })
+      return
+    }
 
     setIsLoading(true)
 
