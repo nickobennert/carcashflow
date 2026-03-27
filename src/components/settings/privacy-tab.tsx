@@ -1,15 +1,27 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   Download,
   Loader2,
   Shield,
   Info,
+  FileText,
+  ScrollText,
+  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { UsageRulesContent } from "@/components/legal/usage-rules-content"
 import type { Profile } from "@/types"
 
 interface PrivacyTabProps {
@@ -19,6 +31,7 @@ interface PrivacyTabProps {
 
 export function PrivacyTab({ profile }: PrivacyTabProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const [showRules, setShowRules] = useState(false)
 
   async function handleExportData() {
     setIsExporting(true)
@@ -96,6 +109,58 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Legal Documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ScrollText className="h-5 w-5 text-muted-foreground" />
+            Rechtliches
+          </CardTitle>
+          <CardDescription>
+            Nutzungsregeln und Datenschutzerklärung einsehen
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={() => setShowRules(true)}
+          >
+            <span className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Nutzungsregeln anzeigen
+            </span>
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            asChild
+          >
+            <Link href="/datenschutz" target="_blank">
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Datenschutzerklärung anzeigen
+              </span>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Usage Rules Dialog */}
+      <Dialog open={showRules} onOpenChange={setShowRules}>
+        <DialogContent className="max-w-lg max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Regeln für die Nutzung der FAHR MIT App</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] rounded-lg border bg-muted/30 p-4">
+            <UsageRulesContent />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Privacy Info */}
       <Card className="bg-muted/50">
