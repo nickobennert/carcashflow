@@ -212,6 +212,7 @@ const tableOfContents = [
   { id: "push", label: "Push Notifications", icon: Bell },
   { id: "bugs", label: "Bug Reports", icon: Bug },
   { id: "admin", label: "Admin-Panel", icon: Settings },
+  { id: "legal", label: "Rechtliches", icon: Eye },
   { id: "security", label: "Sicherheit", icon: Lock },
   { id: "env", label: "Environment", icon: Server },
   { id: "deploy", label: "Deployment", icon: Globe },
@@ -271,8 +272,8 @@ export default function DocsPage() {
               <span className="font-semibold text-muted-foreground">Docs</span>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className="text-xs">MVP 1.0</Badge>
-              <span className="text-xs text-muted-foreground">Feb 2026</span>
+              <Badge variant="outline" className="text-xs">MVP 1.1</Badge>
+              <span className="text-xs text-muted-foreground">Mär 2026</span>
             </div>
           </div>
         </header>
@@ -390,8 +391,14 @@ export default function DocsPage() {
                     ["Route-Watches", <StatusBadge key="watches" status="active" />, "Auto-Benachrichtigung bei passenden Fahrten"],
                     ["Bug Reports", <StatusBadge key="bugs" status="active" />, "Fehlermeldung mit Screenshots"],
                     ["Admin-Panel", <StatusBadge key="admin" status="active" />, "Stats, User-Verwaltung, Bug Reports"],
+                    ["Telefonnummern-Sperre", <StatusBadge key="phone" status="active" />, "Chat blockiert Telefonnummern mit Inline-Warnung"],
+                    ["Nutzungsregeln (25 §)", <StatusBadge key="legal" status="active" />, "Modal beim ersten Login, einsehbar in Settings"],
+                    ["Rechtliches in Settings", <StatusBadge key="legal-settings" status="active" />, "Nutzungsregeln + Datenschutz als Modal in Settings"],
+                    ["Resend SMTP", <StatusBadge key="resend" status="active" />, "Custom SMTP via Resend (noreply@carcashflow.de)"],
+                    ["Conversation Cleanup", <StatusBadge key="cleanup" status="active" />, "Vollständige Löschung bei Ride-Expiration inkl. Chat + Attachments"],
                     ["E2E-Verschlüsselung", <StatusBadge key="e2e" status="disabled" />, "Entfernt - nicht zuverlässig in Web-Apps"],
                     ["Bezahlsystem", <StatusBadge key="payment" status="planned" />, "Für spätere Phase geplant (Anbieter noch offen)"],
+                    ["AGB-Seite", <StatusBadge key="agb" status="planned" />, "Links entfernt, AGB entstehen nach der Beta"],
                   ]}
                 />
               </Section>
@@ -482,13 +489,15 @@ export default function DocsPage() {
     rides/                    RideCard, CreateRideForm, Filters
     messages/                 ConversationList, ConversationView
     notifications/            NotificationDropdown, Badge
-    settings/                 AdminTab, ProfileForm
+    settings/                 AdminTab, ProfileForm, PrivacyTab
+    legal/                    LegalAcceptanceModal, UsageRulesContent, PrivacyPolicyContent
     help/                     BugReportModal
 
   lib/
     supabase/client.ts        Browser-Client (Anon Key)
     supabase/server.ts        Server-Client (Session)
     supabase/admin.ts         Service Role Client (NUR API!)
+    conversations/cleanup.ts  Shared Conversation-Löschung
     push/server.ts            Web Push senden
     animations.ts             Motion Variants
     utils.ts                  cn(), formatDate(), etc.
@@ -606,6 +615,21 @@ CREATE TABLE messages (
                   <FlowStep number={4}>Wenn <strong className="text-foreground">beide</strong> User den Chat entfernen, wird die Conversation samt Nachrichten permanent gelöscht.</FlowStep>
                 </div>
 
+                <SubTitle>Conversation Cleanup</SubTitle>
+                <Paragraph>
+                  Bei Ride-Expiration (Cron, täglich 3 Uhr UTC), manueller Ride-Löschung oder wenn beide User den Chat entfernen,
+                  wird die Conversation vollständig gelöscht. Die Shared-Funktion <InlineCode>permanentlyDeleteConversation()</InlineCode> in
+                  <InlineCode>lib/conversations/cleanup.ts</InlineCode> löscht in dieser Reihenfolge:
+                </Paragraph>
+                <div className="space-y-2 my-4">
+                  <FlowStep number={1}>Attachment-Dateien aus Supabase Storage</FlowStep>
+                  <FlowStep number={2}>Alle Nachrichten</FlowStep>
+                  <FlowStep number={3}>Conversation Keys (E2E Legacy)</FlowStep>
+                  <FlowStep number={4}>Zugehörige Notifications</FlowStep>
+                  <FlowStep number={5}>Hidden-Conversation-Einträge</FlowStep>
+                  <FlowStep number={6}>Die Conversation selbst</FlowStep>
+                </div>
+
                 <SubTitle>bug_reports</SubTitle>
                 <CodeBlock language="sql" title="bug_reports">{`CREATE TABLE bug_reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -656,9 +680,14 @@ CREATE TABLE messages (
                   <FlowStep number={1}>User füllt Formular aus (Email, Passwort, Vorname)</FlowStep>
                   <FlowStep number={2}>Supabase erstellt Auth-User</FlowStep>
                   <FlowStep number={3}>DB-Trigger erstellt automatisch ein Profil mit generiertem Username</FlowStep>
-                  <FlowStep number={4}>User bekommt Bestätigungs-Email</FlowStep>
+                  <FlowStep number={4}>User bekommt Bestätigungs-Email (via Resend SMTP)</FlowStep>
                   <FlowStep number={5}>Nach Klick auf Link: Redirect zu <InlineCode>/dashboard</InlineCode></FlowStep>
                 </div>
+
+                <Callout type="info">
+                  <strong>Duplicate-Signup-Schutz:</strong> Supabase gibt bei bereits registrierten E-Mails keinen Fehler zurück (Anti-Enumeration).
+                  Stattdessen prüft der Code <InlineCode>identities.length === 0</InlineCode> und zeigt &quot;Diese E-Mail ist bereits registriert&quot;.
+                </Callout>
 
                 <SubTitle>Login</SubTitle>
                 <div className="space-y-2 my-4">
@@ -666,6 +695,11 @@ CREATE TABLE messages (
                   <FlowStep number={2}>Supabase validiert Credentials, setzt Session Cookie</FlowStep>
                   <FlowStep number={3}>Redirect zu <InlineCode>/dashboard</InlineCode></FlowStep>
                 </div>
+
+                <Callout type="info">
+                  <strong>Unbestätigte E-Mail:</strong> Wenn ein User versucht sich einzuloggen bevor die E-Mail bestätigt ist,
+                  wird er automatisch zu <InlineCode>/verify-email</InlineCode> weitergeleitet.
+                </Callout>
 
                 <SubTitle>Middleware</SubTitle>
                 <Paragraph>
@@ -723,6 +757,15 @@ CREATE TABLE messages (
     filter: \`conversation_id=eq.\${conversationId}\`,
   }, handleNewMessage)
   .subscribe()`}</CodeBlock>
+
+                <SubTitle>Telefonnummern-Sperre</SubTitle>
+                <div className="flex items-center gap-2 mb-3"><StatusBadge status="active" /><span className="text-sm text-muted-foreground">Clientseitige Erkennung</span></div>
+                <Paragraph>
+                  Das Eingabefeld erkennt deutsche Telefonnummern (Mobil und Festnetz) und zeigt eine Inline-Warnung
+                  über dem Textfeld an. Die Nachricht kann nicht abgesendet werden solange eine Nummer erkannt wird.
+                  Erkannte Formate: <InlineCode>0171...</InlineCode>, <InlineCode>+49...</InlineCode>, <InlineCode>089 123...</InlineCode>, etc.
+                  Entspricht §24 der Nutzungsregeln.
+                </Paragraph>
 
                 <SubTitle>E2E-Verschlüsselung</SubTitle>
                 <div className="flex items-center gap-2 mb-3"><StatusBadge status="disabled" /><span className="text-sm text-muted-foreground">Entfernt seit Februar 2025</span></div>
@@ -879,9 +922,46 @@ VALUES ('die-user-uuid', 'super_admin');`}</CodeBlock>
 
               <Separator className="my-10" />
 
-              {/* ─── 12. Sicherheit ─── */}
+              {/* ─── 12. Rechtliches ─── */}
+              <Section id="legal">
+                <SectionTitle number="12">Rechtliches</SectionTitle>
+
+                <SubTitle>Nutzungsregeln (25 Paragraphen)</SubTitle>
+                <Paragraph>
+                  Beim ersten Login erscheint ein Modal mit den Nutzungsregeln. Erst nach Akzeptieren
+                  hat der User Zugriff auf die App. Die Zustimmung wird in <InlineCode>legal_acceptances</InlineCode> gespeichert.
+                </Paragraph>
+                <DataTable
+                  headers={["Modal", "Typ", "Beschreibung"]}
+                  rows={[
+                    ["Nutzungsregeln", <InlineCode key="l1">rideshare_terms</InlineCode>, "25 Paragraphen: Plattformzweck, Haftung, Telefonnummern-Verbot, Sperrung etc."],
+                    ["Versicherungshinweis", <InlineCode key="l2">insurance_notice</InlineCode>, "Separates Modal nach den Nutzungsregeln"],
+                    ["Disclaimer-Banner", <InlineCode key="l3">disclaimer_banner</InlineCode>, "Ablehnbarer Hinweis auf dem Dashboard"],
+                  ]}
+                />
+
+                <SubTitle>Einsehen in Settings</SubTitle>
+                <Paragraph>
+                  Unter <InlineCode>Settings → Datenschutz</InlineCode> können User beide Dokumente jederzeit erneut als Modal öffnen:
+                  Nutzungsregeln und Datenschutzerklärung. Die Inhalte nutzen Shared Components
+                  (<InlineCode>UsageRulesContent</InlineCode> und <InlineCode>PrivacyPolicyContent</InlineCode>).
+                </Paragraph>
+
+                <SubTitle>Regeln zurücksetzen (alle User erneut zustimmen)</SubTitle>
+                <CodeBlock language="sql" title="Legal Acceptances zurücksetzen">{`DELETE FROM legal_acceptances
+WHERE acceptance_type = 'rideshare_terms';`}</CodeBlock>
+
+                <SubTitle>AGB</SubTitle>
+                <Paragraph>
+                  AGB-Links wurden entfernt (keine <InlineCode>/agb</InlineCode>-Seite). AGB werden erst nach der Beta erstellt.
+                </Paragraph>
+              </Section>
+
+              <Separator className="my-10" />
+
+              {/* ─── 13. Sicherheit ─── */}
               <Section id="security">
-                <SectionTitle number="12">Sicherheit</SectionTitle>
+                <SectionTitle number="13">Sicherheit</SectionTitle>
 
                 <SubTitle>Row Level Security (RLS)</SubTitle>
                 <Paragraph>
@@ -910,9 +990,9 @@ ON messages FOR SELECT USING (
 
               <Separator className="my-10" />
 
-              {/* ─── 13. Env ─── */}
+              {/* ─── 14. Env ─── */}
               <Section id="env">
-                <SectionTitle number="13">Environment Variables</SectionTitle>
+                <SectionTitle number="14">Environment Variables</SectionTitle>
 
                 <SubTitle>Pflicht</SubTitle>
                 <CodeBlock language="env" title=".env (Pflicht)">{`# Supabase
@@ -927,6 +1007,24 @@ VAPID_PRIVATE_KEY=xxx
 # App
 NEXT_PUBLIC_APP_URL=https://app.carcashflow.de`}</CodeBlock>
 
+                <SubTitle>E-Mail (Resend SMTP)</SubTitle>
+                <Paragraph>
+                  E-Mails werden über Resend versendet (Custom SMTP in Supabase). Konfiguration im Supabase Dashboard
+                  unter Authentication → Email → SMTP Settings.
+                </Paragraph>
+                <DataTable
+                  headers={["Einstellung", "Wert"]}
+                  rows={[
+                    ["Host", <InlineCode key="smtp1">smtp.resend.com</InlineCode>],
+                    ["Port", <InlineCode key="smtp2">465</InlineCode>],
+                    ["Username", <InlineCode key="smtp3">resend</InlineCode>],
+                    ["Password", "Resend API Key (re_...)"],
+                    ["Sender", <InlineCode key="smtp4">noreply@carcashflow.de</InlineCode>],
+                    ["Sender Name", "Fahr mit"],
+                    ["Rate Limit", "30 emails/h"],
+                  ]}
+                />
+
                 <Callout type="info">
                   <strong>Vercel Setup:</strong> Alle Variablen im Vercel Dashboard unter Project → Settings → Environment Variables für Production und Preview eintragen.
                   <InlineCode>SUPABASE_SERVICE_ROLE_KEY</InlineCode> ist nur serverseitig (kein <InlineCode>NEXT_PUBLIC_</InlineCode> Prefix).
@@ -935,9 +1033,9 @@ NEXT_PUBLIC_APP_URL=https://app.carcashflow.de`}</CodeBlock>
 
               <Separator className="my-10" />
 
-              {/* ─── 14. Deployment ─── */}
+              {/* ─── 15. Deployment ─── */}
               <Section id="deploy">
-                <SectionTitle number="14">Deployment</SectionTitle>
+                <SectionTitle number="15">Deployment</SectionTitle>
                 <Paragraph>
                   Jeder Push auf <InlineCode>main</InlineCode> deployed automatisch zu Vercel via GitHub Integration.
                 </Paragraph>
@@ -954,9 +1052,9 @@ vercel --prod`}</CodeBlock>
 
               <Separator className="my-10" />
 
-              {/* ─── 15. SQL ─── */}
+              {/* ─── 16. SQL ─── */}
               <Section id="sql">
-                <SectionTitle number="15">Häufige SQL-Befehle</SectionTitle>
+                <SectionTitle number="16">Häufige SQL-Befehle</SectionTitle>
                 <Paragraph>
                   Diese Befehle direkt im Supabase SQL-Editor ausführen.
                 </Paragraph>
