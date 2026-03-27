@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Loader2, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react"
+import { Send, Loader2, Paperclip, X, FileText, Image as ImageIcon, ShieldAlert } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ export function MessageInput({
   const [isLoading, setIsLoading] = useState(false)
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [phoneWarning, setPhoneWarning] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -188,9 +190,7 @@ export function MessageInput({
 
     // Check for phone numbers
     if (trimmedContent && containsPhoneNumber(trimmedContent)) {
-      toast.error("Telefonnummer erkannt", {
-        description: "Es sieht so aus, als ob du versuchst, eine Telefonnummer weiterzuleiten. Zu deinem eigenen Schutz ist dies leider nicht erlaubt.",
-      })
+      setPhoneWarning(true)
       return
     }
 
@@ -296,6 +296,7 @@ export function MessageInput({
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setContent(e.target.value)
+    if (phoneWarning) setPhoneWarning(false)
     handleTyping()
   }
 
@@ -334,6 +335,34 @@ export function MessageInput({
           </Button>
         </div>
       )}
+
+      {/* Phone number warning */}
+      <AnimatePresence>
+        {phoneWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+          >
+            <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Telefonnummer erkannt</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Es sieht so aus, als ob du versuchst, eine Telefonnummer weiterzuleiten. Zu deinem eigenen Schutz ist dies leider nicht erlaubt.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPhoneWarning(false)}
+              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="flex items-end gap-2">
         {/* Hidden file input */}
