@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import {
   Download,
   Loader2,
@@ -9,7 +8,6 @@ import {
   Info,
   FileText,
   ScrollText,
-  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -22,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { UsageRulesContent } from "@/components/legal/usage-rules-content"
+import { PrivacyPolicyContent } from "@/components/legal/privacy-policy-content"
 import type { Profile } from "@/types"
 
 interface PrivacyTabProps {
@@ -32,6 +31,7 @@ interface PrivacyTabProps {
 export function PrivacyTab({ profile }: PrivacyTabProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   async function handleExportData() {
     setIsExporting(true)
@@ -124,28 +124,20 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
         <CardContent className="space-y-3">
           <Button
             variant="outline"
-            className="w-full justify-between"
+            className="w-full justify-start gap-2"
             onClick={() => setShowRules(true)}
           >
-            <span className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Nutzungsregeln anzeigen
-            </span>
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4" />
+            Nutzungsregeln anzeigen
           </Button>
 
           <Button
             variant="outline"
-            className="w-full justify-between"
-            asChild
+            className="w-full justify-start gap-2"
+            onClick={() => setShowPrivacy(true)}
           >
-            <Link href="/datenschutz" target="_blank">
-              <span className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Datenschutzerklärung anzeigen
-              </span>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </Link>
+            <Shield className="h-4 w-4" />
+            Datenschutzerklärung anzeigen
           </Button>
         </CardContent>
       </Card>
@@ -162,25 +154,17 @@ export function PrivacyTab({ profile }: PrivacyTabProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Privacy Info */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium">Deine Daten sind sicher</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Wir speichern deine Daten sicher in der EU und geben sie nicht
-                an Dritte weiter. Mehr dazu in unserer{" "}
-                <a href="/datenschutz" className="underline hover:text-foreground">
-                  Datenschutzerklärung
-                </a>
-                .
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Privacy Policy Dialog */}
+      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
+        <DialogContent className="max-w-lg max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Datenschutzerklärung</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] rounded-lg border bg-muted/30 p-4">
+            <PrivacyPolicyContent />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
