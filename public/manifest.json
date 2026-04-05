@@ -2,12 +2,14 @@
   "name": "Fahr mit!",
   "short_name": "Fahr mit!",
   "description": "Mitfahrbörse für Schulungsteilnehmer",
+  "id": "/dashboard",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#061D26",
   "theme_color": "#14768C",
   "orientation": "portrait-primary",
   "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-512.png",
