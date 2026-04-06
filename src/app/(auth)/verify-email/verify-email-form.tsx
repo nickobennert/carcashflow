@@ -24,6 +24,7 @@ export function VerifyEmailForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [showEmailInput, setShowEmailInput] = useState(!initialEmail)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -33,6 +34,13 @@ export function VerifyEmailForm() {
   useEffect(() => {
     inputRefs.current[0]?.focus()
   }, [])
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
 
   // Handle input change
   const handleChange = (index: number, value: string) => {
@@ -164,6 +172,7 @@ export function VerifyEmailForm() {
         return
       }
 
+      setResendCooldown(60)
       toast.success("Neuer Code gesendet", {
         description: "Überprüfe dein E-Mail-Postfach.",
       })
@@ -272,7 +281,7 @@ export function VerifyEmailForm() {
             <button
               type="button"
               onClick={handleResendCode}
-              disabled={isResending}
+              disabled={isResending || resendCooldown > 0}
               className="text-sm text-muted-foreground hover:text-primary disabled:opacity-50"
             >
               {isResending ? (
@@ -280,6 +289,8 @@ export function VerifyEmailForm() {
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Wird gesendet...
                 </span>
+              ) : resendCooldown > 0 ? (
+                `Erneut senden in ${resendCooldown}s`
               ) : (
                 "Code nicht erhalten? Erneut senden"
               )}
