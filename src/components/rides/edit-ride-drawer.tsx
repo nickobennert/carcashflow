@@ -844,6 +844,10 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                             placeholder="LÖSCHEN"
                             className="font-mono"
                             autoComplete="off"
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            inputMode="text"
                           />
                         </div>
                       </div>
@@ -853,7 +857,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
-                      disabled={deleteConfirmText !== "LÖSCHEN"}
+                      disabled={deleteConfirmText.trim().normalize("NFC") !== "LÖSCHEN"}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Endgültig löschen
