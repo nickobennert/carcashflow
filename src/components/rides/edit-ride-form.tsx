@@ -678,7 +678,7 @@ export function EditRideForm({ ride }: EditRideFormProps) {
                 <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
-                  disabled={deleteConfirmText.trim().normalize("NFC") !== "LÖSCHEN"}
+                  disabled={deleteConfirmText.trim().normalize("NFC").toUpperCase() !== "LÖSCHEN"}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Endgültig löschen

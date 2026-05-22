@@ -493,7 +493,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl md:max-w-2xl p-0 m-4 h-[calc(100vh-2rem)] rounded-lg border shadow-2xl flex flex-col [&>button]:hidden"
+        className="w-full sm:max-w-xl md:max-w-2xl p-0 m-0 sm:m-4 h-dvh sm:h-[calc(100dvh-2rem)] rounded-none sm:rounded-lg border shadow-2xl flex flex-col [&>button]:hidden"
       >
         <TooltipProvider>
           {/* Header */}
@@ -806,7 +806,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t shrink-0 bg-background">
+          <div className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t shrink-0 bg-background">
             <div className="flex justify-between gap-3">
               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText("") }}>
                 <AlertDialogTrigger asChild>
@@ -857,7 +857,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
-                      disabled={deleteConfirmText.trim().normalize("NFC") !== "LÖSCHEN"}
+                      disabled={deleteConfirmText.trim().normalize("NFC").toUpperCase() !== "LÖSCHEN"}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Endgültig löschen
