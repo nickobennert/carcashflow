@@ -250,8 +250,8 @@ export function NotificationsDropdown() {
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 max-w-sm p-0">
-          <div className="flex items-center justify-between p-3 border-b">
+        <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 max-w-sm p-0 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between p-3 border-b shrink-0">
             <h4 className="font-semibold">Benachrichtigungen</h4>
             {unreadCount > 0 && (
               <Badge variant="secondary">{unreadCount} neu</Badge>
@@ -268,7 +268,7 @@ export function NotificationsDropdown() {
               <p className="text-sm">Keine Benachrichtigungen</p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[300px]">
+            <ScrollArea className="max-h-[300px] min-h-0 flex-1">
               {recentNotifications.map((notif) => (
                 <NotificationItem
                   key={notif.id}
@@ -289,8 +289,7 @@ export function NotificationsDropdown() {
             </ScrollArea>
           )}
 
-          <Separator />
-          <div className="p-2">
+          <div className="border-t p-2 shrink-0 bg-popover">
             <Button
               variant="ghost"
               className="w-full justify-center text-sm"

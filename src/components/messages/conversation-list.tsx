@@ -178,12 +178,12 @@ function ConversationItem({ conversation, currentUserId, onRemove }: Conversatio
   return (
     <>
       <div className={cn(
-        "group relative flex items-center",
+        "group flex items-center",
         hasUnread && "bg-primary/5"
       )}>
         <Link
           href={`/messages/${conversation.id}`}
-          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors flex-1 min-w-0"
+          className="flex items-center gap-3 pl-4 py-3 hover:bg-muted/50 transition-colors flex-1 min-w-0"
         >
           {/* Avatar */}
           <div className="relative shrink-0">
@@ -253,24 +253,24 @@ function ConversationItem({ conversation, currentUserId, onRemove }: Conversatio
               </div>
             )}
           </div>
-
-          {/* Arrow */}
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
         </Link>
 
-        {/* Remove button - visible on hover (desktop) and always on mobile */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-12 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setShowRemoveDialog(true)
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {/* Remove button + Arrow */}
+        <div className="flex items-center shrink-0 pr-3 gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setShowRemoveDialog(true)
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+        </div>
       </div>
 
       <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
