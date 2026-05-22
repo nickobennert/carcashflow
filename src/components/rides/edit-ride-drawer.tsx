@@ -806,14 +806,15 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t shrink-0 bg-background">
-            <div className="flex justify-between gap-3">
+          <div className="px-4 sm:px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t shrink-0 bg-background">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText("") }}>
                 <AlertDialogTrigger asChild>
                   <Button
                     type="button"
                     variant="destructive"
                     disabled={isDeleting || isLoading}
+                    className="w-full sm:w-auto"
                   >
                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -872,6 +873,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                   variant="outline"
                   onClick={handleClose}
                   disabled={isLoading || isDeleting}
+                  className="flex-1 sm:flex-initial"
                 >
                   Abbrechen
                 </Button>
@@ -879,6 +881,7 @@ export function EditRideDrawer({ ride, trigger, open: controlledOpen, onOpenChan
                   type="submit"
                   form="edit-ride-form"
                   disabled={isLoading || isDeleting}
+                  className="flex-1 sm:flex-initial"
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Speichern
